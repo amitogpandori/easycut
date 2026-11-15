@@ -10,5 +10,13 @@ contextBridge.exposeInMainWorld('easycutDesktop', {
   openProjectPath: (p) => ipcRenderer.invoke('open-project-path', p),
   writeFile: (filePath, data) => ipcRenderer.invoke('write-file', { filePath, data }),
   readFile: (filePath) => ipcRenderer.invoke('read-file', filePath),
+  ai: {
+    status: () => ipcRenderer.invoke('ai-status'),
+    start: () => ipcRenderer.invoke('ai-start'),
+    chat: (model, messages) => ipcRenderer.invoke('ai-chat', { model, messages }),
+    pull: (model) => ipcRenderer.invoke('ai-pull', model),
+    onPullProgress: (cb) => { const f = (e, d) => cb(d); ipcRenderer.on('ai-pull-progress', f); return () => ipcRenderer.removeListener('ai-pull-progress', f); },
+    getOllama: () => ipcRenderer.invoke('ai-get-ollama'),
+  },
   platform: process.platform,
 });

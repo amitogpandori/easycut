@@ -172,6 +172,32 @@ input[type=color]{width:34px;height:28px;border:1px solid var(--line);border-rad
 .beats{position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(90deg,rgba(255,255,255,.55) 0 1px,transparent 1px);background-repeat:repeat-x}
 .eitem{height:24px;background:linear-gradient(135deg,#a16207,#eab308)}
 .eitem .lbl{top:3px}
+.pro{background:var(--panel2);border-radius:12px;padding:0 12px;margin-bottom:14px;border:1px solid var(--line)}
+.pro[open]{padding-bottom:10px}
+.pro summary{cursor:pointer;font-weight:700;padding:11px 0;list-style:none}
+.pro summary::-webkit-details-marker{display:none}
+.pro summary::after{content:'▾';float:right;color:var(--mut)}
+.label2{font-size:11px;font-weight:800;letter-spacing:.5px;color:var(--dim);text-transform:uppercase;margin:12px 0 8px}
+.kfb{width:22px;height:22px;border-radius:6px;font-size:12px;color:var(--dim);background:var(--panel3);display:grid;place-items:center}
+.kfb.has{color:#fbbf24}.kfb.on{color:#111;background:#fbbf24}
+.kfbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:6px 0 12px}
+.kfbar .seg{flex:1;min-width:130px}
+.kfd{position:absolute;bottom:3px;width:7px;height:7px;margin-left:-3.5px;background:#fbbf24;transform:rotate(45deg);pointer-events:none;z-index:2;box-shadow:0 0 0 1px #000}
+.io{position:absolute;top:0;bottom:0;background:#3b82f633;border-left:2px solid #3b82f6;border-right:2px solid #3b82f6;pointer-events:none}
+.tmk{position:absolute;top:0;width:10px;height:12px;margin-left:-5px;background:#22c55e;clip-path:polygon(0 0,100% 0,100% 60%,50% 100%,0 60%);cursor:pointer;z-index:3}
+.ttog{margin-left:auto;font-size:12px;opacity:.75;padding:2px}.ttog.off{opacity:1;filter:grayscale(0)}
+.tll{position:relative}
+#bSnap.on{background:var(--panel3);color:var(--text)}
+#meter{border-radius:3px;margin:0 4px}
+.ailog{min-height:120px;max-height:46vh;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:4px 0}
+.aim{padding:9px 12px;border-radius:12px;font-size:13px;line-height:1.45;max-width:94%}
+.aim.u{align-self:flex-end;background:var(--acc);color:#fff;border-bottom-right-radius:4px}
+.aim.a{align-self:flex-start;background:var(--panel2);border:1px solid var(--line);border-bottom-left-radius:4px}
+.aim ul{margin:6px 0 6px;padding-left:16px;color:var(--mut);font-size:12px}
+.aim .btn{margin-top:4px}
+#aiIn{resize:none;min-height:44px}
+.aichips{display:flex;gap:6px;overflow-x:auto;margin-top:10px;padding-bottom:4px;scrollbar-width:thin}
+.aichips .chip{white-space:nowrap;flex:none}
 .fxcard{font-size:13px;font-weight:700;padding:12px 4px;white-space:normal}
 .desk{display:none!important}
 body.is-desk .desk{display:inline-flex!important}
@@ -349,6 +375,7 @@ body.is-desk .desk{display:inline-flex!important}
     </div>
     <div class="transport">
       <div class="tc" id="tc"><b>0:00.0</b> / 0:00.0</div>
+      <canvas id="meter" width="56" height="14" title="Audio level"></canvas>
       <button class="ib" id="bStart" title="Go to start (Home)"></button>
       <button class="ib" id="bBack" title="Previous frame (←)"></button>
       <button class="play" id="bPlay" title="Play / Pause (Space)"></button>
@@ -371,6 +398,7 @@ body.is-desk .desk{display:inline-flex!important}
       <input type="range" id="zoom" min="0" max="100" value="40" aria-label="Timeline zoom">
       <button class="ib" id="zIn" title="Zoom in (+)"></button>
       <button class="btn sm" id="zFit">Fit</button>
+      <button class="btn sm on" id="bSnap" title="Snapping on/off">🧲</button>
     </div>
   </div>
   <div class="tlbody">
@@ -411,6 +439,7 @@ body.is-desk .desk{display:inline-flex!important}
 <input type="file" id="fileFont" multiple accept=".ttf,.otf,.woff,.woff2,font/ttf,font/otf,font/woff,font/woff2" hidden>
 <input type="file" id="fileTpl" accept=".json,application/json" hidden>
 <input type="file" id="fileLogo" multiple accept="image/*" hidden>
+<input type="file" id="fileLut" multiple accept=".cube" hidden>
 <div class="busy" id="busy"></div>
 <div class="bufpill" id="bufpill">Loading video…</div>
 <div id="pool"></div>
@@ -444,7 +473,7 @@ const IC = {
   crop:'M6 2v14a2 2 0 0 0 2 2h14M18 22V8a2 2 0 0 0-2-2H2', layers:'M12 2 2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5',
   camera:'M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',
   snow:'M12 2v20M2 12h20M4.9 4.9l14.2 14.2M19.1 4.9 4.9 19.1', wave:'M2 12h2l3-7 4 14 4-10 3 6h4',
-  home:'M3 11l9-8 9 8M5 10v10h14V10', wand:'M15 4V2M15 16v-2M8 9h2M20 9h2M17.8 11.8 19 13M15 9h.01M17.8 6.2 19 5M3 21l9-9M12.2 6.2 11 5', gif:'M3 5h18v14H3zM10 10H7v4h3v-2M13 10v4M16 14v-4h3M16 12h2', tag:'M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8zM7 7h.01',
+  home:'M3 11l9-8 9 8M5 10v10h14V10', bot:'M12 8V4H8M4 12a8 6 0 0 1 16 0v6H4zM9 13v1M15 13v1M2 14h2M20 14h2', wand:'M15 4V2M15 16v-2M8 9h2M20 9h2M17.8 11.8 19 13M15 9h.01M17.8 6.2 19 5M3 21l9-9M12.2 6.2 11 5', gif:'M3 5h18v14H3zM10 10H7v4h3v-2M13 10v4M16 14v-4h3M16 12h2', tag:'M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8zM7 7h.01',
   speed:'M12 14l4-4M3.3 15a9 9 0 1 1 17.4 0', volume:'M11 5 6 9H2v6h4l5 4zM15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14', trans:'M3 5h7v14H3zM14 5h7v14h-7zM8 12h8', sparkle:'M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z', flip:'M12 3v18M16 7l4 5-4 5M8 7l-4 5 4 5',
 };
 const ICF = { play:'M8 5v14l11-7z', pause:'M6 5h4v14H6zM14 5h4v14h-4z', start:'M6 5h2v14H6zM20 5v14L9 12z', end:'M16 5h2v14h-2zM4 5v14l11-7z' };
@@ -504,10 +533,10 @@ let textBoxes = [];
 
 /* ---------- history ---------- */
 const H = { past:[], future:[] }; let ck = { k:null, t:0 };
-const snap = () => JSON.stringify({ aspect:S.aspect, res:S.res, fps:S.fps, fit:S.fit, bg:S.bg, bgColor:S.bgColor, clips:S.clips, texts:S.texts, audios:S.audios, overlays:S.overlays, effects:S.effects });
+const snap = () => JSON.stringify({ markers:S.markers || [], inP:S.inP ?? null, outP:S.outP ?? null, hide:S.hide || {}, mute:S.mute || {}, aspect:S.aspect, res:S.res, fps:S.fps, fit:S.fit, bg:S.bg, bgColor:S.bgColor, clips:S.clips, texts:S.texts, audios:S.audios, overlays:S.overlays, effects:S.effects });
 function push(){ H.past.push(snap()); if (H.past.length > 120) H.past.shift(); H.future = []; ck = { k:null, t:0 }; updUndo(); }
 function checkpoint(k){ const now = Date.now(); if (ck.k !== k || now - ck.t > 1200) push(); ck = { k, t:now }; }
-function restore(s){ Object.assign(S, { overlays:[], effects:[], fps:30, fit:'fit' }, JSON.parse(s)); if (cropMode && !getObj('clip', cropMode.clipId)) cropMode = null; if (sel && !getObj(sel.type, sel.id)) sel = null; applyCanvasSize(); playT = clamp(playT, 0, totalDur()); refreshAll(); }
+function restore(s){ Object.assign(S, { overlays:[], effects:[], fps:30, fit:'fit', markers:[], inP:null, outP:null, hide:{}, mute:{} }, JSON.parse(s)); renderLabels(); if (cropMode && !getObj('clip', cropMode.clipId)) cropMode = null; if (sel && !getObj(sel.type, sel.id)) sel = null; applyCanvasSize(); playT = clamp(playT, 0, totalDur()); refreshAll(); }
 function undo(){ if (!H.past.length) return; H.future.push(snap()); restore(H.past.pop()); updUndo(); }
 function redo(){ if (!H.future.length) return; H.past.push(snap()); restore(H.future.pop()); updUndo(); }
 function updUndo(){ $('#bUndo').disabled = !H.past.length; $('#bRedo').disabled = !H.future.length; }
@@ -552,10 +581,10 @@ updatePlayBtn();
 let toastT;
 function toast(msg, ms = 2600){ const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), ms); }
 
-const TABS = [['media','Media','media'],['reel','Reel','sparkle'],['templates','Templates','canvas'],['effects','Effects','wand'],['transitions','Transition','trans'],['text','Text','text'],['sticker','Sticker','sticker'],['gif','GIF','gif'],['logos','Logo','tag'],['music','Music','music'],['overlay','PIP','layers'],['filter','Filter','filter'],['canvas','Canvas','crop']];
+const TABS = [['ai','AI Editor','bot'],['media','Media','media'],['reel','Reel','sparkle'],['templates','Templates','canvas'],['effects','Effects','wand'],['transitions','Transition','trans'],['text','Text','text'],['sticker','Sticker','sticker'],['gif','GIF','gif'],['logos','Logo','tag'],['music','Music','music'],['overlay','PIP','layers'],['filter','Filter','filter'],['canvas','Canvas','crop']];
 const CLIP_TOOLS = [['split','Split','split'],['speed','Speed','speed'],['volume','Volume','volume'],['crop','Crop','crop'],['freeze','Freeze','snow'],['rotate','Rotate','rotate'],['flip','Flip','flip'],['dup','Copy','copy'],['del','Delete','trash']];
 const sheetOpen = () => document.body.classList.contains('sheet');
-function openSheet(k){ if (k) tab = k; document.body.classList.add('sheet'); renderRail(); renderPanel(); if (tab === 'gif' && gif.key && !gif.items.length && !gif.loading) gifLoad('Trending'); }
+function openSheet(k){ if (k) tab = k; document.body.classList.add('sheet'); renderRail(); renderPanel(); if (tab === 'ai' && AIB) aiRefresh(); if (tab === 'gif' && gif.key && !gif.items.length && !gif.loading) gifLoad('Trending'); }
 function closeSheet(){ document.body.classList.remove('sheet'); renderRail(); }
 function renderRail(){
   $('#rail').innerHTML = TABS.map(([k, l, i]) => `<button class="tab ${sheetOpen() && tab === k ? 'on' : ''}" data-tab="${k}">${ic(i)}${l}</button>`).join('')
@@ -621,6 +650,8 @@ function renderPanel(){
   h += `<h3 style="margin-top:20px">Fonts</h3><div class="hint" style="margin-bottom:10px">${FONTS.length} fonts are built in, including Hindi and Punjabi. You can add any .ttf, .otf or .woff2 font file too.${userFonts.length ? ` Your fonts: ${userFonts.map(esc).join(', ')}.` : ''}</div><button class="btn sm full" data-act="addFont">${ic('plus')}Add your own font</button><div style="margin-top:14px"><button class="btn sm full" data-act="toTemplates">More text templates →</button></div>`;
   } else if (tab === 'sticker'){
     h = stickersHTML();
+  } else if (tab === 'ai'){
+    h = aiHTML();
   } else if (tab === 'effects'){
     h = effectsHTML();
   } else if (tab === 'transitions'){
@@ -665,6 +696,14 @@ $('#panel').addEventListener('click', e => {
   if (act === 'importOv') return $('#fileOv').click();
   if (act === 'reel') return openReel();
   if (act === 'closeSheet') return closeSheet();
+  if (act === 'aiGet') return AIB.getOllama();
+  if (act === 'aiCheck'){ ai.status = null; renderPanel(); return aiRefresh(); }
+  if (act === 'aiStart'){ toast('Starting Ollama…'); return AIB.start().then(r => { if (!r.ok) toast('Could not start Ollama (' + r.reason + '). Open it from the Start menu.', 5000); return aiRefresh(); }); }
+  if (act === 'aiMore'){ ai.more = !ai.more; return renderPanel(); }
+  if (act === 'aiSend') return aiSend(($('#aiIn') || {}).value);
+  const ap = t.closest('[data-aipull]'); if (ap) return aiPull(ap.dataset.aipull);
+  const ach = t.closest('[data-aichip]'); if (ach) return aiSend(AI_CHIPS[+ach.dataset.aichip].replace(/^✨ /, ''));
+  const au = t.closest('[data-aiundo]'); if (au){ const m = ai.log[+au.dataset.aiundo]; if (m && m.snap){ H.past.push(snap()); restore(m.snap); m.snap = null; m.done = (m.done || []).concat('↶ Undone'); updUndo(); renderPanel(); } return; }
   if (act === 'trAll'){ if (S.clips.length < 2) return toast('Add at least 2 clips'); push(); S.clips.forEach((c, i) => { if (i > 0){ c.trans = lastTrans; c.tdur = transDur; } }); toast('Transition added to every cut'); return refreshAll(); }
   if (act === 'trRandom'){ if (S.clips.length < 2) return toast('Add at least 2 clips'); push(); const ks = TRANS.map(x => x[0]).filter(x => x !== 'none'); S.clips.forEach((c, i) => { if (i > 0){ c.trans = ks[Math.floor(Math.random() * ks.length)]; c.tdur = transDur; } }); toast('Random transitions added'); return refreshAll(); }
   if (act === 'trNone'){ push(); S.clips.forEach(c => c.trans = 'none'); return refreshAll(); }
@@ -698,7 +737,8 @@ $('#panel').addEventListener('click', e => {
   const tpl = t.closest('[data-tpl]'); if (tpl) return applyTemplate(+tpl.dataset.tpl);
   const ov = t.closest('[data-ov]'); if (ov) return addOverlay(ov.dataset.ov);
 });
-$('#panel').addEventListener('keydown', e => { if (e.target.matches('input:not([type=range]),textarea,select')){ e.stopPropagation(); if (e.key === 'Enter' && e.target.id === 'myTplName') saveMyTemplate(e.target.value); if (e.key === 'Enter' && e.target.id === 'gifQ') gifLoad(e.target.value.trim()); if (e.key === 'Enter' && e.target.id === 'gifKey') $('[data-act="gifKeySave"]').click(); } });
+$('#panel').addEventListener('keydown', e => { if (e.target.matches('input:not([type=range]),textarea,select')){ e.stopPropagation(); if (e.key === 'Enter' && e.target.id === 'myTplName') saveMyTemplate(e.target.value); if (e.key === 'Enter' && e.target.id === 'gifQ') gifLoad(e.target.value.trim()); if (e.key === 'Enter' && !e.shiftKey && e.target.id === 'aiIn'){ e.preventDefault(); aiSend(e.target.value); } if (e.key === 'Enter' && e.target.id === 'gifKey') $('[data-act="gifKeySave"]').click(); } });
+$('#panel').addEventListener('change', e => { if (e.target.id === 'aiModel'){ ai.model = e.target.value; try { localStorage.setItem('easycut.aiModel', ai.model); } catch (er) {} } });
 $('#panel').addEventListener('input', e => { if (e.target.dataset.trdur){ transDur = +e.target.value; e.target.parentElement.querySelector('.rv').textContent = transDur.toFixed(1) + 's'; return; } if (e.target.dataset.lset){ const k = e.target.dataset.lset; logoSet[k] = e.target.type === 'checkbox' ? e.target.checked : +e.target.value; const rv = e.target.parentElement.querySelector('.rv'); if (rv) rv.textContent = Math.round(logoSet[k] * 100) + '%'; return; } const k = e.target.dataset.g; if (!k) return; checkpoint('g' + k); S[k] = e.target.value; scheduleRender(); });
 $('#panel').addEventListener('dragstart', e => { const mc = e.target.closest('[data-mid]'); if (mc){ e.dataTransfer.setData('text/x-media', mc.dataset.mid); e.dataTransfer.effectAllowed = 'copy'; } });
 
@@ -966,12 +1006,12 @@ function split(){
   const o = getSel();
   if (o && sel.type !== 'clip'){
     if (playT <= o.start + .1 || playT >= o.start + o.dur - .1) return toast('Move the playhead inside the selected item to split it');
-    push(); const d = playT - o.start; const n = { ...structuredClone(o), id:uid(), start:playT, dur:o.dur - d }; if (hasOffset(sel.type, o)) n.offset = o.offset + d; o.dur = d;
+    push(); const d = playT - o.start; const n = { ...structuredClone(o), id:uid(), start:playT, dur:o.dur - d }; shiftKf(n, d); if (hasOffset(sel.type, o)) n.offset = o.offset + d; o.dur = d;
     listOf(sel.type).push(n); sel = { type:sel.type, id:n.id }; return refreshAll();
   }
   const ca = clipAt(playT); if (!ca) return toast('Add a clip first');
   const L = clipLen(ca.c); if (ca.local < .1 || ca.local > L - .1) return toast('Move the playhead inside a clip to split it');
-  push(); const c = ca.c, cut = c.in + ca.local * c.speed; const n = { ...structuredClone(c), id:uid(), in:cut, trans:'none' }; c.out = cut;
+  push(); const c = ca.c, cut = c.in + ca.local * c.speed; const n = { ...structuredClone(c), id:uid(), in:cut, trans:'none' }; shiftKf(n, ca.local); c.out = cut;
   S.clips.splice(ca.i + 1, 0, n); sel = { type:'clip', id:n.id }; refreshAll(); seekPreview();
 }
 function del(){
@@ -989,12 +1029,30 @@ function dup(){
 function setSel(type, id){ if (cropMode && (type !== 'clip' || id !== cropMode.clipId)) cropMode = null; sel = type ? { type, id } : null; renderProps(); renderTimeline(); if (tab === 'filter') renderPanel(); scheduleRender(); }
 
 /* ---------- properties panel ---------- */
-const fmtVal = (k, v) => ['volume','boxAlpha','scale','opacity','keyTol','vig','panX','k'].includes(k) ? Math.round(v * 100) + '%' : ['b','c','s'].includes(k) ? Math.round(v) + '%' : ['fadeIn','fadeOut','afIn','afOut','tdur'].includes(k) ? (+v).toFixed(1) + 's' : Math.round(v);
+const fmtVal = (k, v) => ['posX','posY'].includes(k) ? (v >= 0 ? '+' : '') + Math.round(v * 100) + '%' : k === 'zoom' ? (+v).toFixed(2) + '×' : ['rot','rotate'].includes(k) ? Math.round(v) + '°' : /^g\./.test(k) ? (v > 0 ? '+' : '') + Math.round(v) : ['x','y'].includes(k) ? Math.round(v * 100) + '%' : ['volume','boxAlpha','scale','opacity','keyTol','vig','panX','k'].includes(k) ? Math.round(v * 100) + '%' : ['b','c','s'].includes(k) ? Math.round(v) + '%' : ['fadeIn','fadeOut','afIn','afOut','tdur'].includes(k) ? (+v).toFixed(1) + 's' : Math.round(v);
 const range = (k, min, max, step, v) => `<div class="rng"><input type="range" data-k="${k}" data-t="num" min="${min}" max="${max}" step="${step}" value="${v}"><span class="rv" data-v="${k}">${fmtVal(k, v)}</span></div>`;
 const seg = (k, opts, v, t = 'str') => `<div class="seg" data-seg="${k}" data-t="${t}">${opts.map(([val, l]) => `<button data-val="${val}" class="${String(val) === String(v) ? 'on' : ''}">${l}</button>`).join('')}</div>`;
 const row = (l, inner, id = '') => `<div class="prow" ${id ? `id="${id}"` : ''}><label>${l}</label>${inner}</div>`;
 const chk = (k, l, v, colorK, colorV) => `<div class="crow"><label class="chk"><input type="checkbox" data-k="${k}" data-t="bool" ${v ? 'checked' : ''}>${l}</label>${colorK ? `<input type="color" data-k="${colorK}" data-t="str" value="${colorV}">` : ''}</div>`;
 const acts = () => `<div class="acts"><button class="btn sm" data-pa="split">${ic('split')}Split</button><button class="btn sm" data-pa="dup">${ic('copy')}Duplicate</button><button class="btn sm danger" data-pa="del">${ic('trash')}Delete</button></div>`;
+const proOpen = { transform:false, color:false, smart:false };
+let smartPause = .6;
+const BLENDS = [['normal','Normal'],['multiply','Multiply'],['screen','Screen'],['overlay','Overlay'],['darken','Darken'],['lighten','Lighten'],['color-dodge','Color dodge'],['color-burn','Color burn'],['hard-light','Hard light'],['soft-light','Soft light'],['difference','Difference'],['exclusion','Exclusion'],['hue','Hue'],['saturation','Saturation'],['color','Color'],['luminosity','Luminosity']];
+function colorSection(o){
+  const g = { ...GRADE_DEF, ...(o.grade || {}) }, gr = (k, l, mn = -100, mx = 100) => row(l, range('g.' + k, mn, mx, 1, g[k]));
+  const luts = Object.entries(LUTS);
+  return `<details class="pro" ${proOpen.color ? 'open' : ''} data-sec="color"><summary>🎨 Color grading${gradeOn(o) ? ' ●' : ''}</summary>
+    ${GL.ok === false ? '<div class="hint" style="color:#ff9aa9">Color grading needs WebGL2, which this computer does not support.</div>' : ''}
+    <div class="acts"><button class="btn sm" data-pa="gradeAuto">✨ Auto color</button><button class="btn sm" data-pa="gradeCopy">Copy</button><button class="btn sm" data-pa="gradePaste">Paste</button><button class="btn sm" data-pa="gradeAll">Apply to all</button><button class="btn sm danger" data-pa="gradeReset">Reset</button></div>
+    <div class="label2">Looks</div><div class="pgrid" style="margin-bottom:12px">${Object.entries(LOOKS).map(([k2, [n]]) => `<button class="preset" data-look="${k2}" style="font-size:12px;font-weight:700;padding:8px 4px">${n}</button>`).join('')}</div>
+    <div class="label2">Light</div>${gr('exp', 'Exposure')}${gr('con', 'Contrast')}${gr('hi', 'Highlights')}${gr('sh', 'Shadows')}${gr('wh', 'Whites')}${gr('bl', 'Blacks')}
+    <div class="label2">Color</div>${gr('temp', 'Temperature')}${gr('tint', 'Tint')}${gr('vib', 'Vibrance')}${gr('sat', 'Saturation')}${gr('split', 'Teal & orange', 0, 100)}
+    <div class="label2">Creative</div>${gr('sharp', 'Sharpen', 0, 100)}${gr('fade', 'Faded film', 0, 100)}
+    <div class="label2">LUT (.cube)</div>
+    <div style="display:flex;gap:6px;margin-bottom:8px"><select class="inp" data-k="g.lut" data-t="str"><option value="">None</option>${luts.map(([id, L]) => `<option value="${id}" ${g.lut === id ? 'selected' : ''}>${esc(L.name)} (${L.size}³)</option>`).join('')}</select><button class="btn sm" data-pa="lutImport">${ic('import')}Import</button></div>
+    ${g.lut ? row('LUT strength', range('g.lutAmt', 0, 100, 1, g.lutAmt)) : ''}
+  </details>`;
+}
 function renderProps(){
   const p = $('#props'), o = getSel(); let h = '';
   document.body.classList.toggle('has-sel', !!o || !!cropMode);
@@ -1019,16 +1077,19 @@ function renderProps(){
   }
   if (!o){
     h = `<h3>Edit</h3><div class="hint" style="margin-bottom:18px">Click a clip, overlay, text or sound on the timeline to edit it here. Drag clip edges to trim; drag a clip to reorder.</div>
-    <h3>Shortcuts</h3><div class="keys"><kbd>Space</kbd><span>Play / pause</span><kbd>S</kbd><span>Split at playhead</span><kbd>Del</kbd><span>Delete selected</span><kbd>Ctrl+D</kbd><span>Duplicate</span><kbd>Ctrl+Z</kbd><span>Undo</span><kbd>Ctrl+Y</kbd><span>Redo</span>${DESK ? '<kbd>Ctrl+S</kbd><span>Save project</span><kbd>Ctrl+O</kbd><span>Open project</span>' : ''}<kbd>← →</kbd><span>Step a frame (Shift: 1s)</span><kbd>+ −</kbd><span>Zoom timeline</span></div>`;
+    <h3>Shortcuts</h3><div class="keys"><kbd>Space</kbd><span>Play / pause</span><kbd>S</kbd><span>Split at playhead</span><kbd>Del</kbd><span>Delete selected</span><kbd>Ctrl+D</kbd><span>Duplicate</span><kbd>Ctrl+Z</kbd><span>Undo</span><kbd>Ctrl+Y</kbd><span>Redo</span>${DESK ? '<kbd>Ctrl+S</kbd><span>Save project</span><kbd>Ctrl+O</kbd><span>Open project</span>' : ''}<kbd>← →</kbd><span>Step a frame (Shift: 1s)</span><kbd>+ −</kbd><span>Zoom timeline</span><kbd>M</kbd><span>Add / remove marker</span><kbd>I / O</kbd><span>Set In / Out (export just that part)</span><kbd>X</kbd><span>Clear In / Out</span><kbd>↑ ↓</kbd><span>Jump to previous / next cut or marker</span><kbd>J K L</kbd><span>Back 1 frame · pause · play</span><kbd>Alt+drag</kbd><span>Slip a clip (change which part plays)</span></div>`;
   } else if (sel.type === 'clip'){
     const m = media[o.mediaId], vid = m.type === 'video', nl = (o.logos || []).length;
     h = `<div class="phead"><span class="dot" style="background:var(--vid)"></span><span class="t">${esc(m.name)}</span><small>${fmt(clipLen(o))}</small></div>${acts()}`
       + `<div class="acts"><button class="btn sm" data-pa="crop">${ic('crop')}Crop</button><button class="btn sm" data-pa="logo">${ic('x')}Remove logo${nl ? ` (${nl})` : ''}</button>${vid ? `<button class="btn sm" data-pa="freeze">${ic('snow')}Freeze frame</button><button class="btn sm" data-pa="extract">${ic('wave')}Extract audio</button>` : ''}</div>`
       + row('Framing', seg('fit', [['auto','Canvas default'],['fit','Fit'],['fill','Fill (no bars)']], o.fit || 'auto'))
-      + (vid ? row('Speed', seg('speed', [[.25,'.25x'],[.5,'.5x'],[1,'1x'],[1.5,'1.5x'],[2,'2x'],[3,'3x'],[4,'4x']], o.speed, 'num'), 'secSpeed') + row('Volume', range('volume', 0, 2, .05, o.volume), 'secVol')
+      + (vid ? row('Speed', seg('speed', [[.25,'.25x'],[.5,'.5x'],[1,'1x'],[1.5,'1.5x'],[2,'2x'],[3,'3x'],[4,'4x']], o.speed, 'num'), 'secSpeed') + `<div id="secVol">${krange(o, 'volume', 0, 2, .05, 'Volume', 1)}</div>`
              + `<div class="two">${row('Sound fade in', range('afIn', 0, 3, .1, o.afIn || 0))}${row('Sound fade out', range('afOut', 0, 3, .1, o.afOut || 0))}</div>`
              + row('Voice effect', seg('aeff', FX_NAMES, o.aeff || 'none'))
              : row('Duration (seconds)', `<input class="inp" type="number" min="0.2" max="600" step="0.1" data-k="len" data-t="num" value="${clipLen(o).toFixed(1)}">`))
+      + `<details class="pro" ${proOpen.transform ? 'open' : ''} data-sec="transform"><summary>Transform & keyframes</summary>${kfBar(o)}${krange(o, 'posX', -1, 1, .005, 'Position X', 0)}${krange(o, 'posY', -1, 1, .005, 'Position Y', 0)}${krange(o, 'zoom', .1, 4, .01, 'Scale', 1)}${krange(o, 'rot', -180, 180, .5, 'Rotation', 0)}${krange(o, 'opacity', 0, 1, .01, 'Opacity', 1)}<div class="hint">Click ◆ to set a keyframe at the playhead, move the playhead, change the value — EasyCut animates between keyframes.</div></details>`
+      + colorSection(o)
+      + (vid ? `<details class="pro" data-sec="smart" ${proOpen.smart ? 'open' : ''}><summary>✂️ Smart cuts</summary><div class="hint" style="margin-bottom:8px">Let EasyCut find the cuts for you.</div><div class="acts"><button class="btn sm" data-pa="silence">🔇 Remove silent parts</button><button class="btn sm" data-pa="scenes">🎞️ Cut at scene changes</button></div>${row('Shortest pause to remove', seg('minPause', [[.3,'0.3s'],[.6,'0.6s'],[1,'1s'],[2,'2s']], smartPause, 'num'))}<button class="btn sm full" data-pa="silenceAll">Remove silent parts in ALL clips</button></details>` : '')
       + row('Motion', seg('motion', [['none','None'],['in','Zoom in'],['out','Zoom out'],['left','Pan ←'],['right','Pan →']], motionOf(o)))
       + row('Transition in', seg('trans', TRANS, o.trans) + (o.trans !== 'none' ? `<div style="margin-top:8px">${range('tdur', .2, 1.5, .05, o.tdur || .5)}</div>` : ''), 'secTrans')
       + row('Filter', `<select class="inp" data-k="filter" data-t="str">${Object.entries(FILTERS).map(([k, [n]]) => `<option value="${k}" ${o.filter === k ? 'selected' : ''}>${n}</option>`).join('')}</select>`)
@@ -1045,13 +1106,14 @@ function renderProps(){
         + (vid ? row('Volume', range('volume', 0, 2, .05, o.volume)) : '')
         + row('Corners', seg('shape', [['rect','Square'],['round','Rounded']], o.shape === 'round' ? 'round' : 'rect'));
     } else {
-      h += row('Size', range('scale', .03, 1.5, .01, o.scale)) + row('Opacity', range('opacity', 0, 1, .05, o.opacity))
+      h += kfBar(o) + krange(o, 'scale', .03, 1.5, .005, 'Size', .36) + krange(o, 'opacity', 0, 1, .01, 'Opacity', 1) + krange(o, 'x', -.2, 1.2, .002, 'Position X', .5) + krange(o, 'y', -.2, 1.2, .002, 'Position Y', .5) + krange(o, 'rotate', -180, 180, .5, 'Rotation', 0)
+        + row('Blend mode', `<select class="inp" data-k="blend" data-t="str">${BLENDS.map(([v, l]) => `<option value="${v}" ${(o.blend || 'normal') === v ? 'selected' : ''}>${l}</option>`).join('')}</select>`)
         + row('Position', `<div class="seg" data-ovpos="1"><button data-p=".2,.2">↖</button><button data-p=".8,.2">↗</button><button data-p=".5,.5">Center</button><button data-p=".2,.78">↙</button><button data-p=".8,.78">↘</button></div>`)
         + row('Shape', seg('shape', [['rect','Square'],['round','Rounded'],['circle','Circle']], o.shape))
         + `<div class="prow">${chk('border', 'Border', o.border, 'borderColor', o.borderColor)}${chk('shadow', 'Shadow', o.shadow)}</div>`
         + row('Animation', seg('anim', [['none','None'],['fade','Fade'],['pop','Pop'],['slide','Slide up']], o.anim))
         + `<div class="prow">${chk('chroma', 'Remove green screen', o.chroma, 'keyColor', o.keyColor)}${o.chroma ? range('keyTol', .05, .9, .01, o.keyTol) : ''}</div>`
-        + (vid ? row('Volume', range('volume', 0, 2, .05, o.volume)) : '')
+        + (vid ? krange(o, 'volume', 0, 2, .05, 'Volume', 0) : '')
         + `<div class="acts"><button class="btn sm" data-pa="rotate">${ic('rotate')}Rotate</button><button class="btn sm" data-pa="flip">${ic('flip')}Mirror</button><button class="btn sm" data-pa="watermark">Make it a watermark</button></div>`;
     }
     h += `<div class="two">${row('Starts at (s)', `<input class="inp" type="number" step="0.1" min="0" data-k="start" data-t="num" value="${o.start.toFixed(1)}">`)}${row('Duration (s)', `<input class="inp" type="number" step="0.1" min="0.2" data-k="dur" data-t="num" value="${o.dur.toFixed(1)}">`)}</div>`;
@@ -1065,7 +1127,7 @@ function renderProps(){
     h = `<div class="phead"><span class="dot" style="background:var(--txt)"></span><span class="t">Text</span><small>${fmt(o.dur)}</small></div>${acts()}`
       + row('Text', `<textarea class="inp" id="txtArea" data-k="text" data-t="str" spellcheck="false">${esc(o.text)}</textarea>`)
       + row('Font', `<div style="display:flex;gap:6px"><select class="inp" data-k="font" data-t="str">${(userFonts.length ? [['My fonts', userFonts], ...FONT_GROUPS] : FONT_GROUPS).map(([g, fs]) => `<optgroup label="${esc(g)}">${fs.map(f => `<option ${o.font === f ? 'selected' : ''}>${esc(f)}</option>`).join('')}</optgroup>`).join('')}${[...FONTS, ...userFonts].includes(o.font) ? '' : `<option selected>${esc(o.font)}</option>`}</select><button class="btn sm" data-pa="addFont" title="Add your own font file">${ic('plus')}Font</button></div>`)
-      + row('Size', range('size', 16, 340, 1, o.size))
+      + kfBar(o) + krange(o, 'size', 16, 340, 1, 'Size', 72) + krange(o, 'x', -.2, 1.2, .002, 'Position X', .5) + krange(o, 'y', -.2, 1.2, .002, 'Position Y', .5) + krange(o, 'rot', -180, 180, .5, 'Rotation', 0) + krange(o, 'opacity', 0, 1, .01, 'Opacity', 1)
       + `<div class="prow"><div class="crow"><label class="chk"><input type="checkbox" data-k="bold" data-t="bool" ${o.bold ? 'checked' : ''}>Bold</label><span class="crow" style="gap:6px"><span class="hint">Color</span><input type="color" data-k="color" data-t="str" value="${o.color}"></span></div>`
       + chk('stroke', 'Outline', o.stroke, 'strokeColor', o.strokeColor) + chk('box', 'Background box', o.box, 'boxColor', o.boxColor)
       + (o.box ? range('boxAlpha', 0, 1, .05, o.boxAlpha) : '') + chk('shadow', 'Drop shadow', o.shadow) + chk('glow', 'Glow', o.glow) + `</div>`
@@ -1076,7 +1138,7 @@ function renderProps(){
   } else {
     const m = media[o.mediaId];
     h = `<div class="phead"><span class="dot" style="background:var(--aud)"></span><span class="t">${esc(m ? m.name : 'Audio')}</span><small>${fmt(o.dur)}</small></div>${acts()}`
-      + row('Volume', range('volume', 0, 2, .05, o.volume)) + row('Fade in', range('fadeIn', 0, 5, .1, o.fadeIn)) + row('Fade out', range('fadeOut', 0, 5, .1, o.fadeOut))
+      + kfBar(o) + krange(o, 'volume', 0, 2, .01, 'Volume (◆ for volume keyframes)', 1) + row('Fade in', range('fadeIn', 0, 5, .1, o.fadeIn)) + row('Fade out', range('fadeOut', 0, 5, .1, o.fadeOut))
       + `<div class="prow">${chk('duck', 'Lower the music when someone talks (auto-duck)', o.duck)}${chk('voice', 'This is a voice track (other music ducks under it)', o.voice)}</div>`
       + row('Effect', seg('aeff', FX_NAMES, o.aeff || 'none'))
       + row('Starts at (s)', `<input class="inp" type="number" step="0.1" min="0" data-k="start" data-t="num" value="${o.start.toFixed(1)}">`)
@@ -1096,7 +1158,10 @@ $('#props').addEventListener('input', e => {
   const el = e.target, k = el.dataset.k; if (!k) return; const o = getSel(); if (!o) return;
   const t = el.dataset.t; const v = t === 'num' ? parseFloat(el.value) : t === 'bool' ? el.checked : el.value;
   if (t === 'num' && isNaN(v)) return;
-  checkpoint(sel.id + k); setProp(o, k, v);
+  checkpoint(sel.id + k);
+  if (/^g\./.test(k)){ o.grade = { ...GRADE_DEF, ...(o.grade || {}) }; o.grade[k.slice(2)] = v; }
+  else if (KEYABLE[sel.type] && KEYABLE[sel.type].includes(k) && o.kf && o.kf[k] && o.kf[k].length){ kfSet(o, k, selLocal(), v); }
+  else setProp(o, k, v);
   if (k === 'chroma' && v){ o.border = false; o.shadow = false; o.shape = 'rect'; }
   const lab = $('#props').querySelector(`[data-v="${k}"]`); if (lab) lab.textContent = fmtVal(k, v);
   if (k === 'font') document.fonts?.load(`${o.bold ? 800 : 500} 40px "${v}"`).then(scheduleRender).catch(() => {});
@@ -1108,6 +1173,19 @@ $('#props').addEventListener('click', e => {
   const pa = e.target.closest('[data-pa]')?.dataset.pa;
   if (pa === 'mclose'){ if (cropMode) return exitBoxMode(); return setSel(null); }
   if (pa === 'boxDone') return exitBoxMode();
+  if (pa === 'kfPrev') return kfJump(-1); if (pa === 'kfNext') return kfJump(1);
+  if (pa === 'kfClear'){ push(); for (const p2 in (o.kf || {})) o[p2] = kv(o, p2, selLocal(), KF_DEF[p2]); o.kf = {}; return refreshAll(); }
+  if (pa === 'gradeAuto') return autoColor(o);
+  if (pa === 'silence') return removeSilences([o], { minPause:smartPause });
+  if (pa === 'silenceAll') return removeSilences(S.clips.slice(), { minPause:smartPause });
+  if (pa === 'scenes') return sceneDetectCmd(o);
+  if (pa === 'gradeReset'){ push(); o.grade = null; return refreshAll(); }
+  if (pa === 'gradeCopy'){ gradeClip = structuredClone(o.grade || null); return toast('Color copied — select another clip and Paste'); }
+  if (pa === 'gradePaste'){ if (!gradeClip) return toast('Copy a clip’s color first'); push(); o.grade = structuredClone(gradeClip); return refreshAll(); }
+  if (pa === 'gradeAll'){ push(); S.clips.forEach(c => c.grade = structuredClone(o.grade || null)); toast('Color applied to every clip'); return refreshAll(); }
+  if (pa === 'lutImport') return $('#fileLut').click();
+  const kfb = e.target.closest('[data-kf]'); if (kfb && o) return kfToggle(o, kfb.dataset.kf);
+  const lk = e.target.closest('[data-look]'); if (lk && o){ push(); o.grade = { ...GRADE_DEF, ...LOOKS[lk.dataset.look][1], lut:(o.grade && o.grade.lut) || '' }; return refreshAll(); }
   if (pa === 'fxWhole'){ push(); o.start = 0; o.dur = Math.max(.5, videoEnd() || totalDur()); return refreshAll(); }
   if (pa === 'addFont') return $('#fileFont').click();
   if (pa === 'cropReset'){ const c = getObj('clip', cropMode.clipId); push(); c.crop = { ...FULL }; cropMode.ratio = 'free'; renderProps(); return renderFrame(); }
@@ -1131,10 +1209,13 @@ $('#props').addEventListener('click', e => {
   if (sg.dataset.pos){ push(); o.y = +b.dataset.y; o.x = .5; return refreshAll(); }
   if (sg.dataset.ovpos){ push(); const [x, y] = b.dataset.p.split(',').map(Number); o.x = x; o.y = y; return refreshAll(); }
   const k = sg.dataset.seg; if (!k) return;
+  if (k === 'minPause'){ smartPause = +b.dataset.val; return renderProps(); }
+  if (k === 'kfEase'){ push(); o.kfEase = b.dataset.val; return refreshAll(); }
   push(); setProp(o, k, sg.dataset.t === 'num' ? +b.dataset.val : b.dataset.val);
   if (k === 'trans' && o.trans !== 'none'){ const st = clipStarts()[S.clips.indexOf(o)]; playT = Math.max(0, st - .3); if (!playing) play(); }
   refreshAll(); seekPreview();
 });
+$('#props').addEventListener('toggle', e => { const d = e.target; if (d.dataset && d.dataset.sec) proOpen[d.dataset.sec] = d.open; }, true);
 $('#props').addEventListener('keydown', e => { if (e.target.matches('textarea,select,input:not([type=range]):not([type=checkbox])')) e.stopPropagation(); });
 
 /* ---------- freeze frame, extract audio, save frame ---------- */
@@ -1148,7 +1229,7 @@ async function freezeFrame(){
   const fm = await importOne(new File([blob], `Freeze ${fmt(playT).replace(/[:.]/g, '-')}.jpg`, { type:'image/jpeg' })); if (!fm) return;
   push();
   const src = ca.c, L = clipLen(src); let idx = ca.i;
-  if (ca.local > .05 && ca.local < L - .05){ const cut = src.in + ca.local * src.speed; const n = { ...structuredClone(src), id:uid(), in:cut, trans:'none' }; src.out = cut; S.clips.splice(idx + 1, 0, n); idx++; }
+  if (ca.local > .05 && ca.local < L - .05){ const cut = src.in + ca.local * src.speed; const n = { ...structuredClone(src), id:uid(), in:cut, trans:'none' }; shiftKf(n, ca.local); src.out = cut; S.clips.splice(idx + 1, 0, n); idx++; }
   else if (ca.local >= L - .05) idx++;
   const fc = { ...newClip(fm.id), out:2, crop:{ ...(src.crop || FULL) }, logos:structuredClone(src.logos || []), filter:src.filter, b:src.b, c:src.c, s:src.s, fit:src.fit, rotate:src.rotate, flipH:src.flipH, vig:src.vig || 0, motion:'none' };
   S.clips.splice(idx, 0, fc); sel = { type:'clip', id:fc.id }; playT = clipStarts()[idx] + .01;
@@ -1244,7 +1325,7 @@ async function openProject(){
     try { const buf = await DESK.readFile(mm.path); const m = await importOne(new File([buf], mm.name, { type:mimeFor(mm.name, mm.type) }), mm.id, mm.path); if (!m) missing.push(mm.name); }
     catch (e) { missing.push(mm.name); }
   }
-  Object.assign(S, { aspect:'16:9', res:1080, fps:30, fit:'fit', bg:'blur', bgColor:'#111111', clips:[], texts:[], audios:[], overlays:[], effects:[] }, j.state || {});
+  Object.assign(S, { aspect:'16:9', res:1080, fps:30, fit:'fit', bg:'blur', bgColor:'#111111', clips:[], texts:[], audios:[], overlays:[], effects:[], markers:[], inP:null, outP:null, hide:{}, mute:{} }, j.state || {}); renderLabels();
   const ok = o => !!media[o.mediaId];
   S.clips = S.clips.filter(ok); S.audios = S.audios.filter(ok); S.overlays = S.overlays.filter(ok);
   $('#pname').value = j.name || 'Project'; projPath = r.path; playT = 0; addRecent(j.name, r.path);
@@ -1303,6 +1384,177 @@ function removeLogo(g, L, W, H){
   g.drawImage(g.canvas, x - 6, y - 6, w + 12, h + 12, x - 6, y - 6, w + 12, h + 12); g.restore();
 }
 
+/* ---------- Keyframes (Premiere-style animation of any property over time) ---------- */
+const easeIO = p => p < .5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+function kv(item, prop, lt, def){
+  const base = item[prop] == null ? def : item[prop];
+  const k = item.kf && item.kf[prop]; if (!k || !k.length) return base;
+  if (lt <= k[0][0]) return k[0][1];
+  const L = k[k.length - 1]; if (lt >= L[0]) return L[1];
+  let i = 0; while (i < k.length - 1 && k[i + 1][0] < lt) i++;
+  const a = k[i], b = k[i + 1], p = (lt - a[0]) / Math.max(1e-6, b[0] - a[0]);
+  return a[1] + (b[1] - a[1]) * (item.kfEase === 'linear' ? p : easeIO(p));
+}
+function selLocal(){
+  const o = getSel(); if (!o) return 0;
+  if (sel.type === 'clip'){ const st = clipStarts()[S.clips.indexOf(o)]; return clamp(playT - st, 0, clipLen(o)); }
+  return clamp(playT - o.start, 0, o.dur);
+}
+const KEYABLE = { clip:['posX','posY','zoom','rot','opacity','volume'], overlay:['x','y','scale','rotate','opacity','volume'], text:['x','y','size','rot','opacity'], audio:['volume'] };
+const KF_DEF = { posX:0, posY:0, zoom:1, rot:0, opacity:1, volume:1, x:.5, y:.5, scale:.36, rotate:0, size:72 };
+const FR = 1 / 30;
+function kfAt(o, prop, lt){ const k = o.kf && o.kf[prop]; if (!k) return -1; return k.findIndex(p => Math.abs(p[0] - lt) < FR * .6); }
+function kfSet(o, prop, lt, v){ o.kf = o.kf || {}; const k = o.kf[prop] = o.kf[prop] || []; const i = kfAt(o, prop, lt); if (i >= 0) k[i][1] = v; else { k.push([+lt.toFixed(3), v]); k.sort((a, b) => a[0] - b[0]); } }
+function kfToggle(o, prop){
+  const lt = selLocal(), i = kfAt(o, prop, lt); push();
+  if (i >= 0){ o.kf[prop].splice(i, 1); if (!o.kf[prop].length){ o[prop] = kv(o, prop, lt, KF_DEF[prop]); delete o.kf[prop]; } }
+  else { const v = kv(o, prop, lt, KF_DEF[prop]); kfSet(o, prop, lt, v); }
+  renderProps(); renderTimeline(); scheduleRender();
+}
+function kfTimes(o){ const s = new Set(); for (const p in (o.kf || {})) for (const [t] of o.kf[p]) s.add(+t.toFixed(3)); return [...s].sort((a, b) => a - b); }
+function kfJump(dir){
+  const o = getSel(); if (!o) return; const ts = kfTimes(o); if (!ts.length) return toast('No keyframes yet — click a ◆ to add one');
+  const lt = selLocal(); const t = dir > 0 ? ts.find(x => x > lt + FR / 2) : [...ts].reverse().find(x => x < lt - FR / 2); if (t == null) return;
+  const base = sel.type === 'clip' ? clipStarts()[S.clips.indexOf(o)] : o.start; playT = base + t; seekPreview(); renderProps();
+}
+function shiftKf(o, d){ if (!o.kf) return; for (const p in o.kf) for (const k of o.kf[p]) k[0] = +(k[0] - d).toFixed(3); }
+/* a slider whose value can be animated: shows the value at the playhead and a ◆ to set/remove a keyframe */
+function krange(o, k, min, max, step, label, def){
+  const lt = selLocal(), v = kv(o, k, lt, def), has = o.kf && o.kf[k] && o.kf[k].length, on = kfAt(o, k, lt) >= 0;
+  return `<div class="prow"><label class="crow" style="margin-bottom:6px"><span>${label}</span><button class="kfb ${on ? 'on' : has ? 'has' : ''}" data-kf="${k}" title="${on ? 'Remove keyframe here' : 'Add keyframe here'}">◆</button></label><div class="rng"><input type="range" data-k="${k}" data-t="num" min="${min}" max="${max}" step="${step}" value="${v}"><span class="rv" data-v="${k}">${fmtVal(k, v)}</span></div></div>`;
+}
+function kfBar(o){
+  const n = kfTimes(o).length;
+  return `<div class="kfbar"><span class="hint">Keyframes${n ? ` · ${n}` : ''}</span><button class="btn sm" data-pa="kfPrev" title="Previous keyframe">◀◆</button><button class="btn sm" data-pa="kfNext" title="Next keyframe">◆▶</button>${seg('kfEase', [['smooth','Smooth'],['linear','Linear']], o.kfEase || 'smooth')}${n ? `<button class="btn sm danger" data-pa="kfClear">Clear</button>` : ''}</div>`;
+}
+let kfRefreshT = null;
+function refreshKfProps(){
+  const o = getSel(); if (!o || !o.kf || !Object.keys(o.kf).length) return;
+  const ae = document.activeElement; if (ae && ae.closest && ae.closest('#props') && ae.matches('input,textarea,select')) return;
+  clearTimeout(kfRefreshT); kfRefreshT = setTimeout(renderProps, 80);
+}
+
+/* ---------- Color grading (Lumetri-style) on the GPU with WebGL2, plus .cube LUTs ---------- */
+const GRADE_DEF = { exp:0, con:0, hi:0, sh:0, wh:0, bl:0, temp:0, tint:0, vib:0, sat:0, split:0, sharp:0, fade:0, lut:'', lutAmt:100 };
+const gradeOn = c => c.grade && (c.grade.lut || Object.keys(GRADE_DEF).some(k => k !== 'lut' && k !== 'lutAmt' && c.grade[k]));
+const LUTS = {};   // id -> { name, size, data:Float32Array }
+const GL = { ok:null };
+function glInit(){
+  if (GL.ok !== null) return GL.ok;
+  try {
+    const c = document.createElement('canvas'), gl = c.getContext('webgl2', { premultipliedAlpha:false, preserveDrawingBuffer:true, antialias:false });
+    if (!gl){ GL.ok = false; return false; }
+    const vs = `#version 300 es
+in vec2 p; out vec2 uv; void main(){ uv = vec2(p.x * .5 + .5, .5 - p.y * .5); gl_Position = vec4(p, 0., 1.); }`;
+    const fs = `#version 300 es
+precision highp float; precision highp sampler3D;
+uniform sampler2D img; uniform sampler3D lut; uniform vec4 crop; uniform vec2 px;
+uniform float uExp, uCon, uHi, uSh, uWh, uBl, uTemp, uTint, uVib, uSat, uSplit, uSharp, uFade, uLut, uLutAmt, uLutSize;
+in vec2 uv; out vec4 o;
+float luma(vec3 c){ return dot(c, vec3(.2126, .7152, .0722)); }
+void main(){
+  vec2 q = crop.xy + uv * crop.zw; vec4 t = texture(img, q); vec3 c = t.rgb;
+  if (uSharp > 0.){ vec3 n = texture(img, q + vec2(px.x, 0.)).rgb + texture(img, q - vec2(px.x, 0.)).rgb + texture(img, q + vec2(0., px.y)).rgb + texture(img, q - vec2(0., px.y)).rgb; c += (c * 4. - n) * uSharp; }
+  c *= exp2(uExp);
+  c.r *= 1. + uTemp * .22; c.b *= 1. - uTemp * .22; c.g *= 1. - uTint * .16;
+  float L = luma(c);
+  float hw = smoothstep(.45, 1., L), sw = 1. - smoothstep(0., .5, L);
+  c += c * uHi * .55 * hw; c += (c + .04) * uSh * .6 * sw;
+  float wp = 1. - uWh * .25, bp = -uBl * .08; c = (c - bp) / max(.05, wp - bp);
+  c = (c - .5) * (1. + uCon) + .5;
+  float l2 = luma(c); c = mix(vec3(l2), c, 1. + uSat);
+  float mx = max(c.r, max(c.g, c.b)), mn = min(c.r, min(c.g, c.b)); c = mix(vec3(l2), c, 1. + uVib * (1. - clamp(mx - mn, 0., 1.)));
+  L = clamp(luma(c), 0., 1.); c += (vec3(-.06, .03, .09) * (1. - L) + vec3(.09, .03, -.07) * L) * uSplit;
+  c = c * (1. - uFade * .22) + uFade * .1;
+  c = clamp(c, 0., 1.);
+  if (uLut > .5){ vec3 lc = texture(lut, c * ((uLutSize - 1.) / uLutSize) + .5 / uLutSize).rgb; c = mix(c, lc, uLutAmt); }
+  o = vec4(c, t.a);
+}`;
+    const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; };
+    const pr = gl.createProgram(); gl.attachShader(pr, sh(gl.VERTEX_SHADER, vs)); gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, fs)); gl.linkProgram(pr);
+    if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(pr));
+    gl.useProgram(pr);
+    const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    const loc = gl.getAttribLocation(pr, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+    const tex = gl.createTexture(); gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex);
+    for (const [k, v] of [[gl.TEXTURE_MIN_FILTER, gl.LINEAR], [gl.TEXTURE_MAG_FILTER, gl.LINEAR], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, v);
+    const lt = gl.createTexture(); gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_3D, lt);
+    for (const [k, v] of [[gl.TEXTURE_MIN_FILTER, gl.LINEAR], [gl.TEXTURE_MAG_FILTER, gl.LINEAR], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_R, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_3D, k, v);
+    gl.texImage3D(gl.TEXTURE_3D, 0, gl.RGB16F, 2, 2, 2, 0, gl.RGB, gl.FLOAT, new Float32Array(24));
+    const U = {}; for (const n of ['img','lut','crop','px','uExp','uCon','uHi','uSh','uWh','uBl','uTemp','uTint','uVib','uSat','uSplit','uSharp','uFade','uLut','uLutAmt','uLutSize']) U[n] = gl.getUniformLocation(pr, n);
+    gl.uniform1i(U.img, 0); gl.uniform1i(U.lut, 1);
+    Object.assign(GL, { ok:true, c, gl, U, lutId:null });
+  } catch (e) { console.warn('Color grading unavailable:', e); GL.ok = false; }
+  return GL.ok;
+}
+function glLut(id){
+  const { gl } = GL; if (GL.lutId === id) return !!LUTS[id];
+  const L = LUTS[id]; if (!L) return false;
+  gl.activeTexture(gl.TEXTURE1); gl.texImage3D(gl.TEXTURE_3D, 0, gl.RGB16F, L.size, L.size, L.size, 0, gl.RGB, gl.FLOAT, L.data); GL.lutId = id; return true;
+}
+/* returns a canvas holding the graded, cropped frame (or null if grading is off/unavailable) */
+function gradeFrame(c, src, sw0, sh0, sr, outLong){
+  if (!gradeOn(c) || !glInit()) return null;
+  const { gl, U } = GL, g = { ...GRADE_DEF, ...c.grade };
+  const k = Math.min(1, outLong / Math.max(sr[2], sr[3])), w = Math.max(2, Math.round(sr[2] * k)), h = Math.max(2, Math.round(sr[3] * k));
+  if (GL.c.width !== w || GL.c.height !== h){ GL.c.width = w; GL.c.height = h; }
+  gl.viewport(0, 0, w, h);
+  gl.activeTexture(gl.TEXTURE0);
+  try { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, src); } catch (e) { return null; }
+  gl.uniform4f(U.crop, sr[0] / sw0, sr[1] / sh0, sr[2] / sw0, sr[3] / sh0); gl.uniform2f(U.px, 1 / sw0, 1 / sh0);
+  gl.uniform1f(U.uExp, g.exp / 50); gl.uniform1f(U.uCon, g.con / 100); gl.uniform1f(U.uHi, g.hi / 100); gl.uniform1f(U.uSh, g.sh / 100);
+  gl.uniform1f(U.uWh, g.wh / 100); gl.uniform1f(U.uBl, g.bl / 100); gl.uniform1f(U.uTemp, g.temp / 100); gl.uniform1f(U.uTint, g.tint / 100);
+  gl.uniform1f(U.uVib, g.vib / 100); gl.uniform1f(U.uSat, g.sat / 100); gl.uniform1f(U.uSplit, g.split / 100); gl.uniform1f(U.uSharp, g.sharp / 100); gl.uniform1f(U.uFade, g.fade / 100);
+  const useL = g.lut && glLut(g.lut); gl.uniform1f(U.uLut, useL ? 1 : 0); gl.uniform1f(U.uLutAmt, g.lutAmt / 100); gl.uniform1f(U.uLutSize, useL ? LUTS[g.lut].size : 2);
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+  return GL.c;
+}
+function parseCube(text){
+  let size = 0; const vals = [];
+  for (const line of text.split(/\r?\n/)){
+    const s = line.trim(); if (!s || s[0] === '#') continue;
+    if (/^LUT_3D_SIZE/i.test(s)){ size = parseInt(s.split(/\s+/)[1]); continue; }
+    if (/^[A-Z_]/i.test(s)) continue;
+    const p = s.split(/\s+/).map(Number); if (p.length >= 3 && p.every(n => !isNaN(n))) vals.push(p[0], p[1], p[2]);
+  }
+  if (!size || vals.length < size * size * size * 3) throw new Error('Not a 3D .cube LUT');
+  return { size, data:new Float32Array(vals.slice(0, size * size * size * 3)) };
+}
+async function importLuts(files){
+  let last = null;
+  for (const f of files){
+    try { const L = parseCube(await f.text()); const id = 'lut_' + f.name.replace(/\.cube$/i, '').replace(/[^\w-]+/g, '_'); LUTS[id] = { name:f.name.replace(/\.cube$/i, ''), ...L }; await store.put('luts', { id, name:LUTS[id].name, size:L.size, data:L.data }); last = id; }
+    catch (e) { toast(`${f.name}: ${e.message}`, 4000); }
+  }
+  if (!last) return;
+  const o = getSel(); if (o && sel.type === 'clip'){ push(); o.grade = { ...GRADE_DEF, ...(o.grade || {}), lut:last }; }
+  refreshAll(); toast(`LUT “${LUTS[last].name}” added`);
+}
+async function loadLuts(){ for (const l of await store.all('luts')) LUTS[l.id] = { name:l.name, size:l.size, data:l.data instanceof Float32Array ? l.data : new Float32Array(l.data) }; }
+const LOOKS = {
+  cinematic:['🎬 Cinematic', { con:18, sat:-12, split:45, fade:8, hi:-10 }], tealorange:['🧡 Teal & orange', { split:80, sat:10, con:12 }],
+  moody:['🌑 Moody', { exp:-12, con:22, sh:-25, sat:-28, temp:-10 }], bright:['☀️ Bright & clean', { exp:10, sh:25, vib:30, con:8 }],
+  warm:['🔥 Warm film', { temp:35, fade:18, sat:-5, con:10 }], cold:['❄️ Cold', { temp:-35, tint:5, sat:-10, con:10 }],
+  vintage:['📼 Vintage', { fade:40, sat:-30, temp:20, con:-10 }], bw:['⚫ B&W punch', { sat:-100, con:35, sharp:20 }],
+  vivid:['🌈 Vivid pop', { vib:60, sat:15, con:15, sharp:15 }], golden:['🌅 Golden hour', { temp:45, tint:8, hi:-15, sh:15, vib:20 }],
+};
+async function autoColor(c){
+  const m = media[c.mediaId]; if (!m || !m.el) return;
+  if (m.type === 'video' && m.el.readyState < 2) return toast('Wait for the clip to load, then try again');
+  const t = document.createElement('canvas'); t.width = 96; t.height = Math.max(1, Math.round(96 * m.h / m.w)); const g = t.getContext('2d', { willReadFrequently:true });
+  g.drawImage(m.type === 'anim' ? m.frames[0].bmp : m.el, 0, 0, t.width, t.height);
+  const d = g.getImageData(0, 0, t.width, t.height).data, L = []; let r = 0, b = 0;
+  for (let i = 0; i < d.length; i += 4){ L.push(.2126 * d[i] + .7152 * d[i + 1] + .0722 * d[i + 2]); r += d[i]; b += d[i + 2]; }
+  L.sort((x, y) => x - y); const n = L.length, p5 = L[Math.floor(n * .05)] / 255, p95 = L[Math.floor(n * .95)] / 255, mean = L.reduce((a, x) => a + x, 0) / n / 255;
+  push(); c.grade = { ...GRADE_DEF, ...(c.grade || {}) };
+  c.grade.exp = Math.round(clamp(Math.log2(.46 / Math.max(.05, mean)) * 50, -60, 60));
+  c.grade.con = Math.round(clamp((.9 / Math.max(.2, p95 - p5) - 1) * 60, -20, 40));
+  c.grade.temp = Math.round(clamp((b - r) / (n * 255) * 220, -40, 40));
+  c.grade.vib = 15;
+  refreshAll(); toast('Auto color applied — fine-tune it with the sliders');
+}
+let gradeClip = null;
+
 /* draws one clip at a moment inside it; used for normal playback and for transitions (which also draw the clip before) */
 function drawClipAt(c, local, o = {}){
   const m = media[c.mediaId]; if (!m || !m.el) return false;
@@ -1316,10 +1568,12 @@ function drawClipAt(c, local, o = {}){
   ctx.translate(o.ox || 0, o.oy || 0);
   if (o.clip){ ctx.beginPath(); o.clip(ctx); ctx.clip(); }
   const a = o.alpha == null ? 1 : o.alpha;
+  let srcEl = s.el, sr2 = sr, gf = 1;
+  const gl2 = gradeFrame(c, s.el, s.w, s.h, sr, Math.max(W, Hh) * 1.05); if (gl2){ srcEl = gl2; gf = gl2.width / sr[2]; sr2 = [0, 0, gl2.width, gl2.height]; }
   if (o.bg && S.bg === 'blur' && fit !== 'fill'){
     small.width = 48; small.height = Math.max(1, Math.round(48 * Hh / W));
-    const ks = Math.max(small.width / dw, small.height / dh);
-    sctx.filter = filterStr(c); drawMedia(sctx, s.el, small.width, small.height, ks, rot, c.flipH, sr); sctx.filter = 'none';
+    const ks = Math.max(small.width / dw, small.height / dh) / gf;
+    sctx.filter = filterStr(c); drawMedia(sctx, srcEl, small.width, small.height, ks, rot, c.flipH, sr2); sctx.filter = 'none';
     ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high'; ctx.globalAlpha = a;
     ctx.drawImage(small, 0, 0, W, Hh); ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.fillRect(0, 0, W, Hh);
   } else if (o.bg && o.clip){ ctx.globalAlpha = a; ctx.fillStyle = S.bg === 'white' ? '#ffffff' : S.bg === 'color' ? S.bgColor : '#000000'; ctx.fillRect(0, 0, W, Hh); }
@@ -1328,10 +1582,11 @@ function drawClipAt(c, local, o = {}){
   if (mo === 'in') k *= 1 + .15 * q;
   else if (mo === 'out') k *= 1.15 - .15 * q;
   else if (mo === 'left' || mo === 'right'){ k *= 1.18; const span = Math.max(0, dw * k - W) / 2; mx = (mo === 'left' ? 1 : -1) * span * (1 - 2 * q); }
-  k *= o.k || 1;
+  k *= (o.k || 1) * kv(c, 'zoom', local, 1);
   let fs = filterStr(c); if (o.blur > .2) fs = (fs === 'none' ? '' : fs + ' ') + `blur(${o.blur.toFixed(1)}px)`;
-  ctx.globalAlpha = a; ctx.filter = fs;
-  drawMedia(ctx, s.el, W, Hh, k, rot + (o.rot || 0), c.flipH, sr, mx, 0);
+  ctx.globalAlpha = a * clamp(kv(c, 'opacity', local, 1), 0, 1); ctx.filter = fs;
+  k /= gf;
+  drawMedia(ctx, srcEl, W, Hh, k, rot + (o.rot || 0) + kv(c, 'rot', local, 0), c.flipH, sr2, mx + kv(c, 'posX', local, 0) * W, kv(c, 'posY', local, 0) * Hh);
   ctx.filter = 'none';
   if (c.vig > 0){ const g = ctx.createRadialGradient(W / 2, Hh / 2, Math.min(W, Hh) * .3, W / 2, Hh / 2, Math.hypot(W, Hh) / 2); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, `rgba(0,0,0,${c.vig})`); ctx.fillStyle = g; ctx.fillRect(0, 0, W, Hh); }
   ctx.restore();
@@ -1374,10 +1629,11 @@ function renderFrame(t = playT){
   }
   ctx.restore();
   ovBoxes = []; ovHandle = null;
-  for (const o of S.overlays) if (t >= o.start && t < o.start + o.dur) drawOverlay(o, t - o.start);
-  applyEffects(t);
+  const HID = S.hide || {};
+  if (!HID.overlay) for (const o of S.overlays) if (t >= o.start && t < o.start + o.dur) drawOverlay(o, t - o.start);
+  if (!HID.effect) applyEffects(t);
   textBoxes = [];
-  for (const x of S.texts) if (t >= x.start && t < x.start + x.dur) drawText(x, t - x.start);
+  if (!HID.text) for (const x of S.texts) if (t >= x.start && t < x.start + x.dur) drawText(x, t - x.start);
 }
 
 /* ---------- overlays (picture-in-picture, logos, green screen) ---------- */
@@ -1418,14 +1674,14 @@ function drawOverlay(o, lt){
   const m = media[o.mediaId], el = ovEl(o); if (!m || !el) return;
   if (o.cell) return drawCell(o, m, el, lt);
   const W = cv.width, Hh = cv.height, A = .35, inP = clamp(lt / A, 0, 1), outP = clamp((o.dur - lt) / A, 0, 1);
-  let alpha = o.opacity, sc = 1, oy = 0;
+  let alpha = clamp(kv(o, 'opacity', lt, 1), 0, 1), sc = 1, oy = 0;
   if (o.anim === 'fade') alpha *= Math.min(inP, outP);
   else if (o.anim === 'pop'){ sc = Math.max(.01, lt < A ? easeBack(inP) : 1); alpha *= Math.min(1, inP * 3, outP); }
   else if (o.anim === 'slide'){ oy = (1 - easeOut(inP)) * Hh * .08; alpha *= Math.min(inP, outP); }
-  const rot = ((o.rotate % 360) + 360) % 360, swp = rot === 90 || rot === 270;
-  const w = o.scale * W, h = w * (m.h / m.w);
+  const rot = kv(o, 'rotate', lt, 0), r9 = ((rot % 360) + 360) % 360, swp = r9 === 90 || r9 === 270;
+  const w = kv(o, 'scale', lt, .36) * W, h = w * (m.h / m.w);
   let bw = swp ? h : w, bh = swp ? w : h; if (o.shape === 'circle') bw = bh = Math.min(w, h);
-  const cx = o.x * W, cy = o.y * Hh;
+  const cx = kv(o, 'x', lt, .5) * W, cy = kv(o, 'y', lt, .5) * Hh;
   const box = { id:o.id, x:cx - bw / 2, y:cy - bh / 2, w:bw, h:bh }; ovBoxes.push(box);
   const isSel = sel && sel.id === o.id && !exporting;
   if (isSel){ const hs = Math.min(W, Hh) * .03; ovHandle = { id:o.id, x:box.x + box.w - hs / 2, y:box.y + box.h - hs / 2, s:hs }; }
@@ -1438,7 +1694,7 @@ function drawOverlay(o, lt){
       keyCx.clearRect(0, 0, cw, chh); keyCx.drawImage(src, 0, 0, cw, chh);
       const id = keyCx.getImageData(0, 0, cw, chh); keyOut(id.data, o.keyColor, o.keyTol); keyCx.putImageData(id, 0, 0); src = keyCv;
     }
-    ctx.save(); ctx.globalAlpha = alpha; ctx.translate(cx, cy + oy); ctx.rotate(rot * Math.PI / 180); ctx.scale(sc * (o.flipH ? -1 : 1), sc);
+    ctx.save(); ctx.globalAlpha = alpha; if (o.blend && o.blend !== 'normal') ctx.globalCompositeOperation = o.blend; ctx.translate(cx, cy + oy); ctx.rotate(rot * Math.PI / 180); ctx.scale(sc * (o.flipH ? -1 : 1), sc);
     const path = () => { ctx.beginPath(); if (o.shape === 'circle') ctx.arc(0, 0, Math.min(w, h) / 2, 0, Math.PI * 2); else if (o.shape === 'round') rr(ctx, -w / 2, -h / 2, w, h, Math.min(w, h) * .12); else ctx.rect(-w / 2, -h / 2, w, h); };
     if (o.shadow){ ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.55)'; ctx.shadowBlur = W * .02; ctx.shadowOffsetY = W * .006; path(); ctx.fillStyle = '#000'; if (!o.chroma) ctx.fill(); ctx.restore(); }
     ctx.save(); path(); ctx.clip(); ctx.drawImage(src, -w / 2, -h / 2, w, h); ctx.restore();
@@ -1539,22 +1795,22 @@ function enterBoxMode(kind, clipId){
 function exitBoxMode(){ if (!cropMode) return; cropMode = null; refreshAll(); seekPreview(); }
 
 function drawText(x, lt){
-  const W = cv.width, Hh = cv.height, base = Math.min(W, Hh) / 1080, px = x.size * base, A = .35;
+  const W = cv.width, Hh = cv.height, base = Math.min(W, Hh) / 1080, px = kv(x, 'size', lt, 72) * base, A = .35;
   const inP = clamp(lt / A, 0, 1), outP = clamp((x.dur - lt) / A, 0, 1);
-  let alpha = 1, sc = 1, oy = 0, txt = x.text || '';
-  if (x.anim === 'fade') alpha = Math.min(inP, outP);
-  else if (x.anim === 'pop'){ sc = Math.max(.01, lt < A ? easeBack(inP) : 1); alpha = Math.min(1, inP * 3, outP); }
-  else if (x.anim === 'slide'){ oy = (1 - easeOut(inP)) * px * 1.2; alpha = Math.min(inP, outP); }
-  else if (x.anim === 'type'){ const T = Math.min(1.6, x.dur * .6); txt = [...txt].slice(0, Math.ceil([...txt].length * clamp(lt / T, 0, 1))).join(''); alpha = outP; }
+  let alpha = clamp(kv(x, 'opacity', lt, 1), 0, 1), sc = 1, oy = 0, txt = x.text || '';
+  if (x.anim === 'fade') alpha *= Math.min(inP, outP);
+  else if (x.anim === 'pop'){ sc = Math.max(.01, lt < A ? easeBack(inP) : 1); alpha *= Math.min(1, inP * 3, outP); }
+  else if (x.anim === 'slide'){ oy = (1 - easeOut(inP)) * px * 1.2; alpha *= Math.min(inP, outP); }
+  else if (x.anim === 'type'){ const T = Math.min(1.6, x.dur * .6); txt = [...txt].slice(0, Math.ceil([...txt].length * clamp(lt / T, 0, 1))).join(''); alpha *= outP; }
   ctx.save();
   ctx.font = `${x.bold ? 800 : 500} ${px}px "${x.font}", "Plus Jakarta Sans", sans-serif`;
   ctx.textBaseline = 'middle'; ctx.textAlign = x.align;
   const full = (x.text || ' ').split('\n'), lines = txt.split('\n'), lh = px * 1.22;
   const bw = Math.max(...full.map(l => ctx.measureText(l || ' ').width)), bh = lh * full.length, pad = px * .35;
-  const cx = x.x * W, cy = x.y * Hh;
+  const cx = kv(x, 'x', lt, .5) * W, cy = kv(x, 'y', lt, .5) * Hh, trot = kv(x, 'rot', lt, 0);
   textBoxes.push({ id:x.id, x:cx - bw / 2 - pad, y:cy - bh / 2 - pad, w:bw + pad * 2, h:bh + pad * 2 });
   if (alpha > .001){
-    ctx.globalAlpha = alpha; ctx.translate(cx, cy + oy); ctx.scale(sc, sc);
+    ctx.globalAlpha = alpha; ctx.translate(cx, cy + oy); if (trot) ctx.rotate(trot * Math.PI / 180); ctx.scale(sc, sc);
     if (x.box){ ctx.fillStyle = hexA(x.boxColor, x.boxAlpha); rr(ctx, -bw / 2 - pad, -bh / 2 - pad * .6, bw + pad * 2, bh + pad * 1.2, px * .25); ctx.fill(); }
     const ax = x.align === 'left' ? -bw / 2 : x.align === 'right' ? bw / 2 : 0;
     lines.forEach((l, i) => {
@@ -1585,7 +1841,7 @@ const FX = {
 const FX_NAMES = [['none','None'],['clean','Clean voice'],['echo','Echo'],['hall','Hall'],['radio','Radio']];
 function ensureAudio(){
   if (AC){ if (AC.state === 'suspended') AC.resume().catch(() => {}); return; }
-  try { AC = new (window.AudioContext || window.webkitAudioContext)(); master = AC.createGain(); monitor = AC.createGain(); master.connect(monitor); monitor.connect(AC.destination); recDest = AC.createMediaStreamDestination(); master.connect(recDest); }
+  try { AC = new (window.AudioContext || window.webkitAudioContext)(); master = AC.createGain(); monitor = AC.createGain(); master.connect(monitor); monitor.connect(AC.destination); recDest = AC.createMediaStreamDestination(); master.connect(recDest); analyser = AC.createAnalyser(); analyser.fftSize = 1024; meterBuf = new Float32Array(analyser.fftSize); master.connect(analyser); }
   catch (e) { AC = null; }
 }
 function chainFor(el){
@@ -1618,14 +1874,14 @@ const activeOv = (o, t) => t >= o.start && t < o.start + o.dur;
 function tick(now){
   if (!playing) return;
   const dt = Math.min(.1, (now - lastNow) / 1000); lastNow = now;
-  const total = totalDur(), ca = clipAt(playT);
+  const total = exporting ? exporting.end : totalDur(), ca = clipAt(playT);
   let el = null, want = 0, st = false;
   if (ca){ const m = media[ca.c.mediaId]; if (m && m.type === 'video'){ el = m.el; want = ca.c.in + ca.local * ca.c.speed; } }
   if (el){
     if (el.playbackRate !== ca.c.speed) el.playbackRate = ca.c.speed;
     const L = clipLen(ca.c); let f = 1;
     if (ca.c.afIn > 0) f *= clamp(ca.local / ca.c.afIn, 0, 1); if (ca.c.afOut > 0) f *= clamp((L - ca.local) / ca.c.afOut, 0, 1);
-    setVol(el, ca.c.volume * f, ca.c.aeff);
+    setVol(el, kv(ca.c, 'volume', ca.local, 1) * f * (S.mute && S.mute.video ? 0 : 1), ca.c.aeff);
     if (el.seeking || el.readyState < 2) st = true;
     else if (Math.abs(el.currentTime - want) > .35 && want < el.duration - .05){ el.currentTime = want; st = true; }
     if (!st && el.paused && want < ca.c.out - .04) el.play().catch(() => {});
@@ -1642,7 +1898,7 @@ function tick(now){
   }
   syncOverlays(st); syncAudios(st, dt, clipAt(playT));
   if (playT >= total){ playT = total; renderFrame(); updateTimeUI(); if (exporting) return finishExport(); playing = false; stopAllMedia(); updatePlayBtn(); return; }
-  renderFrame(); updateTimeUI(true);
+  renderFrame(); updateTimeUI(true); meterTick();
   if (exporting) updateExportProgress();
   requestAnimationFrame(tick);
 }
@@ -1650,7 +1906,7 @@ function syncOverlays(st){
   for (const o of S.overlays){
     const m = media[o.mediaId]; if (!m || m.type !== 'video') continue;
     const oe = ovEl(o), on = playing && !st && activeOv(o, playT);
-    if (on){ const want = o.offset + (playT - o.start); setVol(oe, o.volume, 'none'); if (Math.abs(oe.currentTime - want) > .3) oe.currentTime = want; if (oe.paused) oe.play().catch(() => {}); }
+    if (on){ const want = o.offset + (playT - o.start); setVol(oe, kv(o, 'volume', playT - o.start, 0) * (S.hide && S.hide.overlay ? 0 : 1), 'none'); if (Math.abs(oe.currentTime - want) > .3) oe.currentTime = want; if (oe.paused) oe.play().catch(() => {}); }
     else if (!oe.paused) oe.pause();
   }
   for (const id in ovEls) if (!S.overlays.some(o => o.id === id) && !ovEls[id].paused) ovEls[id].pause();
@@ -1665,7 +1921,7 @@ function syncAudios(st, dt, ca){
     const on = playing && !st && t >= a.start && t < a.start + a.dur;
     if (on){
       const want = a.offset + (t - a.start), lt = t - a.start, rt = a.start + a.dur - t;
-      let v = a.volume; if (a.fadeIn > 0) v *= clamp(lt / a.fadeIn, 0, 1); if (a.fadeOut > 0) v *= clamp(rt / a.fadeOut, 0, 1);
+      let v = kv(a, 'volume', lt, 1) * (S.mute && S.mute.audio ? 0 : 1); if (a.fadeIn > 0) v *= clamp(lt / a.fadeIn, 0, 1); if (a.fadeOut > 0) v *= clamp(rt / a.fadeOut, 0, 1);
       if (a.duck){ const tgt = speech ? .22 : 1, cur = duckState[a.id] == null ? tgt : duckState[a.id]; duckState[a.id] = cur + (tgt - cur) * Math.min(1, dt * 5); v *= duckState[a.id]; }
       setVol(el, v, a.aeff);
       if (Math.abs(el.currentTime - want) > .3) el.currentTime = want;
@@ -1676,6 +1932,7 @@ function syncAudios(st, dt, ca){
 }
 function seekPreview(){
   if (playing) return;
+  refreshKfProps();
   const ca = clipAt(playT);
   if (ca){ const m = media[ca.c.mediaId]; if (m && m.type === 'video'){ const want = Math.min(ca.c.in + ca.local * ca.c.speed, m.duration - .02); if (Math.abs(m.el.currentTime - want) > .01) m.el.currentTime = want; }
     const pv = ca.i > 0 && ca.c.trans !== 'none' && ca.local < (ca.c.tdur || .5) ? S.clips[ca.i - 1] : null, pm = pv && media[pv.mediaId];
@@ -1782,6 +2039,7 @@ const ppsToZoom = p => Math.log(p / 8) / Math.log(400 / 8) * 100;
 function setPps(p, anchorT){ const old = pps; pps = clamp(p, 8, 400); $('#zoom').value = ppsToZoom(pps); const at = anchorT != null ? anchorT : playT; const offs = at * old - tlScroll.scrollLeft; renderTimeline(); tlScroll.scrollLeft = at * pps - offs; }
 function fitZoom(){ const T = Math.max(totalDur(), 1); setPps((tlScroll.clientWidth - 60) / T, 0); tlScroll.scrollLeft = 0; }
 $('#zoom').oninput = e => setPps(zoomToPps(+e.target.value));
+$('#bSnap').onclick = () => { snapOn = !snapOn; $('#bSnap').classList.toggle('on', snapOn); toast(snapOn ? 'Snapping on' : 'Snapping off'); };
 $('#zIn').onclick = () => setPps(pps * 1.4); $('#zOut').onclick = () => setPps(pps / 1.4); $('#zFit').onclick = fitZoom;
 tlScroll.addEventListener('wheel', e => { if (e.ctrlKey || e.metaKey){ e.preventDefault(); setPps(pps * (e.deltaY < 0 ? 1.15 : 1 / 1.15), xToTime(e.clientX)); } }, { passive:false });
 const xToTime = cx => Math.max(0, (cx - tlInner.getBoundingClientRect().left) / pps);
@@ -1791,32 +2049,33 @@ function beatMarks(a, m){
   const first = m.beat.offset + Math.ceil((a.offset - m.beat.offset) / p) * p, x0 = (first - a.offset) * pps;
   return `<div class="beats" style="background-size:${px}px 100%;background-position:${x0}px 0"></div>`;
 }
+const kfDots = o => { const ts = kfTimes(o); return ts.map(t => `<i class="kfd" style="left:${t * pps}px"></i>`).join(''); };
 function renderTimeline(){
   const T = totalDur(), W = Math.max(tlScroll.clientWidth, (T + 10) * pps + 40);
   tlInner.style.width = W + 'px';
   const stepS = [.1,.25,.5,1,2,5,10,15,30,60,120,300].find(s => s * pps >= 64) || 600;
   let h = ''; for (let i = 0, t = 0; t * pps < W; i++, t = i * stepS){ h += `<div class="tick" style="left:${t * pps}px"><span>${fmtS(+t.toFixed(2))}</span></div><div class="tick mn" style="left:${(t + stepS / 2) * pps}px"></div>`; }
-  $('#ruler').innerHTML = h;
+  $('#ruler').innerHTML = h + rulerExtras();
   const st = clipStarts(); let vh = '';
   S.clips.forEach((c, i) => {
     const m = media[c.mediaId] || {}, w = Math.max(6, clipLen(c) * pps), on = sel && sel.id === c.id;
-    vh += `<div class="item vclip ${on ? 'sel' : ''}" data-type="clip" data-id="${c.id}" style="left:${st[i] * pps}px;width:${w}px;${m.thumb ? `background-image:url('${m.thumb}')` : ''}"><div class="lbl">${c.speed !== 1 ? `<b>${c.speed}x</b>` : ''}${c.crop && (c.crop.w < .999 || c.crop.h < .999) ? '<b>CROP</b>' : ''}${c.logos && c.logos.length ? '<b>LOGO✕</b>' : ''}${m.type === 'image' ? '🖼 ' : ''}${fmtS(+clipLen(c).toFixed(1))}</div><div class="h h-l"></div><div class="h h-r"></div></div>`;
+    vh += `<div class="item vclip ${on ? 'sel' : ''}" data-type="clip" data-id="${c.id}" style="left:${st[i] * pps}px;width:${w}px;${m.thumb ? `background-image:url('${m.thumb}')` : ''}"><div class="lbl">${c.speed !== 1 ? `<b>${c.speed}x</b>` : ''}${c.crop && (c.crop.w < .999 || c.crop.h < .999) ? '<b>CROP</b>' : ''}${c.logos && c.logos.length ? '<b>LOGO✕</b>' : ''}${m.type === 'image' ? '🖼 ' : ''}${fmtS(+clipLen(c).toFixed(1))}</div>${kfDots(c)}<div class="h h-l"></div><div class="h h-r"></div></div>`;
     if (i > 0) vh += `<button class="junc ${c.trans !== 'none' ? 'has' : ''}" data-junc="${c.id}" style="left:${st[i] * pps}px" title="Transition: ${c.trans}">${c.trans !== 'none' ? '◆' : '+'}</button>`;
   });
   if (!S.clips.length) vh = `<div class="temp">Drop videos & photos here</div>`;
   $('#trkV').innerHTML = vh;
   const lo = lanes(S.overlays), hO = lo.n * 36 + 5;
   $('#trkO').style.height = hO + 'px'; $('#lO').style.height = hO + 'px';
-  $('#trkO').innerHTML = S.overlays.map(o => { const m = media[o.mediaId] || {}; return `<div class="item oitem ${sel && sel.id === o.id ? 'sel' : ''}" data-type="overlay" data-id="${o.id}" style="left:${o.start * pps}px;width:${Math.max(6, o.dur * pps)}px;top:${5 + lo.map[o.id] * 36}px;${m.thumb ? `background-image:url('${m.thumb}')` : ''}"><div class="lbl">${o.cell ? '▦ ' : '⧉ '}${esc(m.name || '')}</div><div class="h h-l"></div><div class="h h-r"></div></div>`; }).join('') || `<div class="temp">Picture-in-picture, logos & layouts</div>`;
+  $('#trkO').innerHTML = S.overlays.map(o => { const m = media[o.mediaId] || {}; return `<div class="item oitem ${sel && sel.id === o.id ? 'sel' : ''}" data-type="overlay" data-id="${o.id}" style="left:${o.start * pps}px;width:${Math.max(6, o.dur * pps)}px;top:${5 + lo.map[o.id] * 36}px;${m.thumb ? `background-image:url('${m.thumb}')` : ''}"><div class="lbl">${o.cell ? '▦ ' : '⧉ '}${esc(m.name || '')}</div>${kfDots(o)}<div class="h h-l"></div><div class="h h-r"></div></div>`; }).join('') || `<div class="temp">Picture-in-picture, logos & layouts</div>`;
   const le = lanes(S.effects), hE = le.n * 30 + 5;
   $('#trkE').style.height = hE + 'px'; $('#lE').style.height = hE + 'px';
   $('#trkE').innerHTML = S.effects.map(x => `<div class="item eitem ${sel && sel.id === x.id ? 'sel' : ''}" data-type="effect" data-id="${x.id}" style="left:${x.start * pps}px;width:${Math.max(6, x.dur * pps)}px;top:${5 + le.map[x.id] * 30}px"><div class="lbl">${esc((FX_BY_ID[x.type] || [0, 0, x.type])[2])}</div><div class="h h-l"></div><div class="h h-r"></div></div>`).join('') || `<div class="temp">Effects — shake, glitch, confetti, light leak…</div>`;
   const lt = lanes(S.texts), hT = lt.n * 30 + 5;
   $('#trkT').style.height = hT + 'px'; $('#lT').style.height = hT + 'px';
-  $('#trkT').innerHTML = S.texts.map(x => `<div class="item titem ${sel && sel.id === x.id ? 'sel' : ''}" data-type="text" data-id="${x.id}" style="left:${x.start * pps}px;width:${Math.max(6, x.dur * pps)}px;top:${5 + lt.map[x.id] * 30}px"><div class="lbl">${esc((x.text || '').replace(/\n/g, ' '))}</div><div class="h h-l"></div><div class="h h-r"></div></div>`).join('') || `<div class="temp">Text & stickers</div>`;
+  $('#trkT').innerHTML = S.texts.map(x => `<div class="item titem ${sel && sel.id === x.id ? 'sel' : ''}" data-type="text" data-id="${x.id}" style="left:${x.start * pps}px;width:${Math.max(6, x.dur * pps)}px;top:${5 + lt.map[x.id] * 30}px"><div class="lbl">${esc((x.text || '').replace(/\n/g, ' '))}</div>${kfDots(x)}<div class="h h-l"></div><div class="h h-r"></div></div>`).join('') || `<div class="temp">Text & stickers</div>`;
   const la = lanes(S.audios), hA = la.n * 36 + 5;
   $('#trkA').style.height = hA + 'px'; $('#lA').style.height = hA + 'px';
-  $('#trkA').innerHTML = S.audios.map(a => { const m = media[a.mediaId] || {}; return `<div class="item aitem ${sel && sel.id === a.id ? 'sel' : ''}" data-type="audio" data-id="${a.id}" style="left:${a.start * pps}px;width:${Math.max(6, a.dur * pps)}px;top:${5 + la.map[a.id] * 36}px;${m.wave ? `background-image:url('${m.wave}');background-size:${m.duration * pps}px 100%;background-position:${-a.offset * pps}px 0` : ''}">${beatMarks(a, m)}<div class="lbl">♪ ${esc(m.name || '')}${m.beat ? ` · ${m.beat.bpm} BPM` : ''}</div><div class="h h-l"></div><div class="h h-r"></div></div>`; }).join('') || `<div class="temp">Music & voiceover</div>`;
+  $('#trkA').innerHTML = S.audios.map(a => { const m = media[a.mediaId] || {}; return `<div class="item aitem ${sel && sel.id === a.id ? 'sel' : ''}" data-type="audio" data-id="${a.id}" style="left:${a.start * pps}px;width:${Math.max(6, a.dur * pps)}px;top:${5 + la.map[a.id] * 36}px;${m.wave ? `background-image:url('${m.wave}');background-size:${m.duration * pps}px 100%;background-position:${-a.offset * pps}px 0` : ''}">${beatMarks(a, m)}<div class="lbl">♪ ${esc(m.name || '')}${m.beat ? ` · ${m.beat.bpm} BPM` : ''}</div>${kfDots(a)}<div class="h h-l"></div><div class="h h-r"></div></div>`; }).join('') || `<div class="temp">Music & voiceover</div>`;
   tlInner.style.height = (26 + 65 + hO + hE + hT + hA) + 'px';
   updateTimeUI();
 }
@@ -1831,12 +2090,14 @@ function scrollToPlayhead(){ const x = playT * pps; if (x < tlScroll.scrollLeft 
 let drag = null;
 const hasOffset = (type, o) => type === 'audio' || (type === 'overlay' && media[o.mediaId] && media[o.mediaId].type === 'video');
 function snapTime(t, excludeId){
+  if (!snapOn) return null;
   const thr = 8 / pps; const pts = [0, playT]; let s = 0; for (const c of S.clips){ s += clipLen(c); pts.push(s); }
   for (const o of [...S.texts, ...S.audios, ...S.overlays, ...S.effects]) if (o.id !== excludeId){ pts.push(o.start, o.start + o.dur); }
   let best = null, bd = thr; for (const p of pts){ const d = Math.abs(p - t); if (d < bd){ bd = d; best = p; } } return best;
 }
 tlInner.addEventListener('pointerdown', e => {
   if (e.button !== 0) return;
+  const mk = e.target.closest('[data-mk]'); if (mk){ const t = +mk.dataset.mk; if (e.altKey){ S.markers = (S.markers || []).filter(x => x !== t); push(); renderTimeline(); return; } if (playing) pause(); playT = t; seekPreview(); return; }
   const j = e.target.closest('[data-junc]');
   if (j){ setSel('clip', j.dataset.junc); const s = $('#secTrans'); if (s){ s.scrollIntoView({ block:'center', behavior:'smooth' }); s.classList.remove('flash'); void s.offsetWidth; s.classList.add('flash'); } return; }
   const it = e.target.closest('.item'), x = e.clientX;
@@ -1845,7 +2106,7 @@ tlInner.addEventListener('pointerdown', e => {
     const edge = e.target.classList.contains('h-l') ? 'l' : e.target.classList.contains('h-r') ? 'r' : null;
     if (isMob() && e.pointerType !== 'mouse' && (!sel || sel.id !== id) && !edge){ if (playing) pause(); setSel(type, id); return; }
     if (!sel || sel.id !== id) setSel(type, id);
-    drag = { mode:edge ? 'trim' : 'move', edge, type, id, x0:x, moved:false, orig:{ ...o }, el:tlInner.querySelector(`.item[data-id="${id}"]`) };
+    drag = { mode:edge ? 'trim' : (e.altKey && type === 'clip' ? 'slip' : 'move'), edge, type, id, x0:x, moved:false, orig:{ ...o }, el:tlInner.querySelector(`.item[data-id="${id}"]`) };
   } else {
     if (isMob() && e.pointerType !== 'mouse'){ if (playing) pause(); return; }
     if (playing) pause(); if (cropMode){ cropMode = null; renderProps(); } playT = clamp(xToTime(x), 0, totalDur()); seekPreview();
@@ -1860,6 +2121,7 @@ tlInner.addEventListener('pointermove', e => {
   const o = getObj(drag.type, drag.id); if (!o) return; const d = dx / pps, g = drag.orig;
   if (drag.type === 'clip'){
     const m = media[o.mediaId], idx = S.clips.indexOf(o);
+    if (drag.mode === 'slip'){ if (m.type !== 'video') return; const len = g.out - g.in; o.in = clamp(g.in - d * g.speed, 0, Math.max(0, m.duration - len)); o.out = o.in + len; playT = clipStarts()[idx] + .01; renderTimeline(); seekPreview(); return; }
     if (drag.mode === 'trim'){
       if (drag.edge === 'r'){
         const L = Math.max(.1, clipLen(g) + d); o.out = g.in + L * o.speed; if (m.type === 'video') o.out = Math.min(o.out, m.duration);
@@ -1923,6 +2185,15 @@ document.addEventListener('keydown', e => {
   else if (k === 'End'){ pause(); playT = totalDur(); seekPreview(); scrollToPlayhead(); }
   else if (k === '+' || k === '='){ setPps(pps * 1.4); }
   else if (k === '-'){ setPps(pps / 1.4); }
+  else if (k === 'm' || k === 'M') toggleMarker();
+  else if (k === 'i' || k === 'I') setInOut('in');
+  else if (k === 'o' || k === 'O') setInOut('out');
+  else if (k === 'x' || k === 'X') setInOut('clear');
+  else if (k === 'ArrowUp'){ e.preventDefault(); jumpEdit(-1); }
+  else if (k === 'ArrowDown'){ e.preventDefault(); jumpEdit(1); }
+  else if (k === 'k' || k === 'K') pause();
+  else if (k === 'l' || k === 'L') play();
+  else if (k === 'j' || k === 'J') step(-1);
   else if (k === 'Escape'){ if (cropMode) exitBoxMode(); else setSel(null); }
 });
 
@@ -1955,10 +2226,12 @@ const dlg = $('#dlgExport');
 function openExport(){
   if (!S.clips.length && !S.texts.length) return toast('Add some clips before exporting');
   if (playing) pause();
-  const mime = pickMime(), [w, h] = canvasSize(), T = totalDur();
+  const mime = pickMime(), [w, h] = canvasSize(), T = totalDur(), hasR = S.inP != null || S.outP != null, rA = S.inP || 0, rB = S.outP != null ? S.outP : T;
   if (mime === null || !cv.captureStream){ dlg.innerHTML = `<h2>Export not supported</h2><div class="hint">This browser can't record video. Please use Chrome or Edge on your PC.</div><div class="row"><button class="btn" data-x="close">Close</button></div>`; }
   else dlg.innerHTML = `<h2>Export video</h2><div class="hint">Your video is rendered right here on your computer — nothing is uploaded.</div>
     <div class="kv"><span>Size</span><span>${w} × ${h} (${S.res}p, ${S.aspect})</span><span>Length</span><span>${fmt(T)}</span><span>Format</span><span>${mime.startsWith('video/mp4') ? 'MP4' : 'WebM'} · ${S.fps || 30} fps</span><span>Time needed</span><span>about ${fmt(T)} (plays through once)</span></div>
+    ${hasR ? `<div class="prow"><label>What to export</label><div class="seg" id="xRange"><button data-val="range" class="on">In–Out only (${fmt(rA)}–${fmt(rB)})</button><button data-val="all">Whole video</button></div></div>` : ''}
+    <div class="prow"><label>Quality</label><div class="seg" id="xQual"><button data-val="std">Standard</button><button data-val="high" class="on">High</button><button data-val="max">Maximum</button></div></div>
     <div class="hint">Keep this tab open and visible while it renders.</div>
     <div class="row"><button class="btn" data-x="close">Cancel</button><button class="btn pri" data-x="go">${ic('export')}Start export</button></div>`;
   $('#mExport').classList.add('on');
@@ -1966,6 +2239,7 @@ function openExport(){
 function closeExport(){ $('#mExport').classList.remove('on'); }
 $('#bExport').onclick = openExport;
 dlg.addEventListener('click', e => {
+  const sb = e.target.closest('#xRange button, #xQual button'); if (sb){ sb.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === sb)); return; }
   const x = e.target.closest('[data-x]')?.dataset.x;
   if (x === 'close') closeExport();
   else if (x === 'go') startExport();
@@ -1974,27 +2248,30 @@ dlg.addEventListener('click', e => {
 });
 async function primeFrame(){
   const ca = clipAt(playT);
-  if (ca){ const m = media[ca.c.mediaId]; if (m && m.type === 'video'){ m.el.currentTime = ca.c.in; await once(m.el, 'seeked', 3000).catch(() => {}); } }
+  if (ca){ const m = media[ca.c.mediaId]; if (m && m.type === 'video'){ m.el.currentTime = ca.c.in + ca.local * ca.c.speed; await once(m.el, 'seeked', 3000).catch(() => {}); } }
   renderFrame();
 }
 async function startExport(){
+  const useR = !!($('#xRange') && $('#xRange .on') && $('#xRange .on').dataset.val === 'range'), q = ($('#xQual .on') || {}).dataset ? $('#xQual .on').dataset.val : 'high';
+  const rStart = useR ? (S.inP || 0) : 0, rEnd = useR ? (S.outP != null ? S.outP : totalDur()) : totalDur();
+  const vbr = (S.res >= 1080 ? 10e6 : 6e6) * (q === 'max' ? 2 : q === 'std' ? .6 : 1);
   applyCanvasSize(true);
   const mime = pickMime(); ensureAudio(); if (AC && AC.state === 'suspended') await AC.resume().catch(() => {});
   const stream = cv.captureStream(S.fps || 30), tracks = [...stream.getVideoTracks()];
   if (recDest) tracks.push(...recDest.stream.getAudioTracks());
   let rec;
-  try { rec = new MediaRecorder(new MediaStream(tracks), { mimeType:mime || undefined, videoBitsPerSecond:S.res >= 1080 ? 10e6 : 6e6, audioBitsPerSecond:192000 }); }
+  try { rec = new MediaRecorder(new MediaStream(tracks), { mimeType:mime || undefined, videoBitsPerSecond:vbr, audioBitsPerSecond:q === 'std' ? 128000 : 192000 }); }
   catch (e) { applyCanvasSize(false); dlg.innerHTML = `<h2>Export failed</h2><div class="hint">${esc(e.message)}</div><div class="row"><button class="btn" data-x="close">Close</button></div>`; return; }
   const chunks = []; rec.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
   const prevSel = sel; sel = null;
-  exporting = { rec, chunks, mime:rec.mimeType || mime, total:totalDur(), stream, prevSel, t0:performance.now() };
+  exporting = { rec, chunks, mime:rec.mimeType || mime, total:rEnd - rStart, start:rStart, end:rEnd, stream, prevSel, t0:performance.now() };
   if (monitor) monitor.gain.value = 0;
   dlg.innerHTML = `<h2>Exporting…</h2><div class="hint">Rendering in real time. Keep this tab visible.</div><div class="bar"><i id="xBar"></i></div><div class="crow"><span class="hint" id="xTxt">0%</span><span class="hint" id="xWarn"></span></div><div class="row"><button class="btn" data-x="cancel">Cancel</button></div>`;
-  playT = 0; await primeFrame();
+  playT = rStart; await primeFrame();
   rec.start(500); stalled = false;
   playing = true; lastNow = performance.now(); requestAnimationFrame(tick);
 }
-function updateExportProgress(){ const x = exporting; const p = clamp(playT / x.total, 0, 1); const b = $('#xBar'); if (b) b.style.width = (p * 100).toFixed(1) + '%'; const t = $('#xTxt'); if (t){ const el = (performance.now() - x.t0) / 1000, left = p > .02 ? el / p - el : x.total; t.textContent = `${Math.round(p * 100)}%  ·  about ${Math.max(0, Math.ceil(left))}s left`; } if (x.hiddenWarn){ const w = $('#xWarn'); if (w) w.textContent = 'Tab was hidden — check the result'; } }
+function updateExportProgress(){ const x = exporting; const p = clamp((playT - (x.start || 0)) / x.total, 0, 1); const b = $('#xBar'); if (b) b.style.width = (p * 100).toFixed(1) + '%'; const t = $('#xTxt'); if (t){ const el = (performance.now() - x.t0) / 1000, left = p > .02 ? el / p - el : x.total; t.textContent = `${Math.round(p * 100)}%  ·  about ${Math.max(0, Math.ceil(left))}s left`; } if (x.hiddenWarn){ const w = $('#xWarn'); if (w) w.textContent = 'Tab was hidden — check the result'; } }
 function endExportCommon(){ applyCanvasSize(false); playing = false; stopAllMedia(); updatePlayBtn(); if (monitor) monitor.gain.value = 1; const x = exporting; x.stream.getTracks().forEach(t => t.stop()); sel = x.prevSel; exporting = null; stalled = false; return x; }
 function finishExport(){
   const x = exporting;
@@ -2508,7 +2785,7 @@ function transitionAtPlayhead(type){
   if (ca.local < .15){ target = ca.i > 0 ? ca.c : null; }
   else if (ca.local > L - .15){ target = S.clips[ca.i + 1] || null; }
   if (!target && ca.local >= .15 && ca.local <= L - .15){
-    push(); const c = ca.c, cut = c.in + ca.local * c.speed; const n = { ...structuredClone(c), id:uid(), in:cut, trans:'none' }; c.out = cut; S.clips.splice(ca.i + 1, 0, n); target = n;
+    push(); const c = ca.c, cut = c.in + ca.local * c.speed; const n = { ...structuredClone(c), id:uid(), in:cut, trans:'none' }; shiftKf(n, ca.local); c.out = cut; S.clips.splice(ca.i + 1, 0, n); target = n;
   } else if (target) push();
   if (!target) return toast('Move the playhead past the start of the first clip');
   target.trans = type; target.tdur = transDur; lastTrans = type; sel = { type:'clip', id:target.id };
@@ -2554,8 +2831,8 @@ REEL_STYLES.push(
 
 /* ---------- user storage: your fonts and your templates (kept on this computer) ---------- */
 const store = {
-  db:null, mem:{ fonts:[], tpl:[], logos:[] },
-  async open(){ if (this.db !== null) return this.db; try { this.db = await new Promise((res, rej) => { const r = indexedDB.open('easycut', 2); r.onupgradeneeded = () => { for (const n of ['fonts','tpl','logos']) if (!r.result.objectStoreNames.contains(n)) r.result.createObjectStore(n, { keyPath:'id' }); }; r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); } catch (e) { this.db = false; } return this.db; },
+  db:null, mem:{ fonts:[], tpl:[], logos:[], luts:[] },
+  async open(){ if (this.db !== null) return this.db; try { this.db = await new Promise((res, rej) => { const r = indexedDB.open('easycut', 3); r.onupgradeneeded = () => { for (const n of ['fonts','tpl','logos','luts']) if (!r.result.objectStoreNames.contains(n)) r.result.createObjectStore(n, { keyPath:'id' }); }; r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); } catch (e) { this.db = false; } return this.db; },
   async all(name){ const db = await this.open(); if (!db) return this.mem[name].slice(); return new Promise(res => { try { const q = db.transaction(name).objectStore(name).getAll(); q.onsuccess = () => res(q.result || []); q.onerror = () => res([]); } catch (e) { res([]); } }); },
   async put(name, v){ const db = await this.open(); if (!db){ this.mem[name] = this.mem[name].filter(x => x.id !== v.id).concat(v); return; } return new Promise(res => { try { const t = db.transaction(name, 'readwrite'); t.objectStore(name).put(v); t.oncomplete = res; t.onerror = res; } catch (e) { res(); } }); },
   async del(name, id){ const db = await this.open(); if (!db){ this.mem[name] = this.mem[name].filter(x => x.id !== id); return; } return new Promise(res => { try { const t = db.transaction(name, 'readwrite'); t.objectStore(name).delete(id); t.oncomplete = res; t.onerror = res; } catch (e) { res(); } }); },
@@ -2564,7 +2841,7 @@ let myTemplates = [];
 async function registerFont(name, data){ const face = new FontFace(name, data); await face.load(); document.fonts.add(face); if (!userFonts.includes(name)) userFonts.push(name); }
 async function loadUserStuff(){
   for (const f of await store.all('fonts')){ try { await registerFont(f.name, f.data); } catch (e) {} }
-  myTemplates = await store.all('tpl'); await loadLogos();
+  myTemplates = await store.all('tpl'); await loadLogos(); await loadLuts();
   if (tab === 'templates' || tab === 'text') renderPanel(); renderProps(); scheduleRender();
 }
 async function importFonts(files){
@@ -2599,6 +2876,7 @@ async function importTemplatePack(file){
   } catch (e) { toast('That file is not an EasyCut template pack', 4000); }
 }
 $('#fileFont').addEventListener('change', e => { const fs = [...e.target.files]; e.target.value = ''; importFonts(fs); });
+$('#fileLut').addEventListener('change', e => { const fs = [...e.target.files]; e.target.value = ''; importLuts(fs); });
 $('#fileLogo').addEventListener('change', e => { const fs = [...e.target.files]; e.target.value = ''; uploadLogos(fs); });
 $('#fileTpl').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; if (f) importTemplatePack(f); });
 
@@ -2615,6 +2893,7 @@ function renderHome(){
       <button class="htile" data-h="reel" style="background:linear-gradient(135deg,#7c3aed,#ec4899)"><span class="em">✨</span><b>Reel Maker</b><small>Clips + song → a reel</small></button>
       <button class="htile" data-h="templates" style="background:linear-gradient(135deg,#0284c7,#22d3ee)"><span class="em">🧩</span><b>Templates</b><small>Intros, titles, layouts</small></button>
       <button class="htile" data-h="logos" style="background:linear-gradient(135deg,#16a34a,#84cc16)"><span class="em">🏷️</span><b>Logo</b><small>Brand your videos</small></button>
+      ${DESK ? `<button class="htile" data-h="ai" style="background:linear-gradient(135deg,#0f172a,#6366f1)"><span class="em">🤖</span><b>AI editor</b><small>Free AI on your PC edits for you</small></button>` : ''}
     </div>
     <div class="hrow">${has ? `<button class="btn pri" data-h="continue">▶ Continue editing</button>` : ''}${DESK ? `<button class="btn" data-h="open">📂 Open project</button>` : ''}<button class="btn" data-h="gif">GIFs & stickers</button></div>
     ${rc.length ? `<h3 style="color:var(--mut);font-size:13px;text-transform:uppercase;letter-spacing:.3px">Recent projects</h3><div class="hrecent">${rc.map(x => `<button class="hrc" data-hp="${esc(x.path)}"><b>${esc(x.name)}</b><span class="hint">${new Date(x.at).toLocaleDateString()}</span></button>`).join('')}</div>` : ''}
@@ -2631,6 +2910,7 @@ $('#home').addEventListener('click', e => {
   else if (h === 'templates') openSheet('templates');
   else if (h === 'logos') openSheet('logos');
   else if (h === 'gif') openSheet('gif');
+  else if (h === 'ai') openSheet('ai');
   else if (h === 'open') openProject();
 });
 $('#bHome').innerHTML = ic('home'); $('#bHome').onclick = showHome;
@@ -2651,6 +2931,264 @@ if (CAP && CAP.Plugins && CAP.Plugins.App){
   document.body.classList.add('is-android');
 }
 
+/* ---------- Pro timeline: markers, in/out range, edit points, track mute/hide, snapping, audio meter ---------- */
+let snapOn = true;
+function toggleMarker(){
+  S.markers = S.markers || []; push();
+  const i = S.markers.findIndex(m => Math.abs(m - playT) < .1);
+  if (i >= 0) S.markers.splice(i, 1); else { S.markers.push(+playT.toFixed(3)); S.markers.sort((a, b) => a - b); }
+  renderTimeline(); toast(i >= 0 ? 'Marker removed' : 'Marker added (M) — Up/Down arrows jump between markers and cuts');
+}
+function setInOut(which){
+  push(); if (which === 'in'){ S.inP = +playT.toFixed(3); if (S.outP != null && S.outP <= S.inP) S.outP = null; }
+  else if (which === 'out'){ S.outP = +playT.toFixed(3); if (S.inP != null && S.inP >= S.outP) S.inP = null; }
+  else { S.inP = null; S.outP = null; }
+  renderTimeline(); toast(which === 'clear' ? 'In/Out cleared' : `${which === 'in' ? 'In' : 'Out'} point set — Export can use just this part`);
+}
+function editPoints(){ const pts = new Set([0, totalDur()]); let s0 = 0; for (const c of S.clips){ s0 += clipLen(c); pts.add(+s0.toFixed(3)); } for (const m of S.markers || []) pts.add(m); for (const x of [...S.texts, ...S.overlays, ...S.effects, ...S.audios]){ pts.add(+x.start.toFixed(3)); pts.add(+(x.start + x.dur).toFixed(3)); } return [...pts].sort((a, b) => a - b); }
+function jumpEdit(dir){ if (playing) pause(); const ps = editPoints(); const t = dir > 0 ? ps.find(p => p > playT + .01) : [...ps].reverse().find(p => p < playT - .01); if (t == null) return; playT = t; seekPreview(); scrollToPlayhead(); }
+function rulerExtras(){
+  let h = '';
+  if (S.inP != null || S.outP != null){ const a = S.inP || 0, b = S.outP != null ? S.outP : totalDur(); h += `<div class="io" style="left:${a * pps}px;width:${Math.max(2, (b - a) * pps)}px"></div>`; }
+  for (const m of S.markers || []) h += `<div class="tmk" data-mk="${m}" style="left:${m * pps}px" title="Marker ${fmt(m)} — click to jump, Alt+click to remove"></div>`;
+  return h;
+}
+function trackToggle(k){ push(); if (k === 'video' || k === 'audio'){ S.mute = S.mute || {}; S.mute[k] = !S.mute[k]; } else { S.hide = S.hide || {}; S.hide[k] = !S.hide[k]; } renderLabels(); scheduleRender(); }
+function renderLabels(){
+  const st = (k, mute) => mute ? ((S.mute || {})[k] ? '🔇' : '🔊') : ((S.hide || {})[k] ? '🙈' : '👁');
+  for (const [id, k, mute] of [['lV','video',1],['lO','overlay',0],['lE','effect',0],['lT','text',0],['lA','audio',1]]){
+    const el = $('#' + id); if (!el) continue; let b = el.querySelector('.ttog');
+    if (!b){ b = document.createElement('button'); b.className = 'ttog'; b.dataset.trk = k; el.appendChild(b); }
+    b.textContent = st(k, mute); b.title = mute ? 'Mute / unmute this track' : 'Hide / show this track';
+    b.classList.toggle('off', !!(mute ? (S.mute || {})[k] : (S.hide || {})[k]));
+  }
+}
+$('#tlLabels').addEventListener('click', e => { const b = e.target.closest('[data-trk]'); if (b) trackToggle(b.dataset.trk); });
+/* audio level meter */
+let analyser = null, meterBuf = null;
+function meterTick(){
+  const c = $('#meter'); if (!c) return; const g = c.getContext('2d'); g.clearRect(0, 0, c.width, c.height);
+  if (!analyser || !playing) return;
+  analyser.getFloatTimeDomainData(meterBuf); let s2 = 0; for (const v of meterBuf) s2 += v * v;
+  const db = 20 * Math.log10(Math.sqrt(s2 / meterBuf.length) + 1e-6), p = clamp((db + 60) / 60, 0, 1);
+  const gr = g.createLinearGradient(0, 0, c.width, 0); gr.addColorStop(0, '#22c55e'); gr.addColorStop(.75, '#facc15'); gr.addColorStop(1, '#ef4444');
+  g.fillStyle = '#262b3a'; g.fillRect(0, 4, c.width, c.height - 8); g.fillStyle = gr; g.fillRect(0, 4, c.width * p, c.height - 8);
+}
+
+/* ---------- Smart auto-edits: cut at scene changes, remove silent parts ---------- */
+async function detectScenes(c, opts = {}){
+  const m = media[c.mediaId]; if (!m || m.type !== 'video') return toast('Scene detection works on video clips');
+  const v = document.createElement('video'); v.muted = true; v.preload = 'auto'; v.src = m.url; pool.appendChild(v);
+  try { await once(v, 'loadeddata'); } catch (e) { v.remove(); return toast('Could not read that clip'); }
+  const W2 = 48, H2 = Math.max(8, Math.round(48 * m.h / m.w)), cc = document.createElement('canvas'); cc.width = W2; cc.height = H2; const g = cc.getContext('2d', { willReadFrequently:true });
+  const step = opts.step || .2, times = [], diffs = []; let prev = null;
+  for (let t = c.in; t < c.out - .05; t += step){
+    v.currentTime = t; await once(v, 'seeked', 4000).catch(() => {});
+    g.drawImage(v, 0, 0, W2, H2); const d = g.getImageData(0, 0, W2, H2).data;
+    if (prev){ let s2 = 0; for (let i = 0; i < d.length; i += 4) s2 += Math.abs(d[i] - prev[i]) + Math.abs(d[i + 1] - prev[i + 1]) + Math.abs(d[i + 2] - prev[i + 2]); diffs.push(s2 / (W2 * H2 * 3 * 255)); times.push(t); }
+    prev = d; if (!opts.quiet) progress('Finding scene changes…', (t - c.in) / (c.out - c.in) * 100, fmt(t - c.in) + ' of ' + fmt(c.out - c.in));
+  }
+  v.removeAttribute('src'); v.load(); v.remove(); if (!opts.quiet) progressDone();
+  const mean = diffs.reduce((a, x) => a + x, 0) / Math.max(1, diffs.length), sd = Math.sqrt(diffs.reduce((a, x) => a + (x - mean) * (x - mean), 0) / Math.max(1, diffs.length));
+  const thr = Math.max(.1, mean + 2.5 * sd), cuts = [];
+  diffs.forEach((d, i) => { if (d > thr && (i === 0 || d >= diffs[i - 1]) && (i === diffs.length - 1 || d >= diffs[i + 1])){ const tt = times[i] - step / 2; if (tt - c.in > .4 && c.out - tt > .4 && (!cuts.length || tt - cuts[cuts.length - 1] > .5)) cuts.push(tt); } });
+  return cuts;
+}
+function splitClipAtSource(c, srcTimes){
+  const i = S.clips.indexOf(c); if (i < 0 || !srcTimes.length) return 0;
+  const parts = []; let a = c.in; for (const t of [...srcTimes, c.out]){ if (t - a > .05){ const n = { ...structuredClone(c), id:uid(), in:a, out:t, trans:parts.length ? 'none' : c.trans }; shiftKf(n, (a - c.in) / c.speed); parts.push(n); } a = t; }
+  S.clips.splice(i, 1, ...parts); return parts.length - 1;
+}
+async function sceneDetectCmd(c){
+  const cuts = await detectScenes(c); if (!cuts) return 0;
+  if (!cuts.length){ toast('No scene changes found in this clip'); return 0; }
+  push(); const n = splitClipAtSource(c, cuts); refreshAll(); toast(`Cut into ${n + 1} scenes`); return n;
+}
+async function audioLevels(m){
+  if (m._rms) return m._rms;
+  const r = await fetch(m.url), b = await r.blob(); if (b.size > 700 * 1048576) throw new Error('This video is too big to analyse its sound (over 700 MB)');
+  const ab = await new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(1, 2, 44100).decodeAudioData(await b.arrayBuffer());
+  const d = ab.getChannelData(0), hop = Math.round(ab.sampleRate * .02), n = Math.floor(d.length / hop), rms = new Float32Array(n);
+  for (let i = 0; i < n; i++){ let s2 = 0; const o = i * hop; for (let j = 0; j < hop; j += 2){ const v = d[o + j]; s2 += v * v; } rms[i] = Math.sqrt(s2 / (hop / 2)); }
+  m._rms = { hop:.02, rms }; return m._rms;
+}
+async function removeSilences(clips, opts = {}){
+  const minPause = opts.minPause || .6, pad = .12; let removed = 0, done = 0;
+  const vids = clips.filter(c => media[c.mediaId] && media[c.mediaId].type === 'video'); if (!vids.length){ toast('Select a video clip with talking in it'); return 0; }
+  const plan = [];
+  for (const c of vids){
+    progress('Listening for silent parts…', done / vids.length * 100, media[c.mediaId].name); done++;
+    let L; try { L = await audioLevels(media[c.mediaId]); } catch (e) { if (vids.length === 1){ progressDone(); toast(/decode/i.test(e.message || '') ? 'This clip has no sound to analyse' : (e.message || 'Could not read the sound'), 4500); return 0; } continue; }
+    const i0 = Math.floor(c.in / L.hop), i1 = Math.min(L.rms.length, Math.ceil(c.out / L.hop)), seg = Array.from(L.rms.slice(i0, i1)); if (seg.length < 10) continue;
+    const sorted = [...seg].sort((a, b) => a - b), floor = sorted[Math.floor(sorted.length * .1)], loud = sorted[Math.floor(sorted.length * .9)];
+    if (loud < .005) continue;
+    const thr = floor + (loud - floor) * (opts.sensitivity || .16), keep = []; let runStart = null;
+    const isSil = seg.map(x => x < thr);
+    let segStart = c.in;
+    for (let k = 0; k <= isSil.length; k++){
+      const t = c.in + k * L.hop, sil = k < isSil.length && isSil[k];
+      if (sil && runStart == null) runStart = t;
+      if ((!sil || k === isSil.length) && runStart != null){ const runEnd = Math.min(t, c.out); if (runEnd - runStart >= minPause){ const a = runStart === c.in ? c.in : runStart + pad, b = runEnd >= c.out - .01 ? c.out : runEnd - pad; if (b > a){ if (a - segStart > .15) keep.push([segStart, a]); removed += (b - a) / c.speed; segStart = b; } } runStart = null; }
+    }
+    if (c.out - segStart > .15) keep.push([segStart, c.out]);
+    if (keep.length && !(keep.length === 1 && keep[0][0] === c.in && keep[0][1] === c.out)) plan.push([c, keep]);
+  }
+  progressDone();
+  if (!plan.length){ toast('No long pauses found'); return 0; }
+  push();
+  for (const [c, keep] of plan){ const i = S.clips.indexOf(c); const parts = keep.map(([a, b], j) => { const n = { ...structuredClone(c), id:uid(), in:a, out:b, trans:j ? 'none' : c.trans }; shiftKf(n, (a - c.in) / c.speed); return n; }); S.clips.splice(i, 1, ...parts); }
+  refreshAll(); toast(`Removed ${removed.toFixed(1)} s of silence in ${plan.length} clip${plan.length > 1 ? 's' : ''}`, 4500); return removed;
+}
+
+/* ---------- AI editor: a free local model (Ollama) plans edits, EasyCut carries them out ---------- */
+const AIB = DESK && DESK.ai ? DESK.ai : null;
+const AI_MODELS = [['qwen3.5:2b','Qwen 3.5 2B','2.7 GB · best for your 4 GB graphics card'],['llama3.2:3b','Llama 3.2 3B','2.0 GB · reliable backup'],['qwen2.5:3b','Qwen 2.5 3B','1.9 GB · good at following instructions']];
+const ai = { status:null, model:'', log:[], busy:false, pulling:null };
+try { ai.model = localStorage.getItem('easycut.aiModel') || ''; } catch (e) {}
+const AI_CHIP_LABELS = ['✨ Auto-edit everything','🎵 30s beat reel','🔇 Remove silences','🎞️ Fades between clips','☀️ Warm & bright','🔤 Title + subscribe','✂️ Cut at scenes','🎬 Old film B&W'];
+const AI_CHIPS = ['✨ Auto-edit my video: remove silent parts, add transitions, a title and a cinematic color grade','Make it a 30 second vertical reel with fast beat effects','Remove the silent parts from all clips','Add a fade transition between every clip','Make the colors warm and bright','Add a title “My Trip” at the start and a subscribe button at the end','Cut the video at scene changes','Make it black and white with an old film effect'];
+async function aiRefresh(){
+  if (!AIB) return;
+  try { ai.status = await AIB.status(); } catch (e) { ai.status = { running:false, installed:false }; }
+  if (ai.status.running && ai.status.models.length && !ai.status.models.some(m => m.name === ai.model)){
+    const pref = AI_MODELS.map(x => x[0]).find(n => ai.status.models.some(m => m.name === n || m.name === n + ':latest'));
+    ai.model = pref || ai.status.models[0].name;
+  }
+  if (tab === 'ai' && sheetOpen()) renderPanel();
+}
+function aiHTML(){
+  if (!AIB) return `<div class="hint" style="margin-bottom:12px">The AI editor runs a free AI model on your own computer with <b style="color:var(--text)">Ollama</b>. It works in the EasyCut Windows app — not in this web preview or on Android.</div><div class="vo"><div class="hint" style="flex:1">Install the Windows app from your GitHub Releases page, then open this AI tool there.</div></div>`;
+  const st = ai.status;
+  if (!st) return `<div class="hint">Checking for Ollama…</div>`;
+  if (!st.running){
+    return `<div class="hint" style="margin-bottom:12px">EasyCut's AI uses <b style="color:var(--text)">Ollama</b> — free, private, and it runs on your PC (no internet needed after setup).</div>
+      ${st.installed ? `<div class="vo" style="margin-bottom:10px"><div style="flex:1"><b>Ollama is installed but not running</b><div class="hint">Start it and EasyCut connects automatically.</div></div><button class="btn sm pri" data-act="aiStart">Start Ollama</button></div>`
+      : `<ol class="hint" style="padding-left:18px;line-height:1.8;margin:0 0 12px"><li>Download Ollama for Windows (free)</li><li>Run the installer</li><li>Come back here and press <b>Check again</b></li></ol><button class="btn pri full" data-act="aiGet">${ic('export')}Get Ollama (free)</button>`}
+      <button class="btn sm full" data-act="aiCheck" style="margin-top:8px">Check again</button>`;
+  }
+  const models = st.models || [];
+  const pull = ai.pulling ? `<div class="vo" style="margin:10px 0;flex-direction:column;align-items:stretch"><b>Downloading ${esc(ai.pulling.model)}…</b><div class="bar"><i style="width:${ai.pulling.pct.toFixed(1)}%"></i></div><div class="crow"><span class="hint">${esc(ai.pulling.status || '')}</span><b>${Math.round(ai.pulling.pct)}%</b></div></div>` : '';
+  if (!models.length) return `<div class="hint" style="margin-bottom:10px">Ollama is running ✓. Now download a small AI model (one time):</div>${pull}${AI_MODELS.map(([id, n, d]) => `<div class="vo" style="margin-bottom:8px"><div style="flex:1"><b>${n}</b><div class="hint">${d}</div></div><button class="btn sm ${id === AI_MODELS[0][0] ? 'pri' : ''}" data-aipull="${id}" ${ai.pulling ? 'disabled' : ''}>Download</button></div>`).join('')}`;
+  const log = ai.log.map((m, i) => m.role === 'user' ? `<div class="aim u">${esc(m.text)}</div>` : `<div class="aim a">${esc(m.text)}${m.done && m.done.length ? `<ul>${m.done.map(d => `<li>${esc(d)}</li>`).join('')}</ul>` : ''}${m.snap ? `<button class="btn sm" data-aiundo="${i}">↶ Undo these changes</button>` : ''}</div>`).join('');
+  return `<div class="crow" style="margin-bottom:10px"><select class="inp" id="aiModel" style="flex:1">${models.map(m => `<option ${m.name === ai.model ? 'selected' : ''}>${esc(m.name)}</option>`).join('')}</select><button class="btn sm" data-act="aiMore" title="Download another model">+ Model</button></div>
+    ${ai.more ? `<div style="margin-bottom:10px">${AI_MODELS.filter(x => !models.some(m => m.name.startsWith(x[0]))).map(([id, n, d]) => `<div class="vo" style="margin-bottom:6px"><div style="flex:1"><b>${n}</b><div class="hint">${d}</div></div><button class="btn sm" data-aipull="${id}" ${ai.pulling ? 'disabled' : ''}>Download</button></div>`).join('') || '<div class="hint">All suggested models are installed.</div>'}</div>` : ''}${pull}
+    <div class="ailog" id="aiLog">${log || `<div class="hint">Tell the AI what to do with your video, in plain words. It edits the timeline for you — and every change can be undone.</div>`}</div>
+    <div class="aichips">${AI_CHIPS.map((c, i) => `<button class="chip" data-aichip="${i}" title="${esc(c)}">${esc(AI_CHIP_LABELS[i])}</button>`).join('')}</div>
+    <div style="display:flex;gap:6px;margin-top:6px"><textarea class="inp" id="aiIn" rows="2" placeholder="e.g. cut the first 3 seconds, add a title and make it brighter" ${ai.busy ? 'disabled' : ''}></textarea><button class="btn pri" data-act="aiSend" ${ai.busy ? 'disabled' : ''}>${ai.busy ? '…' : 'Send'}</button></div>
+    ${ai.busy ? `<div class="hint" style="margin-top:6px">🤖 Thinking… small models on a laptop can take 10–60 seconds.</div>` : ''}`;
+}
+function aiContext(){
+  const st = clipStarts();
+  return {
+    video_seconds:+totalDur().toFixed(1), canvas:S.aspect, playhead:+playT.toFixed(1),
+    selected:sel ? (sel.type === 'clip' ? 'clip ' + (S.clips.findIndex(c => c.id === sel.id) + 1) : sel.type) : 'nothing',
+    clips:S.clips.map((c, i) => { const m = media[c.mediaId] || {}; return { n:i + 1, name:m.name, type:m.type === 'video' ? 'video' : 'photo', starts_at:+st[i].toFixed(1), seconds:+clipLen(c).toFixed(1), speed:c.speed, transition_in:c.trans }; }),
+    texts:S.texts.map(x => ({ text:x.text, start:+x.start.toFixed(1), seconds:+x.dur.toFixed(1) })),
+    music:S.audios.map(a => ({ name:(media[a.mediaId] || {}).name, start:+a.start.toFixed(1), seconds:+a.dur.toFixed(1) })),
+    effects:S.effects.map(x => ({ type:x.type, start:+x.start.toFixed(1), seconds:+x.dur.toFixed(1) })),
+  };
+}
+function aiSystem(){
+  return `You are the editing assistant inside EasyCut, a video editor. You change the user's video by answering with ONE JSON object only:
+{"reply":"one short friendly sentence","actions":[ ... ]}
+Each action is an object with "do". Times are in seconds on the timeline. Clips are numbered from 1. "clip" can be a number or "all".
+Actions you can use:
+{"do":"split","at":S}
+{"do":"delete_clip","clip":N}
+{"do":"trim_clip","clip":N,"keep_from":S,"keep_to":S}  (seconds inside that clip)
+{"do":"move_clip","clip":N,"to":N}
+{"do":"fit_length","seconds":S}  (shorten the whole video to about S seconds)
+{"do":"speed","clip":N,"value":0.25-4}
+{"do":"volume","clip":N,"value":0-2}
+{"do":"transition","clip":N,"type":"${TRANS.map(t => t[0]).filter(t => t !== 'none').join('|')}"}
+{"do":"look","clip":N,"name":"${Object.keys(LOOKS).join('|')}"}
+{"do":"color","clip":N,"exposure":-100..100,"contrast":-100..100,"temperature":-100..100,"saturation":-100..100}
+{"do":"auto_color","clip":N}
+{"do":"filter","clip":N,"name":"${Object.keys(FILTERS).join('|')}"}
+{"do":"motion","clip":N,"type":"in|out|left|right|none"}
+{"do":"text","text":"...","start":S,"seconds":S,"position":"top|middle|bottom","style":"${TEXT_PRESETS.map(t => t.name).join('|')}"}
+{"do":"template","name":"${TEMPLATES.map(t => t.name).join('|')}"}
+{"do":"effect","type":"${EFFECTS.map(e => e[1]).join('|')}","start":S,"seconds":S,"strength":0-1}
+{"do":"canvas","aspect":"16:9|9:16|1:1|4:5","fill":true}
+{"do":"remove_silence","clip":N,"min_pause":0.6}
+{"do":"scene_cut","clip":N}
+{"do":"music","volume":0-2,"duck":true}
+{"do":"reel","style":"${REEL_STYLES.map(r => r.id).join('|')}","seconds":15|30|60}
+{"do":"marker","at":S}
+Rules: use only these actions and names; never invent files; keep times inside the video; if the request is unclear or impossible, return "actions":[] and explain in "reply".
+Example: user "make it brighter and add a title Hello" -> {"reply":"Brightened all clips and added your title.","actions":[{"do":"color","clip":"all","exposure":25},{"do":"text","text":"Hello","start":0,"seconds":3,"position":"middle","style":"Title"}]}
+Example: user "remove pauses then add fades" -> {"reply":"Removed the pauses and added fades.","actions":[{"do":"remove_silence","clip":"all"},{"do":"transition","clip":"all","type":"fade"}]}`;
+}
+function parseAI(txt){
+  let s = String(txt || '').trim(); s = s.replace(/^```(json)?/i, '').replace(/```$/, '').trim();
+  const a = s.indexOf('{'), b = s.lastIndexOf('}'); if (a >= 0 && b > a) s = s.slice(a, b + 1);
+  let j; try { j = JSON.parse(s); } catch (e) { return { reply:'Sorry — I could not understand the AI’s answer. Try asking in a simpler way.', actions:[] }; }
+  if (Array.isArray(j)) j = { reply:'Done.', actions:j };
+  if (!Array.isArray(j.actions)) j.actions = j.action ? [j.action] : [];
+  return { reply:String(j.reply || j.message || 'Done.'), actions:j.actions.filter(x => x && typeof x === 'object') };
+}
+const num = (v, d) => { const n = parseFloat(v); return isFinite(n) ? n : d; };
+function clipsOf(ref){ if (ref === 'all' || ref == null || ref === '') return S.clips.slice(); const n = parseInt(ref); return n >= 1 && n <= S.clips.length ? [S.clips[n - 1]] : []; }
+async function runAction(x){
+  const d = String(x.do || x.action || '').toLowerCase(), T = totalDur();
+  const many = (fn, label) => { const cs = clipsOf(x.clip); if (!cs.length) throw new Error('no such clip'); cs.forEach(fn); return `${label} (${x.clip === 'all' || x.clip == null ? 'all clips' : 'clip ' + x.clip})`; };
+  switch (d){
+    case 'split': { const t = clamp(num(x.at, playT), 0, T); playT = t; const ca = clipAt(t); if (!ca || ca.local < .1 || ca.local > clipLen(ca.c) - .1) throw new Error('not inside a clip'); const c = ca.c, cut = c.in + ca.local * c.speed, n = { ...structuredClone(c), id:uid(), in:cut, trans:'none' }; shiftKf(n, ca.local); c.out = cut; S.clips.splice(ca.i + 1, 0, n); return `Split at ${fmt(t)}`; }
+    case 'delete_clip': { const cs = clipsOf(x.clip); if (!cs.length || x.clip === 'all') throw new Error('which clip?'); S.clips.splice(S.clips.indexOf(cs[0]), 1); return `Deleted clip ${x.clip}`; }
+    case 'trim_clip': { const c = clipsOf(x.clip)[0]; if (!c) throw new Error('no such clip'); const L = clipLen(c), a = clamp(num(x.keep_from, 0), 0, L - .1), b = clamp(num(x.keep_to, L), a + .1, L); const m = media[c.mediaId]; if (m.type === 'video'){ const ni = c.in + a * c.speed; c.out = c.in + b * c.speed; c.in = ni; } else c.out = c.in + (b - a); return `Trimmed clip ${x.clip} to ${fmt(a)}–${fmt(b)}`; }
+    case 'move_clip': { const c = clipsOf(x.clip)[0]; if (!c) throw new Error('no such clip'); const to = clamp(parseInt(x.to) - 1, 0, S.clips.length - 1); S.clips.splice(S.clips.indexOf(c), 1); S.clips.splice(to, 0, c); return `Moved clip ${x.clip} to position ${to + 1}`; }
+    case 'fit_length': { const target = clamp(num(x.seconds, 30), 1, 3600), cur = videoEnd(); if (cur <= target) return 'Video is already short enough'; const f = target / cur; for (const c of S.clips){ const L = clipLen(c); c.out = c.in + Math.max(.3, L * f) * c.speed; } return `Shortened the video to about ${Math.round(videoEnd())} s`; }
+    case 'speed': return many(c => { if (media[c.mediaId].type === 'video') c.speed = clamp(num(x.value, 1), .25, 4); }, `Speed ${num(x.value, 1)}×`);
+    case 'volume': return many(c => { c.volume = clamp(num(x.value, 1), 0, 2); }, `Volume ${Math.round(num(x.value, 1) * 100)}%`);
+    case 'transition': { const tp = TRANS.some(t => t[0] === x.type) ? x.type : 'fade'; const cs = x.clip === 'all' || x.clip == null ? S.clips.slice(1) : clipsOf(x.clip); cs.forEach(c => { c.trans = tp; c.tdur = c.tdur || .5; }); return `${tp} transition on ${cs.length} cut${cs.length === 1 ? '' : 's'}`; }
+    case 'look': { const L = LOOKS[x.name] ? x.name : 'cinematic'; return many(c => { c.grade = { ...GRADE_DEF, ...LOOKS[L][1] }; }, `${LOOKS[L][0]} look`); }
+    case 'color': return many(c => { const g = c.grade = { ...GRADE_DEF, ...(c.grade || {}) }; if (x.exposure != null) g.exp = clamp(num(x.exposure, 0), -100, 100); if (x.contrast != null) g.con = clamp(num(x.contrast, 0), -100, 100); if (x.temperature != null) g.temp = clamp(num(x.temperature, 0), -100, 100); if (x.saturation != null) g.sat = clamp(num(x.saturation, 0), -100, 100); }, 'Color adjusted');
+    case 'auto_color': { const cs = clipsOf(x.clip); for (const c of cs) await autoColor(c); return `Auto color on ${cs.length} clip${cs.length === 1 ? '' : 's'}`; }
+    case 'filter': { const f = FILTERS[x.name] ? x.name : 'vivid'; return many(c => { c.filter = f; }, `${FILTERS[f][0]} filter`); }
+    case 'motion': { const mo = ['in','out','left','right','none'].includes(x.type) ? x.type : 'in'; return many(c => { c.motion = mo; }, `Motion: ${mo}`); }
+    case 'text': { const pre = TEXT_PRESETS.find(p => p.name.toLowerCase() === String(x.style || '').toLowerCase()); const y = x.position === 'top' ? .14 : x.position === 'bottom' ? .85 : pre && pre.p.y != null ? pre.p.y : .5; const t0 = clamp(num(x.start, 0), 0, Math.max(0, T - .2)); const n = { ...TEXT_BASE, ...(pre ? pre.p : {}), text:String(x.text || 'Text').slice(0, 120), y, id:uid(), start:t0, dur:clamp(num(x.seconds, 3), .3, Math.max(.3, T - t0 || 3)) }; S.texts.push(n); document.fonts?.load(`800 40px "${n.font}"`).then(scheduleRender).catch(() => {}); return `Text “${n.text}” at ${fmt(t0)}`; }
+    case 'template': { const tp = TEMPLATES.find(t => t.name.toLowerCase() === String(x.name || '').toLowerCase()); if (!tp) throw new Error('unknown template'); if (tp.cat === 'Outros') playT = totalDur(); await applyTemplate(tp); return `Template “${tp.name}”`; }
+    case 'effect': { if (!FX_BY_ID[x.type]) throw new Error('unknown effect'); const t0 = clamp(num(x.start, 0), 0, Math.max(0, T - .2)); const e = { id:uid(), type:x.type, start:t0, dur:clamp(num(x.seconds, 2), .2, Math.max(.2, T - t0)), k:clamp(num(x.strength, 1), .1, 1) }; S.effects.push(e); return `${FX_BY_ID[x.type][2]} effect at ${fmt(t0)}`; }
+    case 'canvas': { if (ASPECTS[x.aspect]) S.aspect = x.aspect; if (x.fill != null) S.fit = x.fill ? 'fill' : 'fit'; applyCanvasSize(); return `Canvas ${S.aspect}${S.fit === 'fill' ? ', filled' : ''}`; }
+    case 'remove_silence': { const r = await removeSilences(clipsOf(x.clip), { minPause:clamp(num(x.min_pause, .6), .2, 3) }); return `Removed ${r.toFixed(1)} s of silence`; }
+    case 'scene_cut': { const c = clipsOf(x.clip)[0]; if (!c) throw new Error('which clip?'); const n = await sceneDetectCmd(c); return `Cut into ${n + 1} scenes`; }
+    case 'music': { if (!S.audios.length) throw new Error('there is no music on the timeline'); S.audios.forEach(a => { if (x.volume != null) a.volume = clamp(num(x.volume, 1), 0, 2); if (x.duck != null) a.duck = !!x.duck; }); return 'Music adjusted'; }
+    case 'reel': { reel.style = REEL_STYLES.some(r => r.id === x.style) ? x.style : 'beat'; reel.len = [15, 30, 60].includes(+x.seconds) ? +x.seconds : 30; reel.mode = 'auto'; reel.items = S.clips.map(c => ({ ...reelItem(c.mediaId), a:c.in, b:c.out })); if (!reel.music && S.audios[0]) reel.music = S.audios[0].mediaId; await buildReel(); return `Made a ${reel.len}s reel`; }
+    case 'marker': { S.markers = S.markers || []; S.markers.push(clamp(num(x.at, playT), 0, T)); return `Marker at ${fmt(num(x.at, playT))}`; }
+    default: throw new Error('unknown action “' + d + '”');
+  }
+}
+async function aiSend(text){
+  text = String(text || '').trim(); if (!text || ai.busy) return;
+  if (!S.clips.length) return toast('Add some clips first, then ask the AI');
+  ai.log.push({ role:'user', text }); ai.busy = true; renderPanel(); aiScroll();
+  const before = snap();
+  try {
+    const msgs = [{ role:'system', content:aiSystem() }];
+    for (const m of ai.log.slice(-7, -1)) msgs.push({ role:m.role === 'user' ? 'user' : 'assistant', content:m.role === 'user' ? m.text : JSON.stringify({ reply:m.text }) });
+    msgs.push({ role:'user', content:`Current video:\n${JSON.stringify(aiContext())}\n\nRequest: ${text}` });
+    const out = parseAI(await AIB.chat(ai.model, msgs));
+    const done = []; if (playing) pause();
+    for (const x of out.actions.slice(0, 25)){ try { done.push('✓ ' + await runAction(x)); } catch (e) { done.push('✗ Skipped ' + (x.do || '?') + ': ' + e.message); } }
+    const changed = snap() !== before;
+    if (changed){ H.past.push(before); H.future = []; updUndo(); }
+    ai.log.push({ role:'ai', text:out.reply, done, snap:changed ? before : null });
+    refreshAll(); seekPreview();
+  } catch (e) {
+    ai.log.push({ role:'ai', text:'⚠️ ' + (/model.*not found/i.test(e.message) ? 'That model is not downloaded yet.' : /fetch|ECONN|connect/i.test(e.message) ? 'Could not reach Ollama — is it running?' : e.message) });
+    aiRefresh();
+  }
+  ai.busy = false; renderPanel(); aiScroll();
+}
+function aiScroll(){ const l = $('#aiLog'); if (l) l.scrollTop = l.scrollHeight; }
+async function aiPull(model){
+  if (ai.pulling) return; ai.pulling = { model, pct:0, status:'starting' }; renderPanel();
+  const off = AIB.onPullProgress(d => { if (d.model !== model) return; ai.pulling.status = d.status; if (d.total) ai.pulling.pct = d.completed / d.total * 100; const b = document.querySelector('#panel .bar i'); if (b && tab === 'ai'){ b.style.width = ai.pulling.pct.toFixed(1) + '%'; const p2 = b.closest('.vo').querySelector('b:last-child'); if (p2) p2.textContent = Math.round(ai.pulling.pct) + '%'; } });
+  try { await AIB.pull(model); ai.model = model; try { localStorage.setItem('easycut.aiModel', model); } catch (e) {} toast(`${model} is ready — ask it to edit your video`); }
+  catch (e) { toast('Download failed: ' + e.message, 5000); }
+  off(); ai.pulling = null; ai.more = false; await aiRefresh(); renderPanel();
+}
+
 /* ---------- glue ---------- */
 function refreshAll(){
   applyCanvasSize();
@@ -2665,8 +3203,9 @@ window.addEventListener('beforeunload', e => { if (S.clips.length || S.overlays.
 if (window.claude && typeof window.claude.use === 'function'){ window.claude.use('downloads').then(d => { dlCap = d; }).catch(() => {}); }
 document.fonts?.ready.then(scheduleRender);
 
-renderRail(); applyCanvasSize(); refreshAll(); setPps(60);
+renderRail(); applyCanvasSize(); refreshAll(); setPps(60); renderLabels();
 loadUserStuff();
+window.__ec = { get S(){ return S; }, totalDur, videoEnd };
 })();
 </script>
 </body>

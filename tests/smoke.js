@@ -113,6 +113,17 @@ function check(cond, msg) {
     check((await count('.vclip')) === nItems, `Reel Maker (manual): ${nItems} clips in order`);
 
     // Play, export and save the video
+    // AI editor: the Ollama bridge answers from the main process
+    const st = await page.evaluate(() => window.easycutDesktop.ai.status());
+    check(st && typeof st.running === 'boolean', `AI bridge works (Ollama ${st.running ? 'running, ' + st.models.length + ' model(s)' : st.installed ? 'installed, not running' : 'not installed'})`);
+    await page.click('[data-tab="ai"]');
+    await page.waitForFunction(() => /Ollama|aiIn/.test(document.getElementById('panel').innerHTML), null, { timeout: 10000 });
+    check(true, 'AI Editor panel opens');
+    if (st.running && st.models.length) {
+      const r = await page.evaluate((m) => window.easycutDesktop.ai.chat(m, [{ role: 'user', content: 'Reply with {"reply":"hi","actions":[]}' }]), st.models[0].name).catch((e) => 'ERR ' + e.message);
+      check(/reply/.test(r), 'real AI reply: ' + String(r).slice(0, 60));
+    }
+    await page.click('[data-tab="media"]');
     await page.keyboard.press('Home'); await page.keyboard.press('Space'); await page.waitForTimeout(1500); await page.keyboard.press('Space');
     check(!(await page.textContent('#tc')).startsWith('0:00.0'), 'playback');
     await page.click('#bExport');

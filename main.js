@@ -127,6 +127,46 @@ app.whenReady().then(() => {
   });
   ipcMain.handle('show-in-folder', (e, p) => { if (typeof p === 'string' && !process.env.EASYCUT_TEST) shell.showItemInFolder(p); });
 
+  // ---------- Local AI (Ollama, free, runs on this PC) ----------
+  const OLLAMA = (process.env.OLLAMA_HOST && /^https?:/.test(process.env.OLLAMA_HOST) ? process.env.OLLAMA_HOST : 'http://127.0.0.1:11434').replace(/\/$/, '');
+  const ollamaExe = () => {
+    const cands = [path.join(process.env.LOCALAPPDATA || '', 'Programs', 'Ollama', 'ollama.exe'), path.join(process.env.ProgramFiles || '', 'Ollama', 'ollama.exe'), process.env.EASYCUT_OLLAMA_EXE || ''];
+    for (const c of cands) { try { if (c && require('fs').existsSync(c)) return c; } catch (e) {} }
+    try { const r = require('child_process').spawnSync(process.platform === 'win32' ? 'where' : 'which', ['ollama'], { encoding: 'utf8' }); const p = (r.stdout || '').split(/\r?\n/)[0].trim(); if (p) return p; } catch (e) {}
+    return null;
+  };
+  const tags = async () => { const r = await fetch(OLLAMA + '/api/tags', { signal: AbortSignal.timeout(2500) }); const j = await r.json(); return (j.models || []).map((m) => ({ name: m.name, size: m.size })); };
+  ipcMain.handle('ai-status', async () => {
+    try { return { running: true, models: await tags() }; }
+    catch (e) { return { running: false, installed: !!ollamaExe() }; }
+  });
+  ipcMain.handle('ai-start', async () => {
+    const exe = ollamaExe(); if (!exe) return { ok: false, reason: 'not-installed' };
+    try { require('child_process').spawn(exe, ['serve'], { detached: true, stdio: 'ignore', windowsHide: true }).unref(); } catch (e) { return { ok: false, reason: e.message }; }
+    for (let i = 0; i < 30; i++) { await new Promise((r) => setTimeout(r, 500)); try { await tags(); return { ok: true }; } catch (e) {} }
+    return { ok: false, reason: 'timeout' };
+  });
+  ipcMain.handle('ai-chat', async (e, { model, messages }) => {
+    const body = (think) => JSON.stringify({ model, messages, stream: false, format: 'json', ...(think === false ? { think: false } : {}), keep_alive: '10m', options: { temperature: 0.2, num_ctx: 8192 } });
+    let r = await fetch(OLLAMA + '/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body(false) });
+    let j = await r.json();
+    if (j.error && /think/i.test(j.error)) { r = await fetch(OLLAMA + '/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body() }); j = await r.json(); }
+    if (j.error) throw new Error(j.error);
+    return (j.message && j.message.content) || '';
+  });
+  ipcMain.handle('ai-pull', async (e, model) => {
+    const r = await fetch(OLLAMA + '/api/pull', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: model, model, stream: true }) });
+    if (!r.ok || !r.body) throw new Error('Download failed (' + r.status + ')');
+    const reader = r.body.getReader(), dec = new TextDecoder(); let buf = '', last = null;
+    for (;;) {
+      const { done, value } = await reader.read(); if (done) break;
+      buf += dec.decode(value, { stream: true }); let i;
+      while ((i = buf.indexOf('\n')) >= 0) { const line = buf.slice(0, i).trim(); buf = buf.slice(i + 1); if (!line) continue; try { last = JSON.parse(line); } catch (er) { continue; } if (last.error) throw new Error(last.error); if (win) win.webContents.send('ai-pull-progress', { model, status: last.status, completed: last.completed || 0, total: last.total || 0 }); }
+    }
+    return { ok: true };
+  });
+  ipcMain.handle('ai-get-ollama', () => shell.openExternal('https://ollama.com/download/windows'));
+
   createWindow();
   app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
 });

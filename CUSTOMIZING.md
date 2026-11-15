@@ -30,3 +30,11 @@ Find `REEL_STYLES.push(` and copy one entry. `beats` is how many beats each cut 
 ### Publishing a new version
 1. Change `"version"` in `package.json` (e.g. `1.2.0` → `1.3.0`).
 2. Push to `main`. GitHub tests the app, builds `EasyCut-Setup-<version>.exe` and publishes it under **Releases**.
+
+## Teaching the AI Editor new tricks
+The AI Editor (Windows app) sends the AI a list of the actions it may use, then runs the actions it gets back. To add one:
+1. In `app/index.html`, find `function aiSystem()` and add a line describing the new action, e.g. `{"do":"my_action","clip":N,...}`.
+2. Find `async function runAction(x)` and add a `case 'my_action':` that changes the project and returns a short message.
+3. Optional: add a quick button in `AI_CHIPS` / `AI_CHIP_LABELS`.
+
+To use a different model, download it in Ollama (for example `ollama pull gemma3:4b` in a terminal) — it appears in the AI Editor's model list. Bigger models follow instructions better but need more memory; on a 4 GB graphics card stay at 2–4B models.
