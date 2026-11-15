@@ -50,7 +50,7 @@ function check(cond, msg) {
 
     // Crop + logo removal
     await page.locator('.vclip').first().click();
-    await page.click('[data-pa="crop"]'); await page.click('[data-cropr] button[data-val="canvas"]'); await page.click('[data-pa="boxDone"]');
+    await page.click('[data-pa="crop"]'); await page.click('[data-cropr] button[data-val="1"]'); await page.click('[data-pa="boxDone"]');
     check((await page.locator('.vclip').first().innerText()).includes('CROP'), 'crop');
     await page.click('[data-pa="logo"]'); await page.click('[data-pa="boxDone"]');
     check((await page.locator('.vclip').first().innerText()).includes('LOGO'), 'logo remover');
