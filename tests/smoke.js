@@ -76,15 +76,21 @@ function check(cond, msg) {
     const after = { v: await count('.vclip'), t: await count('.titem'), o: await count('.oitem') };
     check(JSON.stringify(before) === JSON.stringify(after), `project re-opened with everything in place ${JSON.stringify(after)}`);
 
-    // Auto Reel with beat detection
-    await page.click('#bReel'); await page.waitForSelector('#dlgReel [data-rs]');
+    // Reel Maker: automatic (beat) and manual
+    await page.click('#bReel'); await page.waitForSelector('#studio.on');
     await page.setInputFiles('#fileReelMusic', [media('beat100.mp3')]);
-    await page.waitForSelector('[data-r="noMusic"]', { timeout: 20000 });
-    await page.click('[data-rs="beat"]'); await page.click('[data-seg="rlen"] button[data-val="15"]');
-    await page.click('[data-r="go"]');
-    await page.waitForFunction(() => !document.getElementById('mReel').classList.contains('on'), null, { timeout: 60000 });
+    await page.waitForSelector('[data-sa="nomusic"]', { timeout: 20000 });
+    await page.click('[data-rsid="beat"]'); await page.click('[data-st="len"] button[data-val="15"]');
+    await page.click('[data-sa="make"]');
+    await page.waitForFunction(() => !document.getElementById('studio').classList.contains('on'), null, { timeout: 60000 });
     const toast = await page.textContent('#toast');
-    check((await count('.vclip')) >= 8 && /\d+ BPM/.test(toast), 'Auto Reel: ' + toast.trim());
+    check((await count('.vclip')) >= 8 && /\d+ BPM/.test(toast), 'Reel Maker (automatic): ' + toast.trim());
+    await page.click('#bReel'); await page.waitForSelector('#studio.on');
+    await page.click('[data-st="mode"] button[data-val="manual"]');
+    const nItems = await count('[data-si]');
+    await page.click('[data-sa="make"]');
+    await page.waitForFunction(() => !document.getElementById('studio').classList.contains('on'), null, { timeout: 60000 });
+    check((await count('.vclip')) === nItems, `Reel Maker (manual): ${nItems} clips in order`);
 
     // Play, export and save the video
     await page.keyboard.press('Home'); await page.keyboard.press('Space'); await page.waitForTimeout(1500); await page.keyboard.press('Space');
