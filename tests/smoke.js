@@ -1,17 +1,20 @@
-// End-to-end test of the real desktop app: launches EasyCut (Electron), imports media,
-// edits, plays and exports a video. Run with: npm test
+// End-to-end test of the real desktop app: launches EasyCut (Electron) and uses it like a person would.
+// Run with: npm test   (needs a desktop session — GitHub's Windows runners have one)
 const { _electron: electron } = require('playwright');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 
 const root = path.join(__dirname, '..');
 const media = (f) => path.join(__dirname, 'media', f);
 const out = path.join(__dirname, 'output');
+const testDir = path.join(os.tmpdir(), 'easycut-test');
 fs.mkdirSync(out, { recursive: true });
 
+let failed = 0;
 function check(cond, msg) {
-  if (!cond) throw new Error('FAILED: ' + msg);
-  console.log('  ✓ ' + msg);
+  console.log((cond ? '  ✓ ' : '  ✗ FAILED: ') + msg);
+  if (!cond) failed++;
 }
 
 (async () => {
@@ -19,59 +22,93 @@ function check(cond, msg) {
   const page = await app.firstWindow();
   const errors = [];
   page.on('pageerror', (e) => errors.push(String(e)));
+  const count = (s) => page.locator(s).count();
+  const waitCount = (s, n, t = 30000) => page.waitForFunction(([s, n]) => document.querySelectorAll(s).length >= n, [s, n], { timeout: t });
   try {
     await page.waitForSelector('#bExport');
     check(await page.title() === 'EasyCut — Video Editor', 'app window opens');
-    check(await page.evaluate(() => !!window.easycutDesktop), 'desktop save bridge is available');
+    check(await page.evaluate(() => !!window.easycutDesktop && document.body.classList.contains('is-desk')), 'desktop features are switched on');
 
-    await page.setInputFiles('#fileIn', [media('clip1.mp4'), media('photo.png'), media('music.mp3')]);
-    await page.waitForFunction(() => document.querySelectorAll('.vclip').length === 2 && document.querySelectorAll('.aitem').length === 1, null, { timeout: 30000 });
-    check(true, 'video, photo and music imported onto the timeline');
-
-    await page.click('[data-tab="text"]');
-    await page.click('[data-tp="0"]');
-    check(await page.locator('.titem').count() === 1, 'title text added');
-
-    await page.click('.vclip');
-    await page.keyboard.press('Home');
-    await page.keyboard.press('Shift+ArrowRight');
-    await page.keyboard.press('s');
-    check(await page.locator('.vclip').count() === 3, 'clip split at playhead');
+    // Import & basic editing
+    await page.setInputFiles('#fileIn', [media('logo.mp4'), media('photo.png'), media('clip2.mp4'), media('music.mp3')]);
+    await waitCount('.vclip', 3); await waitCount('.aitem', 1);
+    check(true, 'videos, photo and music imported onto the timeline');
+    await page.locator('.vclip').first.click();
+    await page.keyboard.press('Home'); await page.keyboard.press('Shift+ArrowRight'); await page.keyboard.press('s');
+    check(await count('.vclip') === 4, 'split at playhead');
     await page.keyboard.press('Control+z');
-    check(await page.locator('.vclip').count() === 2, 'undo works');
+    check(await count('.vclip') === 3, 'undo');
 
-    await page.click('.junc');
-    await page.click('[data-seg="trans"] button[data-val="fade"]');
-    await page.keyboard.press('Space'); // stop the transition preview
-    await page.keyboard.press('Home');
-    await page.keyboard.press('Space');
-    await page.waitForTimeout(2000);
-    await page.keyboard.press('Space');
-    const t = await page.textContent('#tc');
-    check(!t.startsWith('0:00.0'), 'playback moves the playhead (' + t.split('/')[0].trim() + ')');
+    // Fill canvas 9:16 with no bars
+    await page.click('[data-tab="canvas"]');
+    await page.click('[data-gseg="fit"] button[data-val="fill"]');
+    await page.click('[data-aspect="9:16"]');
+    await page.keyboard.press('Home'); await page.waitForTimeout(500);
+    const edges = await page.evaluate(() => { const c = document.getElementById('cv'), g = c.getContext('2d'); return [[4, 4], [c.width - 4, c.height - 4], [4, c.height / 2]].map(([x, y]) => Array.from(g.getImageData(x, y, 1, 1).data).slice(0, 3).reduce((a, b) => a + b)); });
+    check(edges.every((v) => v > 40), '9:16 fills the frame with no bars');
+    await page.click('[data-aspect="16:9"]');
+
+    // Crop + logo removal
+    await page.locator('.vclip').first.click();
+    await page.click('[data-pa="crop"]'); await page.click('[data-cropr] button[data-val="canvas"]'); await page.click('[data-pa="boxDone"]');
+    check((await page.locator('.vclip').first.innerText()).includes('CROP'), 'crop');
+    await page.click('[data-pa="logo"]'); await page.click('[data-pa="boxDone"]');
+    check((await page.locator('.vclip').first.innerText()).includes('LOGO'), 'logo remover');
+
+    // Overlay with green screen, layout, template
+    await page.click('[data-tab="overlay"]');
+    await page.setInputFiles('#fileOv', [media('green.mp4')]); await waitCount('.oitem', 1);
+    await page.locator('#props input[data-k="chroma"]').check();
+    check(true, 'picture-in-picture overlay with green screen removal');
+    await page.click('[data-tab="templates"]');
+    await page.click('[data-tpl="6"]'); await waitCount('.titem', 2);
+    check(true, 'lower-third template');
     await page.screenshot({ path: path.join(out, 'editor.png') });
 
+    // Save project, then open it again
+    await page.keyboard.press('Control+s');
+    await page.waitForFunction(() => document.getElementById('toast').textContent.includes('Project saved'), null, { timeout: 30000 });
+    const proj = fs.readdirSync(testDir).find((f) => f.endsWith('.easycut'));
+    check(!!proj, 'project saved to a .easycut file');
+    const before = { v: await count('.vclip'), t: await count('.titem'), o: await count('.oitem') };
+    await page.keyboard.press('Control+o');
+    await page.waitForFunction(() => document.getElementById('toast').textContent.includes('Project opened') || document.getElementById('toast').textContent.includes('missing'), null, { timeout: 60000 });
+    const after = { v: await count('.vclip'), t: await count('.titem'), o: await count('.oitem') };
+    check(JSON.stringify(before) === JSON.stringify(after), `project re-opened with everything in place ${JSON.stringify(after)}`);
+
+    // Auto Reel with beat detection
+    await page.click('#bReel'); await page.waitForSelector('#dlgReel [data-rs]');
+    await page.setInputFiles('#fileReelMusic', [media('beat100.mp3')]);
+    await page.waitForSelector('[data-r="noMusic"]', { timeout: 20000 });
+    await page.click('[data-rs="beat"]'); await page.click('[data-seg="rlen"] button[data-val="15"]');
+    await page.click('[data-r="go"]');
+    await page.waitForFunction(() => !document.getElementById('mReel').classList.contains('on'), null, { timeout: 60000 });
+    const toast = await page.textContent('#toast');
+    check((await count('.vclip')) >= 8 && /\d+ BPM/.test(toast), 'Auto Reel: ' + toast.trim());
+
+    // Play, export and save the video
+    await page.keyboard.press('Home'); await page.keyboard.press('Space'); await page.waitForTimeout(1500); await page.keyboard.press('Space');
+    check(!(await page.textContent('#tc')).startsWith('0:00.0'), 'playback');
     await page.click('#bExport');
-    const fmt = await page.textContent('#dlgExport .kv');
-    console.log('    export settings: ' + fmt.replace(/\s+/g, ' ').trim());
+    console.log('    export settings: ' + (await page.textContent('#dlgExport .kv')).replace(/\s+/g, ' ').trim());
     await page.click('[data-x="go"]');
-    await page.waitForSelector('#dlgExport video', { timeout: 120000 });
-    const info = await page.evaluate(async () => {
-      const v = document.querySelector('#dlgExport video');
-      const b = await (await fetch(v.src)).blob();
-      return { size: b.size, type: b.type, name: document.querySelector('#dlgExport .hint').textContent };
-    });
-    console.log('    exported: ' + info.name + ' (' + info.type + ')');
-    check(info.size > 50000, 'export produced a video file');
+    await page.waitForSelector('#dlgExport video', { timeout: 180000 });
     await page.screenshot({ path: path.join(out, 'export.png') });
+    await page.click('[data-x="save"]');
+    await page.waitForFunction(() => document.getElementById('toast').textContent.includes('Saved to'), null, { timeout: 30000 });
+    const vid = fs.readdirSync(testDir).find((f) => /\.(mp4|webm)$/.test(f));
+    const size = vid ? fs.statSync(path.join(testDir, vid)).size : 0;
+    check(size > 50000, `exported video saved: ${vid} (${(size / 1048576).toFixed(1)} MB)`);
+    if (vid) fs.copyFileSync(path.join(testDir, vid), path.join(out, vid));
 
     check(errors.length === 0, 'no script errors' + (errors.length ? ': ' + errors.join(' | ') : ''));
-    console.log('\nAll desktop tests passed.');
   } catch (e) {
-    console.error(e.message);
+    failed++;
+    console.error('  ✗ ' + e.message);
     await page.screenshot({ path: path.join(out, 'failure.png') }).catch(() => {});
-    process.exitCode = 1;
   } finally {
     await app.close();
   }
+  console.log(failed ? `\n${failed} check(s) failed.` : '\nAll desktop tests passed.');
+  process.exitCode = failed ? 1 : 0;
 })();

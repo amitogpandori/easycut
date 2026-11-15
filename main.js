@@ -69,18 +69,59 @@ app.whenReady().then(() => {
 
   Menu.setApplicationMenu(null);
 
+  // In automated tests, dialogs are replaced by files in a temp folder.
+  const TEST_DIR = process.env.EASYCUT_TEST ? path.join(require('os').tmpdir(), 'easycut-test') : null;
+  if (TEST_DIR) { require('fs').rmSync(TEST_DIR, { recursive: true, force: true }); require('fs').mkdirSync(TEST_DIR, { recursive: true }); }
+
   ipcMain.handle('save-file', async (e, { name, data }) => {
     const ext = (path.extname(name).slice(1) || 'mp4').toLowerCase();
-    const r = await dialog.showSaveDialog(win, {
-      title: 'Save video',
-      defaultPath: path.join(app.getPath('videos'), name),
-      filters: [{ name: ext.toUpperCase() + ' video', extensions: [ext] }],
-    });
-    if (r.canceled || !r.filePath) return { ok: false };
-    await fs.writeFile(r.filePath, Buffer.from(data));
-    return { ok: true, path: r.filePath };
+    const isImg = ['png', 'jpg', 'jpeg'].includes(ext);
+    let filePath = TEST_DIR ? path.join(TEST_DIR, name) : null;
+    if (!filePath) {
+      const r = await dialog.showSaveDialog(win, {
+        title: isImg ? 'Save image' : 'Save video',
+        defaultPath: path.join(app.getPath(isImg ? 'pictures' : 'videos'), name),
+        filters: [{ name: ext.toUpperCase() + (isImg ? ' image' : ' video'), extensions: [ext] }],
+      });
+      if (r.canceled || !r.filePath) return { ok: false };
+      filePath = r.filePath;
+    }
+    await fs.writeFile(filePath, Buffer.from(data));
+    return { ok: true, path: filePath };
   });
-  ipcMain.handle('show-in-folder', (e, p) => { if (typeof p === 'string') shell.showItemInFolder(p); });
+
+  ipcMain.handle('choose-project-save', async (e, name) => {
+    if (TEST_DIR) return path.join(TEST_DIR, name);
+    const r = await dialog.showSaveDialog(win, {
+      title: 'Save EasyCut project',
+      defaultPath: path.join(app.getPath('documents'), name),
+      filters: [{ name: 'EasyCut project', extensions: ['easycut'] }],
+    });
+    return r.canceled ? null : r.filePath;
+  });
+  ipcMain.handle('open-project', async () => {
+    let p;
+    if (TEST_DIR) {
+      const f = require('fs').readdirSync(TEST_DIR).find((n) => n.endsWith('.easycut'));
+      if (!f) return null; p = path.join(TEST_DIR, f);
+    } else {
+      const r = await dialog.showOpenDialog(win, { title: 'Open EasyCut project', properties: ['openFile'], filters: [{ name: 'EasyCut project', extensions: ['easycut'] }] });
+      if (r.canceled || !r.filePaths.length) return null; p = r.filePaths[0];
+    }
+    return { path: p, text: await fs.readFile(p, 'utf8') };
+  });
+  ipcMain.handle('write-file', async (e, { filePath, data }) => {
+    if (typeof filePath !== 'string') throw new Error('bad path');
+    await fs.mkdir(path.dirname(filePath), { recursive: true });
+    await fs.writeFile(filePath, typeof data === 'string' ? data : Buffer.from(data));
+    return true;
+  });
+  ipcMain.handle('read-file', async (e, filePath) => {
+    if (typeof filePath !== 'string') throw new Error('bad path');
+    const b = await fs.readFile(filePath);
+    return b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength);
+  });
+  ipcMain.handle('show-in-folder', (e, p) => { if (typeof p === 'string' && !process.env.EASYCUT_TEST) shell.showItemInFolder(p); });
 
   createWindow();
   app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });

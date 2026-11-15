@@ -1,7 +1,7 @@
 {
   "name": "easycut",
   "productName": "EasyCut",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "EasyCut - an easy video editor for vloggers",
   "main": "main.js",
   "author": "Amitoj",
@@ -19,7 +19,7 @@
   "build": {
     "appId": "com.amitoj.easycut",
     "productName": "EasyCut",
-    "copyright": "Copyright © 2026 Amitoj",
+    "copyright": "Copyright \u00a9 2026 Amitoj",
     "directories": {
       "output": "dist",
       "buildResources": "build"
@@ -31,7 +31,14 @@
       "build/icon.png"
     ],
     "win": {
-      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
       "icon": "build/icon.ico",
       "artifactName": "EasyCut-Setup-${version}.exe"
     },
