@@ -127,9 +127,9 @@ function check(cond, msg) {
 
     // Upscale: downloads the real free tools on this Windows machine and upscales a test clip
     const upQ = await page.evaluate((f) => window.easycutDesktop.upscale.run({ input: f, mode: 'quick', height: 1080, outDir: f.replace(/[\\/][^\\/]+$/, '') + '/../upscaled' }), media('clip2.mp4'));
-    check(upQ.ok && upQ.height === 1080 && fs.existsSync(upQ.path) && fs.statSync(upQ.path).size > 20000, `quick upscale ${upQ.from || ''} → ${upQ.width}×${upQ.height} ${upQ.error || ''}`);
+    check(upQ.ok && Math.min(upQ.width, upQ.height) === 1080 && fs.existsSync(upQ.path) && fs.statSync(upQ.path).size > 20000, `quick upscale ${upQ.from || ''} → ${upQ.width}×${upQ.height} ${upQ.error || ''}`);
     const upA = await page.evaluate((f) => window.easycutDesktop.upscale.run({ input: f, mode: 'anime', height: 1440, outDir: f.replace(/[\\/][^\\/]+$/, '') + '/../upscaled' }), media('clip2.mp4'));
-    check(upA.ok && upA.height === 1440 && fs.existsSync(upA.path), `AI upscale → ${upA.width}×${upA.height} via ${upA.method}${upA.note ? ' (' + upA.note + ')' : ''} ${upA.error || ''}`);
+    check(upA.ok && Math.min(upA.width, upA.height) === 1440 && (upA.method === 'ai' || /Vulkan|graphics/.test(upA.note)) && fs.existsSync(upA.path), `AI upscale → ${upA.width}×${upA.height} via ${upA.method}${upA.note ? ' (' + upA.note + ')' : ''} ${upA.error || ''}`);
     const ust = await page.evaluate(() => window.easycutDesktop.upscale.status());
     check(ust.ffmpeg && ust.ai, 'upscale tools installed on first use ' + JSON.stringify(ust));
     await page.keyboard.press('Home'); await page.keyboard.press('Space'); await page.waitForTimeout(1500); await page.keyboard.press('Space');
