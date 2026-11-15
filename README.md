@@ -32,5 +32,5 @@ npm test       # automated end-to-end test of the desktop app
 npm run dist   # build the Windows installer into dist/
 ```
 
-GitHub Actions builds and tests the installer on every push to `main`.
-Push a tag like `v1.1.0` to publish a new release.
+GitHub Actions tests the app, builds the installer and publishes it as a Release on every push to `main`.
+Bump `version` in package.json for each new release.
