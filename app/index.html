@@ -189,6 +189,9 @@ input[type=color]{width:34px;height:28px;border:1px solid var(--line);border-rad
 .tll{position:relative}
 #bSnap.on{background:var(--panel3);color:var(--text)}
 #meter{border-radius:3px;margin:0 4px}
+.upgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.upopt{background:var(--panel2);border:1.5px solid var(--line);border-radius:12px;padding:10px 8px;color:var(--text);cursor:pointer;display:flex;flex-direction:column;gap:3px;text-align:left;font:inherit}
+.upopt small{color:var(--mut);font-size:11px}.upopt.on{border-color:var(--acc);background:color-mix(in srgb,var(--acc) 14%,var(--panel2))}.upopt:disabled{opacity:.35;cursor:not-allowed}
 .ailog{min-height:120px;max-height:46vh;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:4px 0}
 .aim{padding:9px 12px;border-radius:12px;font-size:13px;line-height:1.45;max-width:94%}
 .aim.u{align-self:flex-end;background:var(--acc);color:#fff;border-bottom-right-radius:4px}
@@ -675,7 +678,7 @@ function renderPanel(){
   } else if (tab === 'canvas'){
     h = `<h3>Clip framing</h3><div class="sec"><div class="seg" data-gseg="fit">${[['fit','Fit (show all)'],['fill','Fill (no bars)']].map(([v, l]) => `<button data-val="${v}" class="${(S.fit || 'fit') === v ? 'on' : ''}">${l}</button>`).join('')}</div><div class="hint" style="margin-top:8px">${(S.fit || 'fit') === 'fill' ? 'Every clip fills the whole frame — no blurred or colored borders. Use <b>Crop</b> on a clip to choose which part shows.' : 'Whole clip is shown; any empty space is filled with the background below.'}</div></div><h3>Canvas size</h3><div class="acards sec">${Object.entries(ASPECTS).map(([k, [a, b, l]]) => { const s = 30 / Math.max(a, b); return `<button class="acard ${S.aspect === k ? 'on' : ''}" data-aspect="${k}"><i style="width:${a * s}px;height:${b * s}px"></i>${k}<small>${l}</small></button>`; }).join('')}</div>`
       + `<h3>Background</h3><div class="sec"><div class="seg" data-gseg="bg">${[['blur','Blur'],['black','Black'],['white','White'],['color','Color']].map(([v, l]) => `<button data-val="${v}" class="${S.bg === v ? 'on' : ''}">${l}</button>`).join('')}</div>${S.bg === 'color' ? `<div class="crow" style="margin-top:10px"><span class="hint">Color</span><input type="color" data-g="bgColor" value="${S.bgColor}"></div>` : ''}<div class="hint" style="margin-top:8px">Fills the empty space when a clip doesn't match the canvas shape.</div></div>`
-      + `<h3>Export quality</h3><div class="seg sec" data-gseg="res">${[[720,'720p HD'],[1080,'1080p Full HD']].map(([v, l]) => `<button data-val="${v}" class="${S.res === v ? 'on' : ''}">${l}</button>`).join('')}</div>`
+      + `<h3>Export quality</h3><div class="seg sec" data-gseg="res">${[[720,'720p HD'],[1080,'1080p Full HD'],[1440,'2K'],[2160,'4K']].map(([v, l]) => `<button data-val="${v}" class="${S.res === v ? 'on' : ''}">${l}</button>`).join('')}</div>`
       + `<h3>Frame rate</h3><div class="seg" data-gseg="fps">${[[30,'30 fps'],[60,'60 fps (smoother)']].map(([v, l]) => `<button data-val="${v}" class="${(S.fps || 30) === v ? 'on' : ''}">${l}</button>`).join('')}</div>`;
   }
   p.innerHTML = `<div class="sheet-h"><b>${esc(tName)}</b><button class="btn pri" data-act="closeSheet" title="Done">✓</button></div>` + h;
@@ -1081,7 +1084,7 @@ function renderProps(){
   } else if (sel.type === 'clip'){
     const m = media[o.mediaId], vid = m.type === 'video', nl = (o.logos || []).length;
     h = `<div class="phead"><span class="dot" style="background:var(--vid)"></span><span class="t">${esc(m.name)}</span><small>${fmt(clipLen(o))}</small></div>${acts()}`
-      + `<div class="acts"><button class="btn sm" data-pa="crop">${ic('crop')}Crop</button><button class="btn sm" data-pa="logo">${ic('x')}Remove logo${nl ? ` (${nl})` : ''}</button>${vid ? `<button class="btn sm" data-pa="freeze">${ic('snow')}Freeze frame</button><button class="btn sm" data-pa="extract">${ic('wave')}Extract audio</button>` : ''}</div>`
+      + `<div class="acts"><button class="btn sm" data-pa="crop">${ic('crop')}Crop</button><button class="btn sm" data-pa="logo">${ic('x')}Remove logo${nl ? ` (${nl})` : ''}</button>${vid ? `<button class="btn sm" data-pa="freeze">${ic('snow')}Freeze frame</button><button class="btn sm" data-pa="extract">${ic('wave')}Extract audio</button>` : ''}<button class="btn sm" data-pa="enhance">✨ Enhance</button>${vid ? `<button class="btn sm" data-pa="upscale">🔍 AI Upscale</button>` : ''}</div>`
       + row('Framing', seg('fit', [['auto','Canvas default'],['fit','Fit'],['fill','Fill (no bars)']], o.fit || 'auto'))
       + (vid ? row('Speed', seg('speed', [[.25,'.25x'],[.5,'.5x'],[1,'1x'],[1.5,'1.5x'],[2,'2x'],[3,'3x'],[4,'4x']], o.speed, 'num'), 'secSpeed') + `<div id="secVol">${krange(o, 'volume', 0, 2, .05, 'Volume', 1)}</div>`
              + `<div class="two">${row('Sound fade in', range('afIn', 0, 3, .1, o.afIn || 0))}${row('Sound fade out', range('afOut', 0, 3, .1, o.afOut || 0))}</div>`
@@ -1176,6 +1179,8 @@ $('#props').addEventListener('click', e => {
   if (pa === 'kfPrev') return kfJump(-1); if (pa === 'kfNext') return kfJump(1);
   if (pa === 'kfClear'){ push(); for (const p2 in (o.kf || {})) o[p2] = kv(o, p2, selLocal(), KF_DEF[p2]); o.kf = {}; return refreshAll(); }
   if (pa === 'gradeAuto') return autoColor(o);
+  if (pa === 'enhance'){ push(); o.grade = { ...GRADE_DEF, ...(o.grade || {}), ...ENHANCE }; toast('✨ Enhanced: sharper, clearer, richer colors. Fine-tune it in Color grading.'); proOpen.color = true; return refreshAll(); }
+  if (pa === 'upscale') return openUpscale(o);
   if (pa === 'silence') return removeSilences([o], { minPause:smartPause });
   if (pa === 'silenceAll') return removeSilences(S.clips.slice(), { minPause:smartPause });
   if (pa === 'scenes') return sceneDetectCmd(o);
@@ -2231,6 +2236,7 @@ function openExport(){
   else dlg.innerHTML = `<h2>Export video</h2><div class="hint">Your video is rendered right here on your computer — nothing is uploaded.</div>
     <div class="kv"><span>Size</span><span>${w} × ${h} (${S.res}p, ${S.aspect})</span><span>Length</span><span>${fmt(T)}</span><span>Format</span><span>${mime.startsWith('video/mp4') ? 'MP4' : 'WebM'} · ${S.fps || 30} fps</span><span>Time needed</span><span>about ${fmt(T)} (plays through once)</span></div>
     ${hasR ? `<div class="prow"><label>What to export</label><div class="seg" id="xRange"><button data-val="range" class="on">In–Out only (${fmt(rA)}–${fmt(rB)})</button><button data-val="all">Whole video</button></div></div>` : ''}
+    <div class="prow"><label>Resolution</label><div class="seg" id="xRes">${[[720,'720p'],[1080,'1080p'],[1440,'2K'],[2160,'4K']].map(([v, l]) => `<button data-val="${v}" class="${S.res === v ? 'on' : ''}">${l}</button>`).join('')}</div></div>
     <div class="prow"><label>Quality</label><div class="seg" id="xQual"><button data-val="std">Standard</button><button data-val="high" class="on">High</button><button data-val="max">Maximum</button></div></div>
     <div class="hint">Keep this tab open and visible while it renders.</div>
     <div class="row"><button class="btn" data-x="close">Cancel</button><button class="btn pri" data-x="go">${ic('export')}Start export</button></div>`;
@@ -2239,7 +2245,7 @@ function openExport(){
 function closeExport(){ $('#mExport').classList.remove('on'); }
 $('#bExport').onclick = openExport;
 dlg.addEventListener('click', e => {
-  const sb = e.target.closest('#xRange button, #xQual button'); if (sb){ sb.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === sb)); return; }
+  const sb = e.target.closest('#xRange button, #xQual button, #xRes button'); if (sb && sb.closest('#xRes')){ S.res = +sb.dataset.val; const [w2, h2] = canvasSize(), sz = dlg.querySelector('.kv span:nth-child(2)'); if (sz) sz.textContent = `${w2} × ${h2} (${S.res >= 2160 ? '4K' : S.res >= 1440 ? '2K' : S.res + 'p'}, ${S.aspect})`; } if (sb){ sb.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === sb)); return; }
   const x = e.target.closest('[data-x]')?.dataset.x;
   if (x === 'close') closeExport();
   else if (x === 'go') startExport();
@@ -2254,7 +2260,7 @@ async function primeFrame(){
 async function startExport(){
   const useR = !!($('#xRange') && $('#xRange .on') && $('#xRange .on').dataset.val === 'range'), q = ($('#xQual .on') || {}).dataset ? $('#xQual .on').dataset.val : 'high';
   const rStart = useR ? (S.inP || 0) : 0, rEnd = useR ? (S.outP != null ? S.outP : totalDur()) : totalDur();
-  const vbr = (S.res >= 1080 ? 10e6 : 6e6) * (q === 'max' ? 2 : q === 'std' ? .6 : 1);
+  const vbr = (S.res >= 2160 ? 40e6 : S.res >= 1440 ? 20e6 : S.res >= 1080 ? 10e6 : 6e6) * (q === 'max' ? 2 : q === 'std' ? .6 : 1);
   applyCanvasSize(true);
   const mime = pickMime(); ensureAudio(); if (AC && AC.state === 'suspended') await AC.resume().catch(() => {});
   const stream = cv.captureStream(S.fps || 30), tracks = [...stream.getVideoTracks()];
@@ -3194,6 +3200,7 @@ Actions you can use:
 {"do":"look","clip":N,"name":"${Object.keys(LOOKS).join('|')}"}
 {"do":"color","clip":N,"exposure":-100..100,"contrast":-100..100,"temperature":-100..100,"saturation":-100..100}
 {"do":"auto_color","clip":N}
+{"do":"enhance","clip":N}  (sharpen and improve quality)
 {"do":"filter","clip":N,"name":"${Object.keys(FILTERS).join('|')}"}
 {"do":"motion","clip":N,"type":"in|out|left|right|none"}
 {"do":"text","text":"...","start":S,"seconds":S,"position":"top|middle|bottom","style":"${TEXT_PRESETS.map(t => t.name).join('|')}"}
@@ -3234,6 +3241,7 @@ async function runAction(x){
     case 'look': { const L = LOOKS[x.name] ? x.name : 'cinematic'; return many(c => { c.grade = { ...GRADE_DEF, ...LOOKS[L][1] }; }, `${LOOKS[L][0]} look`); }
     case 'color': return many(c => { const g = c.grade = { ...GRADE_DEF, ...(c.grade || {}) }; if (x.exposure != null) g.exp = clamp(num(x.exposure, 0), -100, 100); if (x.contrast != null) g.con = clamp(num(x.contrast, 0), -100, 100); if (x.temperature != null) g.temp = clamp(num(x.temperature, 0), -100, 100); if (x.saturation != null) g.sat = clamp(num(x.saturation, 0), -100, 100); }, 'Color adjusted');
     case 'auto_color': { const cs = clipsOf(x.clip); for (const c of cs) await autoColor(c); return `Auto color on ${cs.length} clip${cs.length === 1 ? '' : 's'}`; }
+    case 'enhance': return many(c => { c.grade = { ...GRADE_DEF, ...(c.grade || {}), ...ENHANCE }; }, 'Enhanced (sharper, clearer)');
     case 'filter': { const f = FILTERS[x.name] ? x.name : 'vivid'; return many(c => { c.filter = f; }, `${FILTERS[f][0]} filter`); }
     case 'motion': { const mo = ['in','out','left','right','none'].includes(x.type) ? x.type : 'in'; return many(c => { c.motion = mo; }, `Motion: ${mo}`); }
     case 'text': { const pre = TEXT_PRESETS.find(p => p.name.toLowerCase() === String(x.style || '').toLowerCase()); const y = x.position === 'top' ? .14 : x.position === 'bottom' ? .85 : pre && pre.p.y != null ? pre.p.y : .5; const t0 = clamp(num(x.start, 0), 0, Math.max(0, T - .2)); const n = { ...TEXT_BASE, ...(pre ? pre.p : {}), text:String(x.text || 'Text').slice(0, 120), y, id:uid(), start:t0, dur:clamp(num(x.seconds, 3), .3, Math.max(.3, T - t0 || 3)) }; S.texts.push(n); document.fonts?.load(`800 40px "${n.font}"`).then(scheduleRender).catch(() => {}); return `Text “${n.text}” at ${fmt(t0)}`; }
@@ -3277,6 +3285,60 @@ async function aiPull(model){
   try { await AIB.pull(model); ai.model = model; try { localStorage.setItem('easycut.aiModel', model); } catch (e) {} toast(`${model} is ready — ask it to edit your video`); }
   catch (e) { toast('Download failed: ' + e.message, 5000); }
   off(); ai.pulling = null; ai.more = false; await aiRefresh(); renderPanel();
+}
+
+/* ---------- Enhance + AI Upscale ---------- */
+const ENHANCE = { sharp:45, vib:18, con:8, hi:-12, sh:12, bl:-4 };
+const UPB = DESK && DESK.upscale ? DESK.upscale : null;
+const up = { height:2160, mode:'anime', busy:false };
+function upModal(){ let m = $('#mUp'); if (!m){ m = document.createElement('div'); m.className = 'modal'; m.id = 'mUp'; m.innerHTML = '<div class="dlg" id="dlgUp" style="width:460px"></div>'; document.body.appendChild(m); m.addEventListener('click', upClick); } return m; }
+function openUpscale(c){
+  const m = media[c.mediaId]; if (!m || m.type !== 'video') return toast('Select a video clip');
+  up.clip = c.id; const mm = upModal(), d = $('#dlgUp');
+  if (!UPB){ d.innerHTML = `<h2>🔍 AI Upscale</h2><div class="hint" style="margin:8px 0 14px">AI Upscale makes low-resolution videos sharp at 1080p, 2K or 4K using a free AI model on your own graphics card. It works in the <b style="color:var(--text)">EasyCut Windows app</b>.</div><div class="hint">Here you can still: tap <b style="color:var(--text)">✨ Enhance</b> to sharpen a clip, and choose <b style="color:var(--text)">2K or 4K</b> when you export.</div><div class="row"><button class="btn" data-u="close">Close</button></div>`; mm.classList.add('on'); return; }
+  const short = Math.min(m.w, m.h) || 720;
+  const opt = (k, v, l, sub, dis) => `<button class="upopt ${up[k] === v ? 'on' : ''}" data-uk="${k}" data-uv="${v}" ${dis ? 'disabled' : ''}><b>${l}</b><small>${sub}</small></button>`;
+  if (up.height <= short) up.height = [1080, 1440, 2160].find(h => h > short) || 2160;
+  d.innerHTML = `<h2>🔍 AI Upscale</h2><div class="hint">${esc(m.name)} · now ${m.w} × ${m.h}. Makes a new, sharper copy of the video and swaps it into your project.</div>
+    <h3 style="margin:14px 0 6px;font-size:13px">Make it</h3><div class="upgrid">${opt('height', 1080, '1080p', 'Full HD', short >= 1080)}${opt('height', 1440, '2K', '1440p', short >= 1440)}${opt('height', 2160, '4K', '2160p', short >= 2160)}</div>
+    <h3 style="margin:14px 0 6px;font-size:13px">Type of video</h3><div class="upgrid">${opt('mode', 'anime', '🎨 Cartoon / AI video', 'Fast AI · best for animation')}${opt('mode', 'real', '📷 Real camera', 'Strong AI · slower')}${opt('mode', 'quick', '⚡ Quick', 'No AI · seconds')}</div>
+    <div class="hint" style="margin-top:12px">${m.duration > 60 ? `⚠️ This clip is ${Math.round(m.duration / 60)} min long — AI upscaling can take a long time. Trim it first, or use Quick.<br>` : ''}The first time, EasyCut downloads the free tools (about 100 MB). Uses your graphics card (Vulkan); if it can't, a standard upscale is used.</div>
+    <div class="row"><button class="btn" data-u="close">Cancel</button><button class="btn pri" data-u="go">🔍 Upscale</button></div>`;
+  mm.classList.add('on');
+}
+function upClick(e){
+  const o = e.target.closest('[data-uk]'); if (o && !o.disabled){ up[o.dataset.uk] = o.dataset.uk === 'height' ? +o.dataset.uv : o.dataset.uv; const c = getObj('clip', up.clip); if (c) openUpscale(c); return; }
+  const u = e.target.closest('[data-u]')?.dataset.u;
+  if (u === 'close'){ $('#mUp').classList.remove('on'); }
+  else if (u === 'cancel'){ UPB.cancel(); }
+  else if (u === 'go') runUpscale();
+}
+async function runUpscale(){
+  const c = getObj('clip', up.clip), m = c && media[c.mediaId]; if (!m || up.busy) return;
+  up.busy = true; const d = $('#dlgUp'), t0 = Date.now();
+  const STAGES = { setup:'Getting the free tools ready', frames:'Step 1 of 3 · Reading frames', ai:'Step 2 of 3 · AI upscaling', encode:'Step 3 of 3 · Saving', upscale:'Upscaling' };
+  const show = p => { d.innerHTML = `<h2>🔍 Upscaling to ${up.height >= 2160 ? '4K' : up.height >= 1440 ? '2K' : '1080p'}</h2><div class="hint">${esc(STAGES[p.stage] || 'Working')}</div><div class="bar" style="margin:12px 0 6px"><i style="width:${(p.pct || 0).toFixed(1)}%"></i></div><div class="crow"><span class="hint">${esc(p.msg || '')}</span><b>${Math.round(p.pct || 0)}%</b></div><div class="row"><button class="btn" data-u="cancel">Cancel</button></div>`; };
+  show({ stage:'setup', pct:0, msg:'Starting…' });
+  const off = UPB.onProgress(show);
+  let r;
+  try {
+    const opts = { mode:up.mode, height:up.height, name:m.name };
+    if (m.path) opts.input = m.path; else opts.data = await (await fetch(m.url)).arrayBuffer();
+    r = await UPB.run(opts);
+  } catch (e) { r = { ok:false, error:e.message }; }
+  off(); up.busy = false;
+  if (!r.ok){ if (r.cancelled){ $('#mUp').classList.remove('on'); return toast('Upscale cancelled'); } d.innerHTML = `<h2>Upscale failed</h2><div class="hint" style="margin:8px 0">${esc(r.error || 'Unknown error')}</div><div class="row"><button class="btn" data-u="close">Close</button></div>`; return; }
+  d.innerHTML = `<h2>Adding the sharp video…</h2><div class="bar"><i style="width:100%"></i></div>`;
+  const buf = await DESK.readFile(r.path), nm = r.path.split(/[\\/]/).pop();
+  const nmed = await importOne(new File([buf], nm, { type:'video/mp4' }), undefined, r.path);
+  if (!nmed){ d.innerHTML = `<h2>Saved, but could not load it</h2><div class="hint">${esc(r.path)}</div><div class="row"><button class="btn" data-u="close">Close</button></div>`; return; }
+  for (let i = 0; i < 100 && nmed.loading; i++) await new Promise(res => setTimeout(res, 100));
+  push(); let n = 0; for (const cl of S.clips) if (cl.mediaId === m.id){ cl.mediaId = nmed.id; n++; }
+  if (S.res < up.height){ S.res = up.height; applyCanvasSize(); }
+  refreshAll(); seekPreview();
+  const mins = (Date.now() - t0) / 60000;
+  d.innerHTML = `<h2>✅ Done — ${r.width} × ${r.height}</h2><div class="hint" style="margin:8px 0">${r.method === 'ai' ? 'AI upscaled' : 'Upscaled'} from ${esc(r.from)} in ${mins < 1 ? Math.round(mins * 60) + ' s' : mins.toFixed(1) + ' min'}. ${n} clip${n === 1 ? '' : 's'} now use the sharp version, and export is set to ${up.height >= 2160 ? '4K' : up.height >= 1440 ? '2K' : '1080p'}.</div>${r.note ? `<div class="hint" style="color:#fbbf24;margin-bottom:8px">${esc(r.note)}</div>` : ''}<div class="hint">Also saved as: ${esc(r.path)}</div><div class="row"><button class="btn" data-u="folder">Show file</button><button class="btn pri" data-u="close">OK</button></div>`;
+  d.querySelector('[data-u="folder"]').onclick = () => DESK.showInFolder(r.path);
 }
 
 /* ---------- glue ---------- */

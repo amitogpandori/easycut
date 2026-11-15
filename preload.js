@@ -10,6 +10,12 @@ contextBridge.exposeInMainWorld('easycutDesktop', {
   openProjectPath: (p) => ipcRenderer.invoke('open-project-path', p),
   writeFile: (filePath, data) => ipcRenderer.invoke('write-file', { filePath, data }),
   readFile: (filePath) => ipcRenderer.invoke('read-file', filePath),
+  upscale: {
+    status: () => ipcRenderer.invoke('up-status'),
+    run: (opts) => ipcRenderer.invoke('up-run', opts),
+    cancel: () => ipcRenderer.invoke('up-cancel'),
+    onProgress: (cb) => { const f = (e, d) => cb(d); ipcRenderer.on('up-progress', f); return () => ipcRenderer.removeListener('up-progress', f); },
+  },
   ai: {
     status: () => ipcRenderer.invoke('ai-status'),
     start: () => ipcRenderer.invoke('ai-start'),

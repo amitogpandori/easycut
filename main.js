@@ -167,6 +167,7 @@ app.whenReady().then(() => {
   });
   ipcMain.handle('ai-get-ollama', () => shell.openExternal('https://ollama.com/download/windows'));
 
+  require('./upscale').register(ipcMain, () => win);
   createWindow();
   app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
 });

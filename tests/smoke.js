@@ -124,6 +124,14 @@ function check(cond, msg) {
       check(/reply/.test(r), 'real AI reply: ' + String(r).slice(0, 60));
     }
     await page.click('[data-tab="media"]');
+
+    // Upscale: downloads the real free tools on this Windows machine and upscales a test clip
+    const upQ = await page.evaluate((f) => window.easycutDesktop.upscale.run({ input: f, mode: 'quick', height: 1080, outDir: f.replace(/[\\/][^\\/]+$/, '') + '/../upscaled' }), media('clip2.mp4'));
+    check(upQ.ok && upQ.height === 1080 && fs.existsSync(upQ.path) && fs.statSync(upQ.path).size > 20000, `quick upscale ${upQ.from || ''} → ${upQ.width}×${upQ.height} ${upQ.error || ''}`);
+    const upA = await page.evaluate((f) => window.easycutDesktop.upscale.run({ input: f, mode: 'anime', height: 1440, outDir: f.replace(/[\\/][^\\/]+$/, '') + '/../upscaled' }), media('clip2.mp4'));
+    check(upA.ok && upA.height === 1440 && fs.existsSync(upA.path), `AI upscale → ${upA.width}×${upA.height} via ${upA.method}${upA.note ? ' (' + upA.note + ')' : ''} ${upA.error || ''}`);
+    const ust = await page.evaluate(() => window.easycutDesktop.upscale.status());
+    check(ust.ffmpeg && ust.ai, 'upscale tools installed on first use ' + JSON.stringify(ust));
     await page.keyboard.press('Home'); await page.keyboard.press('Space'); await page.waitForTimeout(1500); await page.keyboard.press('Space');
     check(!(await page.textContent('#tc')).startsWith('0:00.0'), 'playback');
     await page.click('#bExport');
