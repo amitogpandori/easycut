@@ -3,6 +3,7 @@
 An easy, InShot-style video editor for Windows, made for vloggers and reel makers.
 
 ## Features
+- **Android app** (APK) with a phone layout: preview, timeline with a centred playhead you swipe, bottom toolbar, tools and clip settings slide up as sheets; videos save to Documents/EasyCut with a share sheet (Photos, WhatsApp, Instagram…); back button works
 - **InShot-style interface**: start screen, big preview, a bottom toolbar of tools (Media, Reel, Templates, Text, Sticker, GIF, Logo, Music, PIP, Filter, Canvas) plus one-tap clip tools (Split, Speed, Volume, Crop, Transition, Freeze, Rotate, Flip, Copy, Delete)
 - **GIFs from the internet** (GIPHY): search GIFs and see-through animated stickers, drop them on your video. Needs a free GIPHY API key (developers.giphy.com → Create an App → API). Your own .gif / animated .webp files work too
 - **Logos**: save your logos, make a text logo, add it to the whole video in any corner with size and opacity
@@ -31,7 +32,9 @@ An easy, InShot-style video editor for Windows, made for vloggers and reel maker
 - Export MP4 at 720p or 1080p, 30 or 60 fps, all on your own PC
 
 ## Download
-Go to **Releases** and download `EasyCut-Setup-x.y.z.exe`, then run it.
+**Android:** on your phone open the latest Release and download `EasyCut-x.y.z.apk`, open it and tap Install (allow installing from your browser/Files the first time). It's signed with the same key every time, so new versions install over the old one.
+
+**Windows:** Go to **Releases** and download `EasyCut-Setup-x.y.z.exe`, then run it.
 Windows may show "Windows protected your PC" because the app isn't code-signed yet:
 click **More info → Run anyway**.
 

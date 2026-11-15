@@ -275,26 +275,50 @@ body.is-desk .desk{display:inline-flex!important}
 @media (max-height:640px){ body{grid-template-rows:48px minmax(0,1fr) 180px 60px} .tab svg.i{width:16px;height:16px} }
 @media (max-width:1560px){.tab{min-width:56px;font-size:10.5px}.rail{padding:6px 6px}}
 @media (max-width:1100px){.ws{grid-template-columns:0 minmax(0,1fr) 260px}body.sheet .ws{grid-template-columns:250px minmax(0,1fr) 260px}}
+/* ---------- phone layout (InShot style): preview, timeline, toolbar; panels slide up as bottom sheets ---------- */
 @media (max-width:860px){
-  body{display:block;height:auto;overflow:auto}
-  .ws{display:flex;flex-direction:column}
-  .stage{order:1;height:56vh}
-  .rail{position:sticky;bottom:0;z-index:20}
-  body:not(.sheet) .panel{display:none}
-  .panel{order:3;max-height:300px;border:0}
-  .props{order:4;border:0;border-top:1px solid var(--line)}
-  .tl{height:260px}
-  .pname{width:120px}
-  .toast{bottom:20px}
-  body{overflow-x:hidden}
-  .top{gap:4px;padding:0 8px}
-  .logo{font-size:0}.logo .mk{font-size:14px}
-  .transport{flex-wrap:wrap}
-  .tc{min-width:0;width:100%;text-align:center}
+  body{grid-template-rows:auto minmax(0,1fr) 196px 64px;height:100vh;height:100dvh;overflow:hidden}
+  .top{gap:2px;padding:6px 8px;padding-top:max(6px,env(safe-area-inset-top));min-height:48px}
+  .logo{display:none}
+  .pname{width:auto;flex:1;min-width:0;font-weight:700}
+  .top .sp{display:none}
+  #bReel{padding:0;width:38px;height:34px;font-size:0;justify-content:center}#bReel::before{content:'✨';font-size:17px}
+  #bExport{padding:8px 12px}
+  .desk{display:none!important}
+  .ws{display:block;position:relative;min-height:0}
+  .stage{height:100%}
+  .pv{padding:6px}
+  .transport{padding:2px 6px 6px;gap:2px}
+  .tc{min-width:0;font-size:12px}
+  #bStart,#bEnd,#bBack,#bFwd{display:none}
   .transport>div:last-child{min-width:0!important}
-  .tlbar{flex-wrap:wrap}
-  .zoom input{width:70px}
+  #bShot,#bSplit2{padding:6px 8px;font-size:12px}
+  .play{width:42px;height:42px}
+  .panel,.props{position:fixed;left:0;right:0;bottom:calc(64px + env(safe-area-inset-bottom));max-height:58vh;z-index:40;border:0;border-top:1px solid var(--line);border-radius:18px 18px 0 0;box-shadow:0 -12px 40px #000c;padding:0 14px 16px;overflow-y:auto}
+  body:not(.sheet) .panel{display:none}
+  body.sheet .props{display:none}
+  body:not(.has-sel) .props{display:none}
+  .props{padding-top:0}
+  .mclose{display:flex!important}
+  .tl{min-height:0}
+  .tlbar{padding:4px 6px}
+  .tlbar .btn.sm{padding:5px 7px;font-size:12px}
+  .zoom input,#zFit{display:none}
+  .tllabels{width:30px}
+  .tll{font-size:0;padding:0 10px}
+  .tlscroll{-webkit-overflow-scrolling:touch}
+  body.mob .item:not(.sel){touch-action:pan-x}
+  .rail{padding:2px 6px;padding-bottom:max(2px,env(safe-area-inset-bottom));grid-row:4}
+  .tab{min-width:56px;height:56px;font-size:10px}
+  .toast{bottom:calc(76px + 58vh)}
+  .htiles{grid-template-columns:1fr 1fr;gap:10px}
+  .home-in{padding:28px 16px}
+  .htile{min-height:120px;padding:16px 12px}
+  .st-top .seg{width:auto!important}
+  .studio .st-top{padding-top:max(10px,env(safe-area-inset-top))}
+  .dlg{padding:16px}
 }
+.mclose{display:none;position:sticky;top:0;z-index:6;justify-content:space-between;align-items:center;background:var(--panel);padding:10px 0 8px;margin-bottom:6px;border-bottom:1px solid var(--line)}
 </style>
 </head>
 <body>
@@ -470,6 +494,7 @@ const ovEls = {};            // overlay item id -> <video>
 const duckState = {};        // audio item id -> current duck factor
 let cropMode = null, cropView = null, ovBoxes = [], ovHandle = null, projPath = '';
 const DESK = window.easycutDesktop || null;
+const CAP = window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform() ? window.Capacitor : null;
 let sel = null;              // {type:'clip'|'text'|'audio', id}
 let playT = 0, playing = false, exporting = null, lastNow = 0, stalled = false;
 let pps = 60, tab = 'media', voice = null, voN = 0, dlCap = null;
@@ -972,6 +997,7 @@ const chk = (k, l, v, colorK, colorV) => `<div class="crow"><label class="chk"><
 const acts = () => `<div class="acts"><button class="btn sm" data-pa="split">${ic('split')}Split</button><button class="btn sm" data-pa="dup">${ic('copy')}Duplicate</button><button class="btn sm danger" data-pa="del">${ic('trash')}Delete</button></div>`;
 function renderProps(){
   const p = $('#props'), o = getSel(); let h = '';
+  document.body.classList.toggle('has-sel', !!o || !!cropMode);
   if (cropMode){
     const c = getObj('clip', cropMode.clipId);
     if (cropMode.kind === 'crop'){
@@ -1056,6 +1082,7 @@ function renderProps(){
       + row('Starts at (s)', `<input class="inp" type="number" step="0.1" min="0" data-k="start" data-t="num" value="${o.start.toFixed(1)}">`)
       + `<button class="btn sm full" data-pa="muteClips">Mute the original clip sound</button>`;
   }
+  if (o || cropMode) h = `<div class="mclose"><b>Edit</b><button class="btn sm pri" data-pa="mclose">✓ Done</button></div>` + h;
   p.innerHTML = h;
 }
 function setProp(o, k, v){
@@ -1079,6 +1106,7 @@ $('#props').addEventListener('input', e => {
 $('#props').addEventListener('click', e => {
   const o = getSel();
   const pa = e.target.closest('[data-pa]')?.dataset.pa;
+  if (pa === 'mclose'){ if (cropMode) return exitBoxMode(); return setSel(null); }
   if (pa === 'boxDone') return exitBoxMode();
   if (pa === 'fxWhole'){ push(); o.start = 0; o.dur = Math.max(.5, videoEnd() || totalDur()); return refreshAll(); }
   if (pa === 'addFont') return $('#fileFont').click();
@@ -1140,7 +1168,27 @@ function extractAudio(){
   o.volume = 0; S.audios.push(a); sel = { type:'audio', id:a.id }; ensureWave(m);
   refreshAll(); toast('Audio moved to its own track — you can now trim or move it separately');
 }
+/* Android app: write to Documents/EasyCut in pieces, then offer the share sheet (Photos, WhatsApp, Drive, Instagram…) */
+function b64(buf){ let s2 = '', u = new Uint8Array(buf); for (let i = 0; i < u.length; i += 0x8000) s2 += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(s2); }
+async function capSave(blob, name){
+  const FS = CAP.Plugins.Filesystem, SH = CAP.Plugins.Share, CH = 3 * 1024 * 1024;
+  const write = async dir => {
+    const path = 'EasyCut/' + name;
+    for (let off = 0; off < blob.size; off += CH){
+      progress('Saving to your phone…', off / blob.size * 100, name);
+      const data = b64(await blob.slice(off, off + CH).arrayBuffer());
+      if (off === 0) await FS.writeFile({ path, data, directory:dir, recursive:true }); else await FS.appendFile({ path, data, directory:dir });
+    }
+    return (await FS.getUri({ path, directory:dir })).uri;
+  };
+  let uri, where = 'Documents/EasyCut';
+  try { uri = await write('DOCUMENTS'); } catch (e) { uri = await write('CACHE'); where = ''; }
+  progressDone();
+  toast(where ? `Saved to ${where}` : 'Ready to share', 4000);
+  try { await SH.share({ title:name, url:uri, dialogTitle:'Save or share your video' }); } catch (e) {}
+}
 async function saveBlob(blob, name){
+  if (CAP && CAP.Plugins && CAP.Plugins.Filesystem){ try { await capSave(blob, name); } catch (e) { progressDone(); toast('Could not save: ' + (e.message || e), 5000); } return; }
   if (DESK){
     try { const r = await DESK.saveFile(name, await blob.arrayBuffer()); if (r && r.ok){ toast('Saved to ' + r.path, 5000); DESK.showInFolder(r.path); } }
     catch (e) { toast('Could not save: ' + e.message, 5000); }
@@ -1721,6 +1769,13 @@ cv.addEventListener('wheel', e => {
 
 /* ---------- timeline ---------- */
 const tlScroll = $('#tlScroll'), tlInner = $('#tlInner');
+const isMob = () => window.matchMedia('(max-width:860px)').matches;
+let progUntil = 0;
+function syncMobPad(){ const pad = isMob() ? Math.round(tlScroll.clientWidth / 2) : 0; tlInner.style.marginLeft = pad + 'px'; tlInner.style.marginRight = pad + 'px'; document.body.classList.toggle('mob', isMob()); }
+tlScroll.addEventListener('scroll', () => {
+  if (!isMob() || playing || drag || performance.now() < progUntil) return;
+  playT = clamp(tlScroll.scrollLeft / pps, 0, totalDur()); seekPreview();
+}, { passive:true });
 tlScroll.addEventListener('scroll', () => { $('#tlLabels').scrollTop = tlScroll.scrollTop; });
 const zoomToPps = z => 8 * Math.pow(400 / 8, z / 100);
 const ppsToZoom = p => Math.log(p / 8) / Math.log(400 / 8) * 100;
@@ -1768,6 +1823,7 @@ function renderTimeline(){
 function updateTimeUI(follow){
   $('#playhead').style.left = playT * pps + 'px';
   $('#tc').innerHTML = `<b>${fmt(playT)}</b> / ${fmt(totalDur())}`;
+  if (isMob()){ const want = Math.round(playT * pps); if (Math.abs(tlScroll.scrollLeft - want) > 1 && !(drag && drag.mode === 'scrub')){ progUntil = performance.now() + 120; tlScroll.scrollLeft = want; } return; }
   if (follow){ const x = playT * pps; tlScroll.scrollLeft = Math.max(0, x - tlScroll.clientWidth / 2); }
 }
 function scrollToPlayhead(){ const x = playT * pps; if (x < tlScroll.scrollLeft || x > tlScroll.scrollLeft + tlScroll.clientWidth - 40) tlScroll.scrollLeft = Math.max(0, x - 80); }
@@ -1787,9 +1843,11 @@ tlInner.addEventListener('pointerdown', e => {
   if (it){
     const type = it.dataset.type, id = it.dataset.id, o = getObj(type, id); if (!o) return;
     const edge = e.target.classList.contains('h-l') ? 'l' : e.target.classList.contains('h-r') ? 'r' : null;
+    if (isMob() && e.pointerType !== 'mouse' && (!sel || sel.id !== id) && !edge){ if (playing) pause(); setSel(type, id); return; }
     if (!sel || sel.id !== id) setSel(type, id);
     drag = { mode:edge ? 'trim' : 'move', edge, type, id, x0:x, moved:false, orig:{ ...o }, el:tlInner.querySelector(`.item[data-id="${id}"]`) };
   } else {
+    if (isMob() && e.pointerType !== 'mouse'){ if (playing) pause(); return; }
     if (playing) pause(); if (cropMode){ cropMode = null; renderProps(); } playT = clamp(xToTime(x), 0, totalDur()); seekPreview();
     drag = { mode:'scrub' };
   }
@@ -2578,6 +2636,21 @@ $('#home').addEventListener('click', e => {
 $('#bHome').innerHTML = ic('home'); $('#bHome').onclick = showHome;
 renderHome();
 
+/* ---------- Android back button ---------- */
+if (CAP && CAP.Plugins && CAP.Plugins.App){
+  CAP.Plugins.App.addListener('backButton', () => {
+    if (exporting) return;
+    if ($('#mExport').classList.contains('on')) return closeExport();
+    if ($('#studio').classList.contains('on')) return closeStudio();
+    if (cropMode) return exitBoxMode();
+    if (sheetOpen()) return closeSheet();
+    if (sel) return setSel(null);
+    if (!$('#home').classList.contains('on')) return showHome();
+    CAP.Plugins.App.exitApp();
+  });
+  document.body.classList.add('is-android');
+}
+
 /* ---------- glue ---------- */
 function refreshAll(){
   applyCanvasSize();
@@ -2585,7 +2658,8 @@ function refreshAll(){
   renderPanel(); renderProps(); renderTimeline(); renderFrame(); updUndo();
 }
 $('#pname').addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); e.stopPropagation(); });
-window.addEventListener('resize', () => { applyCanvasSize(); renderTimeline(); });
+window.addEventListener('resize', () => { syncMobPad(); applyCanvasSize(); renderTimeline(); });
+syncMobPad();
 if (window.ResizeObserver) new ResizeObserver(() => applyCanvasSize()).observe($('#pv'));
 window.addEventListener('beforeunload', e => { if (S.clips.length || S.overlays.length){ e.preventDefault(); e.returnValue = ''; } });
 if (window.claude && typeof window.claude.use === 'function'){ window.claude.use('downloads').then(d => { dlCap = d; }).catch(() => {}); }
