@@ -1909,15 +1909,15 @@ function tick(now){
   if (!playing) return;
   const dt = Math.min(.1, (now - lastNow) / 1000); lastNow = now;
   const total = exporting ? exporting.end : totalDur(), ca = clipAt(playT);
-  let el = null, want = 0, st = false;
+  let el = null, want = 0, st = false; const master = exporting ? null : masterAudio();
   if (ca){ const m = media[ca.c.mediaId]; if (m && m.type === 'video'){ el = elFor(ca.c); want = ca.c.in + ca.local * ca.c.speed; } }
   if (el){
     if (el.playbackRate !== ca.c.speed) el.playbackRate = ca.c.speed;
     const L = clipLen(ca.c); let f = 1;
     if (ca.c.afIn > 0) f *= clamp(ca.local / ca.c.afIn, 0, 1); if (ca.c.afOut > 0) f *= clamp((L - ca.local) / ca.c.afOut, 0, 1);
     setVol(el, kv(ca.c, 'volume', ca.local, 1) * f * (S.mute && S.mute.video ? 0 : 1), ca.c.aeff);
-    if (el.seeking || el.readyState < 2) st = true;
-    else if (Math.abs(el.currentTime - want) > .35 && want < el.duration - .05){ el.currentTime = want; st = true; }
+    if (el.seeking || el.readyState < 2) st = !master;
+    else if (Math.abs(el.currentTime - want) > .35 && want < el.duration - .05){ el.currentTime = want; st = !master; }
     if (!st && el.paused && want < ca.c.out - .04) el.play().catch(() => {});
   }
   for (const m of Object.values(media)) if (m.type === 'video') for (const e2 of [m.el, m.el2]) if (e2 && e2 !== el && !e2.paused) e2.pause();
@@ -1925,7 +1925,11 @@ function tick(now){
   for (const o of S.overlays){ const m = media[o.mediaId]; if (!m || m.type !== 'video' || !activeOv(o, playT)) continue; const oe = ovEl(o); if (oe.seeking || oe.readyState < 2) st = true; }
   setStalled(st);
   if (!st){
-    if (el && !el.paused && !el.ended && el.readyState >= 2){
+    if (master){
+      // a song is playing: it sets the time, the video follows it (no jumps in the music)
+      const d = master.a.start + (master.el.currentTime - master.a.offset);
+      playT = d >= playT - .05 && d <= playT + .5 ? Math.max(playT, d) : playT + dt;
+    } else if (el && !el.paused && !el.ended && el.readyState >= 2){
       const d = ca.start + (el.currentTime - ca.c.in) / ca.c.speed;
       playT = d >= playT - .05 && d <= playT + .25 ? Math.max(playT, Math.min(d, ca.start + clipLen(ca.c) + .001)) : playT + dt;
     } else playT += dt;
@@ -1936,17 +1940,30 @@ function tick(now){
   if (exporting) updateExportProgress();
   requestAnimationFrame(tick);
 }
+/* keep a playing sound/video in step with the timeline without audible jumps:
+   small drift is corrected by playing a few percent faster/slower; only a big gap causes a jump */
+function syncEl(el, want){
+  const d = el.currentTime - want;
+  if (Math.abs(d) > 1 || el.paused){ if (Math.abs(d) > .08) el.currentTime = want; el.playbackRate = 1; return; }
+  const r = Math.abs(d) < .03 ? 1 : 1 - clamp(d * .8, -.08, .08);
+  if (Math.abs(el.playbackRate - r) > .004) el.playbackRate = r;
+}
+function masterAudio(){
+  if (!playing) return null;
+  for (const a of S.audios){ if (playT < a.start || playT >= a.start + a.dur - .05) continue; const el = audioEls[a.id]; if (el && !el.paused && el.readyState >= 3 && !el.seeking) return { a, el }; }
+  return null;
+}
 function syncOverlays(st){
   for (const o of S.overlays){
     const m = media[o.mediaId]; if (!m || m.type !== 'video') continue;
     const oe = ovEl(o), on = playing && !st && activeOv(o, playT);
-    if (on){ const want = o.offset + (playT - o.start); setVol(oe, kv(o, 'volume', playT - o.start, 0) * (S.hide && S.hide.overlay ? 0 : 1), 'none'); if (Math.abs(oe.currentTime - want) > .3) oe.currentTime = want; if (oe.paused) oe.play().catch(() => {}); }
+    if (on){ const want = o.offset + (playT - o.start); setVol(oe, kv(o, 'volume', playT - o.start, 0) * (S.hide && S.hide.overlay ? 0 : 1), 'none'); syncEl(oe, want); if (oe.paused) oe.play().catch(() => {}); }
     else if (!oe.paused) oe.pause();
   }
   for (const id in ovEls) if (!S.overlays.some(o => o.id === id) && !ovEls[id].paused) ovEls[id].pause();
 }
 function syncAudios(st, dt, ca){
-  const t = playT;
+  const t = playT, master0 = exporting ? null : masterAudio();
   const speech = (ca && media[ca.c.mediaId] && media[ca.c.mediaId].type === 'video' && ca.c.volume > .05)
     || S.overlays.some(o => o.volume > .05 && media[o.mediaId] && media[o.mediaId].type === 'video' && activeOv(o, t))
     || S.audios.some(a => a.voice && t >= a.start && t < a.start + a.dur);
@@ -1958,9 +1975,9 @@ function syncAudios(st, dt, ca){
       let v = kv(a, 'volume', lt, 1) * (S.mute && S.mute.audio ? 0 : 1); if (a.fadeIn > 0) v *= clamp(lt / a.fadeIn, 0, 1); if (a.fadeOut > 0) v *= clamp(rt / a.fadeOut, 0, 1);
       if (a.duck){ const tgt = speech ? .22 : 1, cur = duckState[a.id] == null ? tgt : duckState[a.id]; duckState[a.id] = cur + (tgt - cur) * Math.min(1, dt * 5); v *= duckState[a.id]; }
       setVol(el, v, a.aeff);
-      if (Math.abs(el.currentTime - want) > .3) el.currentTime = want;
+      if (master0 && master0.el === el){ if (Math.abs(el.currentTime - want) > 1) el.currentTime = want; if (el.playbackRate !== 1) el.playbackRate = 1; } else syncEl(el, want);
       if (el.paused) el.play().catch(() => {});
-    } else if (!el.paused) el.pause();
+    } else if (!el.paused){ el.pause(); el.playbackRate = 1; }
   }
   for (const id in audioEls) if (!S.audios.some(a => a.id === id) && !audioEls[id].paused) audioEls[id].pause();
 }
@@ -2419,6 +2436,7 @@ function renderStudio(){
       <div class="vo" style="margin-bottom:8px"><div style="flex:1;min-width:0"><b style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${mus ? '♪ ' + esc(mus.name) : 'No song'}</b><div class="hint">${mus ? 'Cuts follow its beat' : 'Cuts at a steady 120 BPM'}</div></div><button class="btn sm" data-sa="music">${mus ? 'Change' : 'Choose'}</button>${mus ? `<button class="ib" data-sa="nomusic" title="No song">${ic('x')}</button>` : ''}</div>
       ${mus ? `<div class="prow"><div class="crow"><span class="hint">Start song at</span><b id="stMs">${fmt(reel.musicStart)}</b></div><input type="range" data-rs2="musicStart" min="0" max="${Math.max(0, mus.duration - 5).toFixed(1)}" step="0.5" value="${reel.musicStart}" style="width:100%"></div>` : ''}
       <label class="chk"><input type="checkbox" data-rc="keepSound" ${reel.keepSound ? 'checked' : ''}>Keep the clips' own sound${mus ? ' (music goes quieter)' : ''}</label>
+      ${!mus && reel.mode === 'auto' ? `<div class="hint" style="color:#fbbf24">No song picked: the clips' own sound will change at every cut, which can sound choppy or like it's looping. Add a song for a smooth reel.</div>` : ''}
       <h3 style="margin-top:16px">3 · Style</h3>
       <div class="pgrid sec">${REEL_STYLES.map(s => `<button class="preset" data-rsid="${s.id}" style="font-size:12px;font-weight:700;padding:10px 4px;background:linear-gradient(135deg,${s.colors[0]},${s.colors[1]});color:#fff;${reel.style === s.id ? 'box-shadow:0 0 0 3px #fff inset' : ''}">${s.emoji} ${s.name}</button>`).join('')}</div>
       <label class="chk"><input type="checkbox" data-rc="title" ${reel.title ? 'checked' : ''}>Add the style's title (“${esc(style.title.text)}”)</label>
