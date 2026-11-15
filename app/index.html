@@ -41,7 +41,8 @@ svg.i.f{fill:currentColor;stroke:none}
 
 /* workspace */
 .ws{display:grid;grid-template-columns:68px 270px minmax(0,1fr) 300px;min-height:0}
-.rail{background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;gap:4px;padding:8px 6px}
+.rail{background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;gap:4px;padding:8px 6px;overflow-y:auto;min-height:0;scrollbar-width:none}
+.rail::-webkit-scrollbar{display:none}
 .tab{display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 0;border-radius:10px;color:var(--mut);font-size:11px;font-weight:600}
 .tab svg.i{width:20px;height:20px}
 .tab:hover{color:var(--text);background:var(--panel2)}
@@ -138,7 +139,7 @@ input[type=color]{width:34px;height:28px;border:1px solid var(--line);border-rad
 .zoom{display:flex;align-items:center;gap:6px;color:var(--mut)}
 .zoom input{width:120px}
 .tlbody{flex:1;display:flex;min-height:0;overflow:hidden}
-.tllabels{width:86px;flex:none;border-right:1px solid var(--line);padding-top:26px;overflow:hidden}
+.tllabels{width:86px;flex:none;border-right:1px solid var(--line);padding-top:26px;padding-bottom:40px;overflow:hidden}
 .tll{display:flex;align-items:center;gap:6px;padding:0 10px;font-size:11.5px;font-weight:700;color:var(--mut);border-bottom:1px solid #1d2130}
 .tll i{width:8px;height:8px;border-radius:2px}
 .tlscroll{flex:1;overflow:auto;position:relative}
@@ -198,6 +199,16 @@ body.is-desk .desk{display:inline-flex!important}
 .dz.on{display:flex}
 #pool{position:fixed;left:0;top:0;width:2px;height:2px;overflow:hidden;opacity:0;pointer-events:none}
 
+@media (max-height:820px){
+  body{grid-template-rows:50px minmax(0,1fr) 230px}
+  .rail{gap:2px;padding:6px 5px}
+  .tab{padding:5px 0;gap:2px;font-size:10px}
+  .tab svg.i{width:18px;height:18px}
+  .transport{padding:4px 12px 8px}
+  .play{width:40px;height:40px}
+  .pv{padding:10px}
+}
+@media (max-height:640px){ body{grid-template-rows:48px minmax(0,1fr) 200px} .tab svg.i{width:16px;height:16px} }
 @media (max-width:1100px){.ws{grid-template-columns:62px 230px minmax(0,1fr) 260px}}
 @media (max-width:860px){
   body{display:block;height:auto;overflow:auto}
@@ -1467,6 +1478,7 @@ cv.addEventListener('wheel', e => {
 
 /* ---------- timeline ---------- */
 const tlScroll = $('#tlScroll'), tlInner = $('#tlInner');
+tlScroll.addEventListener('scroll', () => { $('#tlLabels').scrollTop = tlScroll.scrollTop; });
 const zoomToPps = z => 8 * Math.pow(400 / 8, z / 100);
 const ppsToZoom = p => Math.log(p / 8) / Math.log(400 / 8) * 100;
 function setPps(p, anchorT){ const old = pps; pps = clamp(p, 8, 400); $('#zoom').value = ppsToZoom(pps); const at = anchorT != null ? anchorT : playT; const offs = at * old - tlScroll.scrollLeft; renderTimeline(); tlScroll.scrollLeft = at * pps - offs; }
