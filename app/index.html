@@ -850,19 +850,44 @@ async function importFiles(files, opt = {}){
   if (firstVis && tab !== 'media' && !opt.audioOnly){ tab = 'media'; renderRail(); renderPanel(); }
   let at = opt.at;
   if (opt.add !== false) push();
-  const showP = list.length > 1;
+  const showP = list.length > 1, newSongs = [], songAt = at != null ? at : (opt.audioAt != null ? opt.audioAt : playT);
   for (let fi = 0; fi < list.length; fi++){
     const f = list[fi];
     if (showP) progress('Importing…', fi / list.length * 100, `${fi + 1} of ${list.length}: ${f.name}`);
     const m = await importOne(f); if (!m) continue;
     if (opt.add !== false){
-      if (m.type === 'audio') addAudio(m.id, at != null ? at : (opt.audioAt != null ? opt.audioAt : playT));
+      if (m.type === 'audio') newSongs.push(m);
       else { addToTimeline(m.id, at, true); if (at != null) at = null; }
     }
   }
   if (showP) progressDone();
   if (wasEmpty && S.clips.length){ playT = 0; fitZoom(); }
+  if (newSongs.length === 1) addAudio(newSongs[0].id, songAt);
+  else if (newSongs.length > 1) askPlaceSongs(newSongs, songAt);
   refreshAll();
+}
+/* several songs added at once: one after another, or all together as layers */
+function placeSongs(list, start, how, fit){
+  push(); let t = start; const end = videoEnd(), ids = [];
+  list.forEach((m, i) => {
+    let st = how === 'seq' ? t : start, dur = m.duration;
+    if (fit && end > 0){ if (st >= end - .3) return; dur = Math.min(dur, end - st); }
+    const a = { id:uid(), mediaId:m.id, start:st, offset:0, dur, volume:how === 'seq' ? 1 : .8, fadeIn:how === 'seq' && i ? .5 : 0, fadeOut:how === 'seq' ? .5 : 0, duck:false, aeff:'none', voice:false };
+    if (fit && end > 0 && st + dur >= end - .05) a.fadeOut = Math.min(1.5, dur / 3);
+    S.audios.push(a); ids.push(a.id); setTimeout(() => ensureBeat(m), 50 + i * 200); t = st + dur;
+  });
+  sel = ids.length ? { type:'audio', id:ids[0] } : sel; refreshAll();
+  toast(how === 'seq' ? `${ids.length} songs added one after another (${fmtLong(t - start)})` : `${ids.length} songs added together`);
+}
+function askPlaceSongs(list, start){
+  const tot = list.reduce((x, m) => x + m.duration, 0), end = videoEnd(), mm = upModal(), d = $('#dlgUp');
+  d.innerHTML = `<h2>🎵 ${list.length} songs added</h2><div class="hint" style="margin:8px 0 12px">${fmtLong(tot)} of music${end > 0 ? ` · your video is ${fmtLong(end)}` : ''}. How should they play?</div>
+    <button class="upopt" style="width:100%;margin-bottom:8px" data-ps="seq"><b>▶ One after another</b><small>${list.map(m => esc(m.name)).join(' → ')}</small></button>
+    <button class="upopt" style="width:100%;margin-bottom:8px" data-ps="layer"><b>🎚️ All together</b><small>Layered, e.g. music + sound effects or ambience</small></button>
+    ${end > 0 ? `<label class="chk"><input type="checkbox" id="psFit" checked> Stop the music when the video ends (with a fade)</label>` : ''}
+    <div class="row"><button class="btn" data-ps="cancel">Cancel</button></div>`;
+  d.querySelectorAll('[data-ps]').forEach(b => b.onclick = () => { const v = b.dataset.ps, fit = !!($('#psFit') && $('#psFit').checked); mm.classList.remove('on'); if (v !== 'cancel') placeSongs(list, start, v, fit); });
+  mm.classList.add('on');
 }
 $('#fileIn').addEventListener('change', e => { importFiles(e.target.files); e.target.value = ''; });
 $('#fileAud').addEventListener('change', e => { importFiles(e.target.files, { audioOnly:true }); e.target.value = ''; });
