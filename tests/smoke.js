@@ -33,7 +33,7 @@ function check(cond, msg) {
     await page.setInputFiles('#fileIn', [media('logo.mp4'), media('photo.png'), media('clip2.mp4'), media('music.mp3')]);
     await waitCount('.vclip', 3); await waitCount('.aitem', 1);
     check(true, 'videos, photo and music imported onto the timeline');
-    await page.locator('.vclip').first.click();
+    await page.locator('.vclip').first().click();
     await page.keyboard.press('Home'); await page.keyboard.press('Shift+ArrowRight'); await page.keyboard.press('s');
     check(await count('.vclip') === 4, 'split at playhead');
     await page.keyboard.press('Control+z');
@@ -49,11 +49,11 @@ function check(cond, msg) {
     await page.click('[data-aspect="16:9"]');
 
     // Crop + logo removal
-    await page.locator('.vclip').first.click();
+    await page.locator('.vclip').first().click();
     await page.click('[data-pa="crop"]'); await page.click('[data-cropr] button[data-val="canvas"]'); await page.click('[data-pa="boxDone"]');
-    check((await page.locator('.vclip').first.innerText()).includes('CROP'), 'crop');
+    check((await page.locator('.vclip').first().innerText()).includes('CROP'), 'crop');
     await page.click('[data-pa="logo"]'); await page.click('[data-pa="boxDone"]');
-    check((await page.locator('.vclip').first.innerText()).includes('LOGO'), 'logo remover');
+    check((await page.locator('.vclip').first().innerText()).includes('LOGO'), 'logo remover');
 
     // Overlay with green screen, layout, template
     await page.click('[data-tab="overlay"]');
