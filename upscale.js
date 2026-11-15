@@ -92,7 +92,8 @@ async function probe(ffmpeg, input) {
   const full = await new Promise((r) => { const ch = spawn(ffmpeg, ['-hide_banner', '-i', input], { windowsHide: true }); let s = ''; ch.stderr.on('data', (d) => (s += d)); ch.on('close', () => r(s)); ch.on('error', () => r('')); });
   const v = full.match(/Stream #.*Video:.*?(\d{2,5})x(\d{2,5})/), d = full.match(/Duration: (\d+):(\d+):([\d.]+)/), f = full.match(/([\d.]+) fps/) || full.match(/([\d.]+) tbr/);
   if (!v) throw new Error('No video found in this file');
-  return { w: +v[1], h: +v[2], dur: d ? +d[1] * 3600 + +d[2] * 60 + +d[3] : 0, fps: f ? +f[1] : 30, audio: /Stream #.*Audio:/.test(full) };
+  const vline = (full.match(/Stream #.*Video:.*/) || [''])[0];
+  return { hdr: /arib-std-b67|smpte2084/.test(vline), hevc: /hevc|h265/i.test(vline), w: +v[1], h: +v[2], dur: d ? +d[1] * 3600 + +d[2] * 60 + +d[3] : 0, fps: f ? +f[1] : 30, audio: /Stream #.*Audio:/.test(full) };
 }
 const even = (n) => Math.max(2, Math.round(n / 2) * 2);
 function timeOf(s) { const m = s.match(/time=(\d+):(\d+):([\d.]+)/g); if (!m) return null; const x = m[m.length - 1].match(/(\d+):(\d+):([\d.]+)/); return +x[1] * 3600 + +x[2] * 60 + +x[3]; }
@@ -161,7 +162,36 @@ async function upscale(opts, sendRaw) {
   return { ok: true, path: output, method, note, width: outW, height: outH, from: `${info.w}×${info.h}` };
 }
 
+// Edit-friendly copy: H.264, a keyframe every half second (fast cuts and seeking), max 1080p and 30 fps,
+// iPhone HDR (HLG / Dolby Vision) converted to normal colors.
+async function optimize(opts, sendRaw) {
+  cancelled = false;
+  const send = (stage, pct, msg) => sendRaw({ stage, pct: Math.max(0, Math.min(100, pct || 0)), msg });
+  const ffmpeg = await ensure('ffmpeg', 'video tools (FFmpeg)', send);
+  let input = opts.input;
+  if (!input && opts.data) { input = path.join(os.tmpdir(), `easycut-opt-src-${Date.now()}${path.extname(opts.name || '.mp4') || '.mp4'}`); await fsp.writeFile(input, Buffer.from(opts.data)); }
+  if (!input || !fs.existsSync(input)) throw new Error('Video file not found');
+  const info = await probe(ffmpeg, input), short = Math.min(info.w, info.h), k = short > 1080 ? 1080 / short : 1;
+  const outW = even(info.w * k), outH = even(info.h * k), fps = Math.min(30, Math.round(info.fps) || 30);
+  const dir = path.join(app.getPath('userData'), 'optimized'); await fsp.mkdir(dir, { recursive: true });
+  const output = path.join(dir, path.basename(input, path.extname(input)) + '-edit-' + Date.now().toString(36) + '.mp4');
+  const tone = info.hdr ? 'zscale=t=linear:npl=100,format=gbrpf32le,zscale=p=bt709,tonemap=tonemap=hable:desat=0,zscale=t=bt709:m=bt709:r=tv,' : '';
+  const total = info.dur || 1;
+  const args = (vf) => ['-y', '-hide_banner', '-i', input, '-vf', vf, '-r', String(fps), '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '18', '-g', String(Math.max(8, Math.round(fps / 2))), '-bf', '0', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', ...(info.audio ? ['-c:a', 'aac', '-b:a', '192k'] : ['-an']), output];
+  const prog = { onData: (s2) => { const t = timeOf(s2); if (t != null) send('optimize', t / total * 100, `Optimizing · ${Math.round(t)} / ${Math.round(total)} s`); } };
+  send('optimize', 0, 'Optimizing…');
+  try { await run(ffmpeg, args(`${tone}scale=${outW}:${outH}:flags=bicubic,format=yuv420p`), prog); }
+  catch (e) { if (e.message === 'cancelled' || !tone) throw e; await run(ffmpeg, args(`scale=${outW}:${outH}:flags=bicubic,format=yuv420p`), prog); }
+  if (opts.data) fsp.rm(input, { force: true }).catch(() => {});
+  send('done', 100, 'Done');
+  return { ok: true, path: output, width: outW, height: outH, from: `${info.w}×${info.h}`, fps, hdr: info.hdr, hevc: info.hevc };
+}
+
 function register(ipcMain, getWin) {
+  ipcMain.handle('opt-run', async (e, opts) => {
+    try { return await optimize(opts, (p) => { const w = getWin(); if (w && !w.isDestroyed()) w.webContents.send('up-progress', p); }); }
+    catch (err) { return { ok: false, cancelled: err.message === 'cancelled', error: err.message }; }
+  });
   ipcMain.handle('up-status', () => ({ ffmpeg: !!tool('ffmpeg'), ai: !!tool('realesrgan-ncnn-vulkan') }));
   ipcMain.handle('up-run', async (e, opts) => {
     try { return await upscale(opts, (p) => { const w = getWin(); if (w && !w.isDestroyed()) w.webContents.send('up-progress', p); }); }
@@ -169,4 +199,4 @@ function register(ipcMain, getWin) {
   });
   ipcMain.handle('up-cancel', () => { cancelled = true; if (current) try { current.kill(); } catch (e) {} return true; });
 }
-module.exports = { register, upscale };
+module.exports = { register, upscale, optimize };

@@ -14,6 +14,7 @@ contextBridge.exposeInMainWorld('easycutDesktop', {
     status: () => ipcRenderer.invoke('up-status'),
     run: (opts) => ipcRenderer.invoke('up-run', opts),
     cancel: () => ipcRenderer.invoke('up-cancel'),
+    optimize: (opts) => ipcRenderer.invoke('opt-run', opts),
     onProgress: (cb) => { const f = (e, d) => cb(d); ipcRenderer.on('up-progress', f); return () => ipcRenderer.removeListener('up-progress', f); },
   },
   ai: {

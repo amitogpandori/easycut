@@ -189,6 +189,7 @@ input[type=color]{width:34px;height:28px;border:1px solid var(--line);border-rad
 .tll{position:relative}
 #bSnap.on{background:var(--panel3);color:var(--text)}
 #meter{border-radius:3px;margin:0 4px}
+.fxpick{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}.fxpick .chip.on,.chip.on{background:var(--acc);color:#fff;border-color:var(--acc)}
 .upgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .upopt{background:var(--panel2);border:1.5px solid var(--line);border-radius:12px;padding:10px 8px;color:var(--text);cursor:pointer;display:flex;flex-direction:column;gap:3px;text-align:left;font:inherit}
 .upopt small{color:var(--mut);font-size:11px}.upopt.on{border-color:var(--acc);background:color-mix(in srgb,var(--acc) 14%,var(--panel2))}.upopt:disabled{opacity:.35;cursor:not-allowed}
@@ -278,6 +279,7 @@ body.is-desk .desk{display:inline-flex!important}
 .toast{position:fixed;left:50%;bottom:290px;transform:translateX(-50%) translateY(20px);background:#fff;color:#111;padding:10px 16px;border-radius:10px;font-weight:600;font-size:13px;opacity:0;pointer-events:none;transition:.25s;z-index:100;max-width:90vw;text-align:center}
 .toast.on{opacity:1;transform:translateX(-50%)}
 .modal{position:fixed;inset:0;background:#000b;display:none;align-items:center;justify-content:center;z-index:90;padding:20px}
+#mUp{z-index:95}
 .modal.on{display:flex}
 .dlg{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px;width:440px;max-width:100%;box-shadow:0 30px 80px #000a}
 .dlg h2{margin:0 0 4px;font-size:19px}
@@ -556,12 +558,13 @@ const getSel = () => sel ? getObj(sel.type, sel.id) : null;
 function canvasSize(){ const [a, b] = ASPECTS[S.aspect]; const r = S.res; return a >= b ? [Math.round(r * a / b / 2) * 2, r] : [r, Math.round(r * b / a / 2) * 2]; }
 // The preview draws at the size it is shown on screen (fast); export and saved frames use full size.
 let fullRes = false;
+function prevQ(){ try { return +(localStorage.getItem('easycut.prevq') || 1) || 1; } catch (e) { return 1; } }
 function applyCanvasSize(full){
   if (full !== undefined) fullRes = !!full;
   const [w, h] = canvasSize(); let k = 1;
   if (!fullRes){
     const pv = document.getElementById('pv');
-    if (pv && pv.clientWidth > 40){ const dpr = Math.min(2, window.devicePixelRatio || 1); const kd = Math.min((pv.clientWidth - 20) / w, (pv.clientHeight - 20) / h); k = clamp(kd * dpr, .3, 1); }
+    if (pv && pv.clientWidth > 40){ const dpr = Math.min(2, window.devicePixelRatio || 1); const kd = Math.min((pv.clientWidth - 20) / w, (pv.clientHeight - 20) / h); k = clamp(kd * dpr, .3, 1) * prevQ(); }
   }
   const W = Math.max(2, Math.round(w * k / 2) * 2), Hh = Math.max(2, Math.round(h * k / 2) * 2);
   if (cv.width !== W || cv.height !== Hh){ cv.width = W; cv.height = Hh; if (!playing) scheduleRender(); }
@@ -630,7 +633,8 @@ function renderPanel(){
   const all = Object.values(media);
   if (tab === 'media'){
     const vis = all.filter(m => m.type !== 'audio');
-    h = `<h3>Media</h3><div class="drop" data-act="import">${ic('import')}<div style="margin-top:6px"><b style="color:var(--text)">Import videos & photos</b><br>or drag files here</div></div>`
+    const hv = UPB && UPB.optimize ? heavyUsed() : [];
+    h = `<h3>Media</h3>${hv.length ? `<div class="vo" style="margin-bottom:10px"><div style="flex:1"><b>⚡ ${hv.length} heavy video${hv.length === 1 ? '' : 's'}</b><div class="hint">Phone/4K videos can freeze on “Loading video…”. Optimize them for smooth playback.</div></div><button class="btn sm pri" data-act="optAll">Optimize all</button></div>` : ''}<div class="drop" data-act="import">${ic('import')}<div style="margin-top:6px"><b style="color:var(--text)">Import videos & photos</b><br>or drag files here</div></div>`
       + `<div class="hint" style="margin-bottom:12px"><b style="color:var(--text)">Combine videos:</b> pick several files at once and they're joined in order. Drag clips on the timeline to reorder. To show videos side by side, use <a href="#" data-act="toTemplates" style="color:var(--acc)">Templates → Layouts</a>.</div>`
       + (vis.length ? `<div class="mgrid">${vis.map(mediaCard).join('')}</div><div style="margin-top:12px"><button class="btn sm full" data-act="addAll">Add all to the timeline again</button></div>` : `<div class="hint">Your clips will show up here. Click one to add it again at the playhead, or drag it onto the timeline.</div>`);
   } else if (tab === 'templates'){
@@ -678,6 +682,7 @@ function renderPanel(){
   } else if (tab === 'canvas'){
     h = `<h3>Clip framing</h3><div class="sec"><div class="seg" data-gseg="fit">${[['fit','Fit (show all)'],['fill','Fill (no bars)']].map(([v, l]) => `<button data-val="${v}" class="${(S.fit || 'fit') === v ? 'on' : ''}">${l}</button>`).join('')}</div><div class="hint" style="margin-top:8px">${(S.fit || 'fit') === 'fill' ? 'Every clip fills the whole frame — no blurred or colored borders. Use <b>Crop</b> on a clip to choose which part shows.' : 'Whole clip is shown; any empty space is filled with the background below.'}</div></div><h3>Canvas size</h3><div class="acards sec">${Object.entries(ASPECTS).map(([k, [a, b, l]]) => { const s = 30 / Math.max(a, b); return `<button class="acard ${S.aspect === k ? 'on' : ''}" data-aspect="${k}"><i style="width:${a * s}px;height:${b * s}px"></i>${k}<small>${l}</small></button>`; }).join('')}</div>`
       + `<h3>Background</h3><div class="sec"><div class="seg" data-gseg="bg">${[['blur','Blur'],['black','Black'],['white','White'],['color','Color']].map(([v, l]) => `<button data-val="${v}" class="${S.bg === v ? 'on' : ''}">${l}</button>`).join('')}</div>${S.bg === 'color' ? `<div class="crow" style="margin-top:10px"><span class="hint">Color</span><input type="color" data-g="bgColor" value="${S.bgColor}"></div>` : ''}<div class="hint" style="margin-top:8px">Fills the empty space when a clip doesn't match the canvas shape.</div></div>`
+      + `<h3>Preview quality</h3><div class="seg sec" data-pq>${[[1,'Full'],[.5,'Half (smoother)'],[.33,'Third (fastest)']].map(([v, l]) => `<button data-val="${v}" class="${Math.abs(prevQ() - v) < .01 ? 'on' : ''}">${l}</button>`).join('')}</div><div class="hint" style="margin:-6px 0 12px">Only the preview while editing — exports are always full quality.</div>`
       + `<h3>Export quality</h3><div class="seg sec" data-gseg="res">${[[720,'720p HD'],[1080,'1080p Full HD'],[1440,'2K'],[2160,'4K']].map(([v, l]) => `<button data-val="${v}" class="${S.res === v ? 'on' : ''}">${l}</button>`).join('')}</div>`
       + `<h3>Frame rate</h3><div class="seg" data-gseg="fps">${[[30,'30 fps'],[60,'60 fps (smoother)']].map(([v, l]) => `<button data-val="${v}" class="${(S.fps || 30) === v ? 'on' : ''}">${l}</button>`).join('')}</div>`;
   }
@@ -695,10 +700,12 @@ $('#panel').addEventListener('click', e => {
   const em = t.closest('[data-emo]'); if (em) return addText({ text:em.dataset.emo, size:170, bold:false, anim:'pop', y:.3, x:.5 + (Math.random() - .5) * .3 });
   const fc = t.closest('[data-filter]'); if (fc){ const c = getSel(); if (!c) return; push(); c.filter = fc.dataset.filter; return refreshAll(); }
   const ac = t.closest('[data-aspect]'); if (ac){ push(); S.aspect = ac.dataset.aspect; applyCanvasSize(); return refreshAll(); }
+  const pqb = t.closest('[data-pq] button'); if (pqb){ try { localStorage.setItem('easycut.prevq', pqb.dataset.val); } catch (er) {} applyCanvasSize(); scheduleRender(); return renderPanel(); }
   const gs = t.closest('[data-gseg] button'); if (gs){ const k = gs.parentElement.dataset.gseg; push(); S[k] = k === 'res' || k === 'fps' ? +gs.dataset.val : gs.dataset.val; if (k === 'fit') S.clips.forEach(c => c.fit = 'auto'); applyCanvasSize(); return refreshAll(); }
   if (act === 'importOv') return $('#fileOv').click();
   if (act === 'reel') return openReel();
   if (act === 'closeSheet') return closeSheet();
+  if (act === 'optAll'){ const hv = heavyUsed(); if (hv.length) optAsk(hv, true); return; }
   if (act === 'aiGet') return AIB.getOllama();
   if (act === 'aiCheck'){ ai.status = null; renderPanel(); return aiRefresh(); }
   if (act === 'aiStart'){ toast('Starting Ollama…'); return AIB.start().then(r => { if (!r.ok) toast('Could not start Ollama (' + r.reason + '). Open it from the Start menu.', 5000); return aiRefresh(); }); }
@@ -824,7 +831,7 @@ async function importOne(f, forceId, forcePath){
   let path = forcePath || ''; if (!path && DESK && DESK.pathForFile){ try { path = DESK.pathForFile(f) || ''; } catch (e) {} }
   const m = { id:forceId || uid(), type, name:f.name, url:URL.createObjectURL(f), duration:0, w:0, h:0, el:null, thumb:'', wave:'', loading:true, path };
   media[m.id] = m; renderPanel();
-  try { await loadMedia(m, f); m.loading = false; renderPanel(); return m; }
+  try { await loadMedia(m, f); m.loading = false; renderPanel(); if (!forceId) optCheck(m); return m; }
   catch (e) { delete media[m.id]; URL.revokeObjectURL(m.url); renderPanel(); toast(`Couldn't open ${f.name}. Try MP4 (H.264), MOV, JPG, PNG or MP3.`, 4000); return null; }
 }
 async function importFiles(files, opt = {}){
@@ -1084,7 +1091,7 @@ function renderProps(){
   } else if (sel.type === 'clip'){
     const m = media[o.mediaId], vid = m.type === 'video', nl = (o.logos || []).length;
     h = `<div class="phead"><span class="dot" style="background:var(--vid)"></span><span class="t">${esc(m.name)}</span><small>${fmt(clipLen(o))}</small></div>${acts()}`
-      + `<div class="acts"><button class="btn sm" data-pa="crop">${ic('crop')}Crop</button><button class="btn sm" data-pa="logo">${ic('x')}Remove logo${nl ? ` (${nl})` : ''}</button>${vid ? `<button class="btn sm" data-pa="freeze">${ic('snow')}Freeze frame</button><button class="btn sm" data-pa="extract">${ic('wave')}Extract audio</button>` : ''}<button class="btn sm" data-pa="enhance">✨ Enhance</button>${vid ? `<button class="btn sm" data-pa="upscale">🔍 AI Upscale</button>` : ''}</div>`
+      + `<div class="acts"><button class="btn sm" data-pa="crop">${ic('crop')}Crop</button><button class="btn sm" data-pa="logo">${ic('x')}Remove logo${nl ? ` (${nl})` : ''}</button>${vid ? `<button class="btn sm" data-pa="freeze">${ic('snow')}Freeze frame</button><button class="btn sm" data-pa="extract">${ic('wave')}Extract audio</button>` : ''}<button class="btn sm" data-pa="enhance">✨ Enhance</button>${vid ? `<button class="btn sm" data-pa="upscale">🔍 AI Upscale</button>${UPB ? `<button class="btn sm" data-pa="optimize">⚡ Optimize</button>` : ''}` : ''}</div>`
       + row('Framing', seg('fit', [['auto','Canvas default'],['fit','Fit'],['fill','Fill (no bars)']], o.fit || 'auto'))
       + (vid ? row('Speed', seg('speed', [[.25,'.25x'],[.5,'.5x'],[1,'1x'],[1.5,'1.5x'],[2,'2x'],[3,'3x'],[4,'4x']], o.speed, 'num'), 'secSpeed') + `<div id="secVol">${krange(o, 'volume', 0, 2, .05, 'Volume', 1)}</div>`
              + `<div class="two">${row('Sound fade in', range('afIn', 0, 3, .1, o.afIn || 0))}${row('Sound fade out', range('afOut', 0, 3, .1, o.afOut || 0))}</div>`
@@ -1181,6 +1188,7 @@ $('#props').addEventListener('click', e => {
   if (pa === 'gradeAuto') return autoColor(o);
   if (pa === 'enhance'){ push(); o.grade = { ...GRADE_DEF, ...(o.grade || {}), ...ENHANCE }; toast('✨ Enhanced: sharper, clearer, richer colors. Fine-tune it in Color grading.'); proOpen.color = true; return refreshAll(); }
   if (pa === 'upscale') return openUpscale(o);
+  if (pa === 'optimize'){ const m = media[o.mediaId]; if (m) optAsk([m], true); return; }
   if (pa === 'silence') return removeSilences([o], { minPause:smartPause });
   if (pa === 'silenceAll') return removeSilences(S.clips.slice(), { minPause:smartPause });
   if (pa === 'scenes') return sceneDetectCmd(o);
@@ -1228,8 +1236,8 @@ async function freezeFrame(){
   const ca = clipAt(playT); if (!ca) return; const m = media[ca.c.mediaId];
   if (m.type !== 'video') return toast('Freeze frame works on video clips');
   if (playing) pause(); seekPreview();
-  if (m.el.seeking) await once(m.el, 'seeked', 3000).catch(() => {});
-  const c = document.createElement('canvas'); c.width = m.w; c.height = m.h; c.getContext('2d').drawImage(m.el, 0, 0);
+  const fe = elFor(ca.c) || m.el; if (fe.seeking) await once(fe, 'seeked', 3000).catch(() => {});
+  const c = document.createElement('canvas'); c.width = m.w; c.height = m.h; c.getContext('2d').drawImage(fe, 0, 0);
   const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', .93));
   const fm = await importOne(new File([blob], `Freeze ${fmt(playT).replace(/[:.]/g, '-')}.jpg`, { type:'image/jpeg' })); if (!fm) return;
   push();
@@ -1349,9 +1357,23 @@ function rr(g, x, y, w, h, r){ r = Math.min(r, w / 2, h / 2); g.beginPath(); g.m
 
 /* logo removal works on a copy of the source frame */
 const pre = document.createElement('canvas'), prex = pre.getContext('2d', { willReadFrequently:true });
+/* two players per video: when the next clip comes from the same video at a different spot, it gets its own player that is ready before the cut */
+function vEl(m, slot){
+  if (!slot || m.type !== 'video') return m.el;
+  if (!m.el2){ const v = document.createElement('video'); v.preload = 'auto'; v.playsInline = true; v.src = m.url; pool.appendChild(v); v.addEventListener('seeked', () => { if (!playing) scheduleRender(); }); v.addEventListener('loadeddata', () => scheduleRender()); m.el2 = v; }
+  return m.el2;
+}
+let slotKey = '', slotArr = [];
+function clipSlots(){
+  const k = S.clips.map(c => c.id + c.mediaId + c.in.toFixed(2) + c.out.toFixed(2) + c.speed).join('|');
+  if (k !== slotKey){ slotKey = k; slotArr = [];
+    S.clips.forEach((c, i) => { const p = S.clips[i - 1]; if (!p || p.mediaId !== c.mediaId) slotArr.push(0); else { const cont = Math.abs(p.out - c.in) < .06 && p.speed === c.speed && c.trans === 'none'; slotArr.push(cont ? slotArr[i - 1] : 1 - slotArr[i - 1]); } }); }
+  return slotArr;
+}
+function elFor(c){ const m = media[c.mediaId]; if (!m) return null; if (m.type !== 'video') return m.el; const i = S.clips.indexOf(c); return vEl(m, i >= 0 ? clipSlots()[i] : 0); }
 const tmpc = document.createElement('canvas'), tctx = tmpc.getContext('2d');
 function sourceFor(c, m, srcT){
-  const base = m.type === 'anim' ? animFrame(m, srcT || 0) : m.el;
+  const base = m.type === 'anim' ? animFrame(m, srcT || 0) : m.type === 'video' ? (elFor(c) || m.el) : m.el;
   if (!c.logos || !c.logos.length) return { el:base, w:m.w, h:m.h };
   const k = Math.min(1, Math.max(480, cv.width, cv.height) / Math.max(m.w, m.h)), w = Math.max(2, Math.round(m.w * k)), h = Math.max(2, Math.round(m.h * k));
   if (pre.width !== w || pre.height !== h){ pre.width = w; pre.height = h; }
@@ -1721,7 +1743,7 @@ function renderBoxEditor(){
   ctx.save(); ctx.setTransform(1,0,0,1,0,0); ctx.filter = 'none'; ctx.globalAlpha = 1; ctx.fillStyle = '#0b0c10'; ctx.fillRect(0, 0, W, Hh);
   const k = Math.min(W * .88 / m.w, Hh * .84 / m.h), dw = m.w * k, dh = m.h * k, ox = (W - dw) / 2, oy = (Hh - dh) / 2;
   cropView = { ox, oy, dw, dh };
-  if (m.type !== 'video' || m.el.readyState >= 2){ const s = sourceFor(c, m, c.in); ctx.filter = filterStr(c); ctx.drawImage(s.el, 0, 0, s.w, s.h, ox, oy, dw, dh); ctx.filter = 'none'; }
+  if (m.type !== 'video' || (elFor(c) || m.el).readyState >= 2){ const s = sourceFor(c, m, c.in); ctx.filter = filterStr(c); ctx.drawImage(s.el, 0, 0, s.w, s.h, ox, oy, dw, dh); ctx.filter = 'none'; }
   const lw = Math.max(2, Math.min(W, Hh) / 360), hs = Math.min(W, Hh) * .022;
   const handles = (r, edges) => {
     ctx.fillStyle = '#fff'; ctx.strokeStyle = '#ff4d6d'; ctx.lineWidth = lw;
@@ -1872,16 +1894,23 @@ function audioEl(a){ let el = audioEls[a.id]; if (!el){ const m = media[a.mediaI
 function play(){ if (playing) return; if (cropMode){ cropMode = null; refreshAll(); } const T = totalDur(); if (T <= 0) return toast('Import a clip to start'); ensureAudio(); if (playT >= T - .02) playT = 0; playing = true; lastNow = performance.now(); updatePlayBtn(); requestAnimationFrame(tick); }
 function pause(){ if (!playing) return; playing = false; clearTimeout(bufT); $('#bufpill').classList.remove('on'); stalled = false; stopAllMedia(); updatePlayBtn(); seekPreview(); }
 function togglePlay(){ playing ? pause() : play(); }
-function stopAllMedia(){ for (const m of Object.values(media)) if (m.type === 'video' && m.el && !m.el.paused) m.el.pause(); for (const el of Object.values(audioEls)) if (!el.paused) el.pause(); for (const el of Object.values(ovEls)) if (!el.paused) el.pause(); }
+function stopAllMedia(){ for (const m of Object.values(media)) if (m.type === 'video') for (const e2 of [m.el, m.el2]) if (e2 && !e2.paused) e2.pause(); for (const el of Object.values(audioEls)) if (!el.paused) el.pause(); for (const el of Object.values(ovEls)) if (!el.paused) el.pause(); }
 let bufT = null;
-function setStalled(v){ if (v === stalled) return; stalled = v; clearTimeout(bufT); if (v && !exporting) bufT = setTimeout(() => $('#bufpill').classList.add('on'), 350); else $('#bufpill').classList.remove('on'); if (exporting){ const r = exporting.rec; try { if (v && r.state === 'recording') r.pause(); else if (!v && r.state === 'paused') r.resume(); } catch (e) {} } }
+const stallLog = []; let stallTip = false;
+function stallAdvice(){
+  const now = Date.now(); stallLog.push(now); while (stallLog.length && now - stallLog[0] > 30000) stallLog.shift();
+  if (stallTip || exporting || stallLog.length < 3) return; stallTip = true;
+  if (UPB && UPB.optimize && heavyUsed().length) optAsk(heavyUsed(), true);
+  else toast('Playback is struggling: try Canvas → Preview quality → Half, or fewer effects while editing. Export is not affected.', 6000);
+}
+function setStalled(v){ if (v === stalled) return; stalled = v; clearTimeout(bufT); if (v && !exporting) bufT = setTimeout(() => { $('#bufpill').classList.add('on'); if (playing) stallAdvice(); }, 350); else $('#bufpill').classList.remove('on'); if (exporting){ const r = exporting.rec; try { if (v && r.state === 'recording') r.pause(); else if (!v && r.state === 'paused') r.resume(); } catch (e) {} } }
 const activeOv = (o, t) => t >= o.start && t < o.start + o.dur;
 function tick(now){
   if (!playing) return;
   const dt = Math.min(.1, (now - lastNow) / 1000); lastNow = now;
   const total = exporting ? exporting.end : totalDur(), ca = clipAt(playT);
   let el = null, want = 0, st = false;
-  if (ca){ const m = media[ca.c.mediaId]; if (m && m.type === 'video'){ el = m.el; want = ca.c.in + ca.local * ca.c.speed; } }
+  if (ca){ const m = media[ca.c.mediaId]; if (m && m.type === 'video'){ el = elFor(ca.c); want = ca.c.in + ca.local * ca.c.speed; } }
   if (el){
     if (el.playbackRate !== ca.c.speed) el.playbackRate = ca.c.speed;
     const L = clipLen(ca.c); let f = 1;
@@ -1891,8 +1920,8 @@ function tick(now){
     else if (Math.abs(el.currentTime - want) > .35 && want < el.duration - .05){ el.currentTime = want; st = true; }
     if (!st && el.paused && want < ca.c.out - .04) el.play().catch(() => {});
   }
-  for (const m of Object.values(media)) if (m.type === 'video' && m.el !== el && m.el && !m.el.paused) m.el.pause();
-  if (ca){ const nx = S.clips[ca.i + 1]; if (nx){ const nm = media[nx.mediaId]; if (nm && nm.type === 'video' && nm.el !== el && clipLen(ca.c) - ca.local < 1 && nm.el.paused && !nm.el.seeking && Math.abs(nm.el.currentTime - nx.in) > .05) nm.el.currentTime = nx.in; } }
+  for (const m of Object.values(media)) if (m.type === 'video') for (const e2 of [m.el, m.el2]) if (e2 && e2 !== el && !e2.paused) e2.pause();
+  if (ca){ const nx = S.clips[ca.i + 1]; if (nx){ const nm = media[nx.mediaId], ne = nm && nm.type === 'video' ? elFor(nx) : null; if (ne && ne !== el && clipLen(ca.c) - ca.local < 1.5 && ne.paused && !ne.seeking && Math.abs(ne.currentTime - nx.in) > .05) ne.currentTime = nx.in; } }
   for (const o of S.overlays){ const m = media[o.mediaId]; if (!m || m.type !== 'video' || !activeOv(o, playT)) continue; const oe = ovEl(o); if (oe.seeking || oe.readyState < 2) st = true; }
   setStalled(st);
   if (!st){
@@ -1939,9 +1968,9 @@ function seekPreview(){
   if (playing) return;
   refreshKfProps();
   const ca = clipAt(playT);
-  if (ca){ const m = media[ca.c.mediaId]; if (m && m.type === 'video'){ const want = Math.min(ca.c.in + ca.local * ca.c.speed, m.duration - .02); if (Math.abs(m.el.currentTime - want) > .01) m.el.currentTime = want; }
+  if (ca){ const m = media[ca.c.mediaId], ce = m && m.type === 'video' ? elFor(ca.c) : null; if (ce){ const want = Math.min(ca.c.in + ca.local * ca.c.speed, m.duration - .02); if (Math.abs(ce.currentTime - want) > .01) ce.currentTime = want; }
     const pv = ca.i > 0 && ca.c.trans !== 'none' && ca.local < (ca.c.tdur || .5) ? S.clips[ca.i - 1] : null, pm = pv && media[pv.mediaId];
-    if (pm && pm !== m && pm.type === 'video'){ const pw = Math.max(0, pv.out - .04); if (Math.abs(pm.el.currentTime - pw) > .05) pm.el.currentTime = pw; } }
+    const pe = pm && pm.type === 'video' ? elFor(pv) : null; if (pe && pe !== ce){ const pw = Math.max(0, pv.out - .04); if (Math.abs(pe.currentTime - pw) > .05) pe.currentTime = pw; } }
   for (const o of S.overlays){ const m = media[o.mediaId]; if (!m || m.type !== 'video' || !activeOv(o, playT)) continue; const oe = ovEl(o), want = Math.min(o.offset + playT - o.start, m.duration - .02); if (Math.abs(oe.currentTime - want) > .01) oe.currentTime = want; }
   renderFrame(); updateTimeUI();
 }
@@ -2254,7 +2283,7 @@ dlg.addEventListener('click', e => {
 });
 async function primeFrame(){
   const ca = clipAt(playT);
-  if (ca){ const m = media[ca.c.mediaId]; if (m && m.type === 'video'){ m.el.currentTime = ca.c.in + ca.local * ca.c.speed; await once(m.el, 'seeked', 3000).catch(() => {}); } }
+  if (ca){ const m = media[ca.c.mediaId], ce = m && m.type === 'video' ? elFor(ca.c) : null; if (ce){ ce.currentTime = ca.c.in + ca.local * ca.c.speed; await once(ce, 'seeked', 3000).catch(() => {}); } }
   renderFrame();
 }
 async function startExport(){
@@ -2327,7 +2356,7 @@ function progressDone(){ $('#busy').classList.remove('on'); }
 const nextFrame = () => new Promise(r => setTimeout(r, 0));
 
 /* ---------- Reel Maker: its own screen ---------- */
-const reel = { items:[], music:null, musicStart:0, style:'beat', len:30, aspect:'9:16', mode:'auto', pace:1, keepSound:false, title:true, selected:null };
+const reel = { items:[], music:null, musicStart:0, style:'beat', len:30, aspect:'9:16', mode:'auto', pace:1, keepSound:false, title:true, selected:null, order:'shuffle', seed:1, fxMode:'style', fxMood:'party', fxPick:[], fxAmt:'some' };
 const studio = () => $('#studio');
 function reelItem(mid){ const m = media[mid]; return { mid, a:0, b:m.type === 'video' ? m.duration : 3, dur:m.type === 'video' ? Math.min(3, m.duration) : 2.5, trans:'fade', caption:'' }; }
 function openReel(){
@@ -2339,6 +2368,22 @@ function openReel(){
   renderStudio(); studio().classList.add('on');
 }
 function closeStudio(){ const v = $('#stVid'); if (v){ v.pause(); } studio().classList.remove('on'); }
+function reelLenHTML(){
+  const fp = footage(reel.items.filter(it => media[it.mid])), mus = reel.music && media[reel.music];
+  const want = reel.len > 0 ? reel.len : fp.usable, songLeft = mus ? Math.max(0, mus.duration - reel.musicStart) : Infinity;
+  const real = Math.min(want, fp.usable, songLeft), style = REEL_STYLES.find(x => x.id === reel.style) || REEL_STYLES[0];
+  let cutE = (mus && mus.beat ? mus.beat.period : .5) * style.beats * reel.pace; while (cutE < .4) cutE *= 2;
+  const parts = Math.max(1, Math.round(real / cutE)), custom = reel.len > 0 && ![15, 30, 60, 90, 180].includes(reel.len);
+  const hv = UPB && UPB.optimize ? reel.items.map(it => media[it.mid]).filter(m => m && heavy(m)) : [];
+  return `<div class="vo" style="margin-bottom:10px;flex-direction:column;align-items:stretch;gap:4px"><b>🎞️ Your footage: ${fmtLong(fp.vid)}</b><span class="hint">${fp.nv} video${fp.nv === 1 ? '' : 's'}${fp.np ? ` + ${fp.np} photo${fp.np === 1 ? '' : 's'}` : ''}${mus ? ` · song: ${fmtLong(songLeft)} from the start point` : ''}</span></div>
+    ${hv.length ? `<div class="vo" style="margin-bottom:10px"><div style="flex:1"><b>⚡ ${hv.length} heavy video${hv.length === 1 ? '' : 's'}</b><div class="hint">Optimize first so the reel plays without “Loading video…”.</div></div><button class="btn sm pri" data-sa="optReel">Optimize</button></div>` : ''}
+    <div class="prow"><label>How long should the reel be?</label>${stSeg('len', [[15,'15s'],[30,'30s'],[60,'1 min'],[90,'1:30'],[180,'3 min'],[0,'All footage']], custom ? 'x' : reel.len)}
+      <div style="display:flex;gap:6px;align-items:center;margin-top:6px"><span class="hint">or type a length:</span><input class="inp" id="rLen" style="width:110px" placeholder="e.g. 2:30" value="${custom ? fmtLong(reel.len) : ''}"></div></div>
+    <div class="hint" style="margin:-2px 0 10px">${want > real + .5 ? `⚠️ ${fp.usable <= songLeft ? `You have ${fmtLong(fp.usable)} of footage` : `The song has ${fmtLong(songLeft)} left`}, so the reel will be <b style="color:var(--text)">${fmtLong(real)}</b> — no part is used twice.` : `Reel: <b style="color:var(--text)">${fmtLong(real)}</b> · about ${parts} different moments · uses ${Math.min(100, Math.round(real / Math.max(.1, fp.usable) * 100))}% of your footage · nothing repeats.`}</div>
+    <div class="prow"><label>Order</label>${stSeg('order', [['shuffle','🔀 Shuffle'],['order','➡️ In order']], reel.order)}</div>`;
+}
+function fmtLong(t){ t = Math.max(0, Math.round(t)); const h = Math.floor(t / 3600), m = Math.floor(t / 60) % 60, s2 = t % 60; return h ? `${h}:${String(m).padStart(2, '0')}:${String(s2).padStart(2, '0')}` : `${m}:${String(s2).padStart(2, '0')}`; }
+function parseLen(v){ v = String(v || '').trim(); if (!v) return 0; const p = v.split(':').map(Number); if (p.some(x => !isFinite(x))) return 0; return p.length === 3 ? p[0] * 3600 + p[1] * 60 + p[2] : p.length === 2 ? p[0] * 60 + p[1] : (/m/i.test(v) ? parseFloat(v) * 60 : p[0]); }
 function stSeg(k, opts, v){ return `<div class="seg" data-st="${k}">${opts.map(([val, l]) => `<button data-val="${val}" class="${String(val) === String(v) ? 'on' : ''}">${l}</button>`).join('')}</div>`; }
 function renderStudio(){
   const it = reel.selected != null ? reel.items[reel.selected] : null, sm = it && media[it.mid], mus = reel.music && media[reel.music];
@@ -2347,7 +2392,7 @@ function renderStudio(){
   studio().innerHTML = `
   <div class="st-top"><button class="btn sm" data-sa="back">${ic('back')}Back to editor</button><div class="st-title">✨ Reel Maker</div><div class="sp"></div>
     <div class="seg" data-st="mode" style="width:260px">${[['auto','⚡ Automatic'],['manual','✋ Manual']].map(([v, l]) => `<button data-val="${v}" class="${reel.mode === v ? 'on' : ''}">${l}</button>`).join('')}</div>
-    <button class="btn pri" data-sa="make" ${reel.items.length ? '' : 'disabled style="opacity:.5"'}>Create reel →</button></div>
+    ${reel.mode === 'auto' && reel.items.length ? `<button class="btn" data-sa="remix" title="Same settings, different moments and order">🎲 New mix</button>` : ''}<button class="btn pri" data-sa="make" ${reel.items.length ? '' : 'disabled style="opacity:.5"'}>Create reel →</button></div>
   <div class="st-body">
     <section class="st-col st-clips">
       <h3>1 · Your clips (${reel.items.length})</h3>
@@ -2377,10 +2422,14 @@ function renderStudio(){
       <h3 style="margin-top:16px">3 · Style</h3>
       <div class="pgrid sec">${REEL_STYLES.map(s => `<button class="preset" data-rsid="${s.id}" style="font-size:12px;font-weight:700;padding:10px 4px;background:linear-gradient(135deg,${s.colors[0]},${s.colors[1]});color:#fff;${reel.style === s.id ? 'box-shadow:0 0 0 3px #fff inset' : ''}">${s.emoji} ${s.name}</button>`).join('')}</div>
       <label class="chk"><input type="checkbox" data-rc="title" ${reel.title ? 'checked' : ''}>Add the style's title (“${esc(style.title.text)}”)</label>
-      ${REEL_FX[style.id] ? `<label class="chk"><input type="checkbox" data-rc="fx" ${reel.fx !== false ? 'checked' : ''}>Add effects: ${esc(reelFxNames(style.id).join(', '))}</label>` : ''}
+      <div class="prow" style="margin-top:10px"><label>Effects</label>${stSeg('fxMode', [['style','✨ Style’s effects'],['mood','🎲 By video type'],['pick','✋ Pick my own'],['none','None']], reel.fx === false ? 'none' : reel.fxMode)}</div>
+      ${reel.fx === false || reel.fxMode === 'none' ? '' : reel.fxMode === 'style' ? `<div class="hint">${REEL_FX[style.id] ? 'Adds: ' + esc(reelFxNames(style.id).join(', ')) : 'This style has no effects of its own — try “By video type”.'}</div>`
+        : `${reel.fxMode === 'mood' ? `<div class="prow">${stSeg('fxMood', Object.entries(FX_MOODS).map(([k, v]) => [k, v[0]]), reel.fxMood)}</div><div class="hint">Shuffles: ${esc(FX_MOODS[reel.fxMood][1].map(id => (FX_BY_ID[id] || [0, 0, id])[2]).join(', '))}</div>`
+          : `<div class="fxpick">${FX_PICKABLE.filter(id => FX_BY_ID[id]).map(id => `<button class="chip ${reel.fxPick.includes(id) ? 'on' : ''}" data-fxpick="${id}">${esc(FX_BY_ID[id][2])}</button>`).join('')}</div><div class="hint">${reel.fxPick.length ? reel.fxPick.length + ' picked — they are shuffled across the cuts' : 'Tap the effects you want; EasyCut shuffles them across your cuts.'}</div>`}
+          <div class="prow"><label>How many</label>${stSeg('fxAmt', [['some','Some (every 3rd cut)'],['lots','Lots (every cut)']], reel.fxAmt)}</div>`}
       <h3 style="margin-top:16px">4 · Shape & length</h3>
       <div class="prow">${stSeg('aspect', [['9:16','Reel 9:16'],['1:1','Square'],['4:5','4:5'],['16:9','YouTube']], reel.aspect)}</div>
-      ${reel.mode === 'auto' ? `<div class="prow"><label>Length</label>${stSeg('len', [[15,'15s'],[30,'30s'],[60,'60s'],[0,'Fit clips']], reel.len)}</div>
+      ${reel.mode === 'auto' ? `${reelLenHTML()}
         <div class="prow"><label>Cut speed</label>${stSeg('pace', [[2,'Relaxed'],[1,'Normal'],[.5,'Fast']], reel.pace)}</div>`
       : `<div class="hint">Manual reel length: <b style="color:var(--text)">${totalManual.toFixed(1)}s</b> from ${reel.items.length} clips.</div>`}
     </section>
@@ -2396,6 +2445,9 @@ studio().addEventListener('click', e => {
   if (sa === 'nomusic'){ reel.music = null; reel.musicStart = 0; return renderStudio(); }
   if (sa === 'clear'){ reel.items = []; reel.selected = null; return renderStudio(); }
   if (sa === 'make') return buildReel();
+  if (sa === 'optReel'){ const hv = reel.items.map(it => media[it.mid]).filter(m => m && heavy(m)); if (hv.length) optAsk(hv, true); return; }
+  if (sa === 'remix'){ reel.seed = (reel.seed || 1) + 1; return buildReel(); }
+  const fpk = t.closest('[data-fxpick]'); if (fpk){ const id = fpk.dataset.fxpick, i = reel.fxPick.indexOf(id); if (i >= 0) reel.fxPick.splice(i, 1); else reel.fxPick.push(id); return renderStudio(); }
   if (sa === 'fullrange'){ const it = reel.items[reel.selected], m = media[it.mid]; it.a = 0; it.b = m.duration; return renderStudio(); }
   if (sa === 'applyAll'){ const it = reel.items[reel.selected]; reel.items.forEach(x => { x.dur = it.dur; x.trans = it.trans; }); toast('Applied to all clips'); return renderStudio(); }
   if (sa === 'pvplay'){ const v = $('#stVid'), it = reel.items[reel.selected]; if (!v) return; v.currentTime = it.a; v.play().catch(() => {}); clearInterval(pvStop); pvStop = setInterval(() => { if (v.currentTime >= it.b || v.paused){ v.pause(); clearInterval(pvStop); } }, 50); return; }
@@ -2405,7 +2457,7 @@ studio().addEventListener('click', e => {
   const b = t.closest('.seg button'); if (b){
     const k = b.parentElement.dataset.st, v = b.dataset.val; if (!k) return;
     if (k === 'trans'){ reel.items[reel.selected].trans = v; }
-    else if (k === 'len' || k === 'pace') reel[k] = +v; else reel[k] = v;
+    else if (k === 'len' || k === 'pace') reel[k] = +v; else if (k === 'fxMode'){ reel.fxMode = v; reel.fx = v !== 'none'; } else reel[k] = v;
     renderStudio();
   }
 });
@@ -2416,7 +2468,7 @@ studio().addEventListener('input', e => {
   if (el.dataset.rs2){ reel.musicStart = +el.value; $('#stMs').textContent = fmt(reel.musicStart); return; }
   if (el.dataset.rc){ reel[el.dataset.rc] = el.checked; return; }
 });
-studio().addEventListener('change', e => { if (e.target.dataset.ri || e.target.dataset.rm === 'dur') renderStudio(); });
+studio().addEventListener('change', e => { if (e.target.id === 'rLen'){ const v = parseLen(e.target.value); if (v > 0){ reel.len = Math.max(3, v); } else toast('Type a length like 45, 2:30 or 1:05:00'); return renderStudio(); } if (e.target.dataset.ri || e.target.dataset.rm === 'dur') renderStudio(); });
 studio().addEventListener('keydown', e => e.stopPropagation());
 studio().addEventListener('dragstart', e => { const c = e.target.closest('[data-si]'); if (c){ stDrag = +c.dataset.si; e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/x-reel', String(stDrag)); } });
 studio().addEventListener('dragover', e => { if (stDrag != null && e.target.closest('[data-si]')) e.preventDefault(); });
@@ -2480,6 +2532,100 @@ function addReelFx(id, end){
   }
   return n;
 }
+/* ---- automatic reel planning: different moments of every clip, never the same footage twice ---- */
+function rngFrom(seed){ let a = (seed * 2654435761) >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+function footage(items){
+  let vid = 0, nv = 0, np = 0;
+  for (const it of items){ const m = media[it.mid]; if (!m) continue; if (m.type === 'video'){ if (it.b - it.a >= .3){ vid += it.b - it.a; nv++; } } else np++; }
+  return { vid, nv, np, usable:vid + np * 2.5 };
+}
+function partCapacity(items, slots, style){
+  const n = slots.length, sp = i => style.speeds[i % style.speeds.length], avg = slots.reduce((x, l, i) => x + l * sp(i), 0) / Math.max(1, n);
+  let cap = 0; for (const it of items){ const m = media[it.mid]; if (!m) continue; if (m.type === 'video'){ const sp2 = it.b - it.a; if (sp2 >= .3) cap += Math.max(1, Math.floor(sp2 / Math.max(.3, avg * .9))); } else cap++; }
+  return cap;
+}
+function mergeSlots(slots, k){ const out = [], n = slots.length; for (let g = 0; g < k; g++){ const a = Math.round(g * n / k), b = Math.round((g + 1) * n / k); let L = 0; for (let i = a; i < b; i++) L += slots[i]; if (L > 0) out.push(L); } return out; }
+function planParts(items, slots, style){
+  const spd = i => style.speeds[i % style.speeds.length], baseAvg = slots.reduce((x, l, i) => x + l * spd(i), 0) / Math.max(1, slots.length);
+  { const cap = partCapacity(items, slots, style); if (cap < slots.length) slots = mergeSlots(slots, Math.max(1, cap)); }
+  const rnd = rngFrom(reel.seed || 1), n = slots.length; if (!n) return [];
+  const sp = i => style.speeds[i % style.speeds.length];
+  const vids = [], photos = [];
+  items.forEach((it, k) => { const m = media[it.mid]; if (!m) return; if (m.type === 'video'){ if (it.b - it.a >= .3) vids.push({ k, a:it.a, b:it.b, span:it.b - it.a }); } else photos.push(k); });
+  const fp = footage(items), avgNeed = Math.min(baseAvg, slots.reduce((x, l, i) => x + l * sp(i), 0) / n);
+  let nPh = Math.min(photos.length, Math.round(n * (photos.length * 2.5) / Math.max(.1, fp.usable)));
+  if (!vids.length) nPh = Math.min(photos.length, n);
+  let left = n - nPh; const vSum = vids.reduce((x, v) => x + v.span, 0) || 1;
+  vids.forEach(v => { v.cap = Math.max(1, Math.floor(v.span / Math.max(.3, avgNeed * .9))); v.n = Math.min(v.cap, Math.floor(left * v.span / vSum)); });
+  let given = vids.reduce((x, v) => x + v.n, 0);
+  while (given < left){ const v = vids.filter(v2 => v2.n < v2.cap).sort((p, q) => (p.n / p.span) - (q.n / q.span))[0]; if (!v) break; v.n++; given++; }
+  while (given < left && nPh < photos.length){ nPh++; left--; }
+  const parts = [];
+  for (const v of vids) for (let j = 0; j < v.n; j++) parts.push({ k:v.k, v, j });
+  photos.slice(0, nPh).forEach(k => parts.push({ k, photo:true }));
+  if (reel.order !== 'order'){
+    // shuffle each clip's moments, then interleave clips so the same clip rarely plays twice in a row
+    const groups = {}; for (const p of parts) (groups[p.k] = groups[p.k] || []).push(p);
+    for (const g of Object.values(groups)) for (let i = g.length - 1; i > 0; i--){ const r = Math.floor(rnd() * (i + 1)); [g[i], g[r]] = [g[r], g[i]]; }
+    const mixed = []; let prevK = null;
+    while (mixed.length < parts.length){
+      const keys = Object.keys(groups).filter(k => groups[k].length), cand = keys.filter(k => +k !== prevK), use = cand.length ? cand : keys;
+      const left = mixed.length ? use.reduce((x, k) => x + groups[k].length, 0) : 0;
+      // weighted by how many moments each clip still has; the clip with the most is preferred so it doesn't pile up at the end
+      const maxK = use.reduce((a, k) => groups[k].length > groups[a].length ? k : a, use[0]);
+      let pick = maxK; if (rnd() < .5 && use.length > 1){ let r = rnd() * use.reduce((x, k) => x + groups[k].length, 0); for (const k of use){ r -= groups[k].length; if (r <= 0){ pick = k; break; } } }
+      mixed.push(groups[pick].pop()); prevK = +pick; void left;
+    }
+    parts.splice(0, parts.length, ...mixed);
+  } else parts.sort((p, q) => (p.k - q.k) || ((p.j || 0) - (q.j || 0)));
+  const out = [];
+  parts.slice(0, n).forEach((p, i) => {
+    const len = slots[i];
+    if (p.photo) return out.push({ k:p.k, len });
+    const w = p.v.span / p.v.n, ws = p.v.a + p.j * w, need = len * sp(i);
+    if (need <= w * .98){ const room = w - need, a0 = ws + room * (.1 + .8 * rnd()); out.push({ k:p.k, a:a0, b:a0 + need, speed:sp(i), len }); }
+    else { const take = w * .98, speed = Math.max(.25, take / len); out.push({ k:p.k, a:ws, b:ws + len * speed, speed, len }); }
+  });
+  return out;
+}
+Object.assign(REEL_FX, {
+  kids:['balloons all .5','sparkle all .5','beatpulse all .5','confetti end 1'],
+  birthday:['confetti all .6','balloons all .5','beatflash all .3','fireworks end 1'],
+  party:['beatcolor all .6','punch all .8','strobe all .25','neon all .4'],
+  retro:['vhs all .7','crt all .4','grain all .5'],
+  love:['hearts all .4','dream all .4','petals all .4','fadeout end 1'],
+  nature:['dust all .5','leak start .8','kenburns all .5','fadeout end 1'],
+  sports:['punch all 1','beatshake all .5','flash start 1','letterbox all .6'],
+  festival:['sparkle all .6','bokeh all .5','beatflash all .3','fireworks end 1'],
+  gurpurab:['bokeh all .45','glow all .4','fadein start 1','fadeout end 1'],
+  unbox:['punch all .5','crashzoom start 1','sparkburst end 1'],
+});
+const FX_MOODS = {
+  kids:['🧸 Kids / cartoon', ['sparkle','balloons','confetti','bubbles','hearts','sparkburst','beatpulse','emojirain']],
+  party:['🎉 Party', ['beatflash','beatcolor','confetti','fireworks','punch','strobe','neon','sparkburst']],
+  cinematic:['🎬 Cinematic', ['letterbox','grain','leak','flare','kenburns','dolly','vig','teal']],
+  energy:['⚡ Energetic', ['punch','beatshake','crashzoom','beatglitch','zoomblur','flash','rgb','beatslide']],
+  retro:['📼 Retro', ['vhs','oldfilm','crt','roll','scan','grain','sepia','filmstrip']],
+  love:['💕 Love', ['hearts','petals','dream','bokeh','glow','sparkle','pastel','heartmask']],
+  calm:['🌿 Calm', ['dust','leak','breathe','dream','fog','fireflies','kenburns','sunset']],
+  travel:['✈️ Travel', ['leak','rays','pan','kenburns','handheld','dust','flare','rec']],
+};
+const FX_PICKABLE = ['punch','beatflash','beatshake','beatglitch','beatcolor','beatpulse','shake','crashzoom','kenburns','handheld','zoomblur','glitch','rgb','vhs','crt','bw','neon','cyber','dream','glow','teal','flash','leak','flare','rays','vig','confetti','sparkle','hearts','petals','balloons','fireworks','snow','bubbles','grain','oldfilm','letterbox','rec','filmstrip','heartmask'];
+function addReelFx2(style, end){
+  const mode = reel.fx === false ? 'none' : (reel.fxMode || 'style');
+  if (mode === 'none') return 0;
+  if (mode === 'style') return addReelFx(style.id, end);
+  const pool = (mode === 'mood' ? (FX_MOODS[reel.fxMood] || FX_MOODS.party)[1] : reel.fxPick).filter(id => FX_BY_ID[id]);
+  if (!pool.length) return 0;
+  const rnd = rngFrom((reel.seed || 1) * 7 + 3), st = clipStarts(), every = reel.fxAmt === 'lots' ? 1 : 3; let prev = '', n = 0;
+  S.clips.forEach((c, i) => {
+    if (i % every !== (every > 1 ? 1 : 0) && !(i === 0 && every === 1)) return;
+    let id = pool[Math.floor(rnd() * pool.length)]; if (id === prev && pool.length > 1) id = pool[(pool.indexOf(id) + 1) % pool.length]; prev = id;
+    const L = clipLen(c), cat = FX_BY_ID[id][0], dur = Math.min(L, cat === 'Beat' || cat === 'Camera' || cat === 'Particles' ? 2.4 : 1.3);
+    S.effects.push({ id:uid(), type:id, start:st[i], dur:Math.max(.3, dur), k:.8 }); n++;
+  });
+  return n;
+}
 async function buildReel(){
   const style = REEL_STYLES.find(s => s.id === reel.style) || REEL_STYLES[0];
   const items = reel.items.filter(it => media[it.mid]); if (!items.length) return;
@@ -2509,32 +2655,26 @@ async function buildReel(){
   } else {
     let cut = beat.period * style.beats * reel.pace; while (cut < .4) cut *= 2;
     let firstBeat = beat.offset; if (mus){ while (firstBeat < ms) firstBeat += beat.period; firstBeat -= ms; }
-    const usable = items.reduce((a, it) => a + (media[it.mid].type === 'video' ? it.b - it.a : 3), 0);
-    let total = reel.len || Math.min(usable, 90); if (mus) total = Math.min(total, beat.duration - ms);
-    const cursor = items.map(it => it.a + Math.min(.5, (it.b - it.a) * .1));
+    const fp = footage(items);
+    let total = reel.len > 0 ? reel.len : fp.usable; total = Math.min(total, fp.usable); if (mus) total = Math.min(total, beat.duration - ms);
     const bounds = []; let t = firstBeat > .05 && firstBeat < cut ? firstBeat : 0;
     if (t > 0) bounds.push(0);
     while (t < total - .05){ bounds.push(t); t += cut; } bounds.push(total);
-    for (let i = 0; i < bounds.length - 1; i++){
-      const len = bounds[i + 1] - bounds[i]; if (len < .15) continue;
-      const k = i % items.length, it = items[k], m = media[it.mid], c = newClip(m.id);
-      if (m.type === 'video'){
-        const sp = style.speeds[i % style.speeds.length], need = len * sp, span = it.b - it.a;
-        let a0 = cursor[k]; if (a0 + need > it.b - .02) a0 = it.a;
-        if (need > span){ c.in = it.a; c.speed = Math.max(.25, span / len * .98); c.out = it.a + len * c.speed; }
-        else { c.speed = sp; c.in = a0; c.out = a0 + need; }
-        cursor[k] = c.out + Math.min(1, span * .08); c.volume = vol;
-      } else c.out = len;
+    const slots = []; for (let i = 0; i < bounds.length - 1; i++){ const len = bounds[i + 1] - bounds[i]; if (len >= .15) slots.push(len); }
+    const plan = planParts(items, slots, style);
+    plan.forEach((p, i) => {
+      const it = items[p.k], m = media[it.mid], c = newClip(m.id);
+      if (m.type === 'video'){ c.in = p.a; c.out = p.b; c.speed = p.speed; c.volume = vol; } else c.out = p.len;
       looks(c, i); c.trans = i === 0 ? 'none' : style.trans[i % style.trans.length];
       S.clips.push(c);
-    }
+    });
     if (style.captions){ const n = Math.min(style.captions.length, S.clips.length), st = clipStarts(), vE = videoEnd(), every = Math.max(1, Math.floor(S.clips.length / n)); for (let k = 0; k < n; k++){ const ci = k * every; if (ci >= S.clips.length) break; const s0 = st[ci] + (k === 0 && reel.title ? 2.5 : 0), e0 = k + 1 < n && (k + 1) * every < S.clips.length ? st[(k + 1) * every] : vE; if (e0 - s0 > .4) S.texts.push({ ...TEXT_BASE, text:style.captions[k], size:56, box:true, boxColor:'#ffffff', boxAlpha:.9, color:'#111111', anim:'pop', y:.84, id:uid(), start:s0, dur:e0 - s0 }); } }
   }
   const vEnd = videoEnd();
   if (mus) S.audios.push({ id:uid(), mediaId:mus.id, start:0, offset:ms, dur:Math.min(vEnd, mus.duration - ms), volume:1, fadeIn:0, fadeOut:Math.min(1.5, vEnd / 4), duck:reel.keepSound, aeff:'none', voice:false });
   if (reel.title && style.title) S.texts.push({ ...TEXT_BASE, ...style.title, id:uid(), start:0, dur:Math.min(2.5, vEnd * .3) });
   if (reel.title && style.end && vEnd > 5) S.texts.push({ ...TEXT_BASE, ...style.end, id:uid(), start:vEnd - 2.2, dur:2.2 });
-  if (reel.fx !== false) addReelFx(style.id, vEnd);
+  addReelFx2(style, vEnd);
   for (const x of S.texts) document.fonts?.load(`${x.bold ? 800 : 500} 40px "${x.font}"`).then(scheduleRender).catch(() => {});
   progress('Making your reel…', 100, 'Done'); progressDone();
   sel = null; playT = 0; closeStudio();
@@ -2923,6 +3063,45 @@ REEL_STYLES.push(
     title:{ text:'little moments 🌸', font:'Dancing Script', size:110, color:'#ffffff', shadow:true, anim:'fade', y:.5 } },
   { id:'food', name:'Food Reel', emoji:'🍜', colors:['#f97316','#facc15'], beats:2, trans:['zoom','slide','flash'], filter:'warm', vig:.1, motion:['in','out'], speeds:[1],
     title:{ text:'must try 🤤', font:'Shrikhand', size:120, bold:false, color:'#fff7ed', stroke:true, strokeColor:'#9a3412', anim:'pop', y:.18 } },
+  { id:'kids', name:'Kids Cartoon', emoji:'🧸', colors:['#38bdf8','#f472b6'], beats:2, trans:['zoom','slide','circle','spin'], filter:'vivid', vig:0, motion:['in','out','left','right'], speeds:[1],
+    title:{ text:'Fun Time! 🎈', font:'Bangers', size:160, bold:false, color:'#ffe600', stroke:true, strokeColor:'#1e3a8a', anim:'pop', y:.2 }, end:{ text:'👍 Like & Subscribe!', font:'Bangers', size:90, bold:false, color:'#ffffff', stroke:true, strokeColor:'#be185d', anim:'pop', y:.82 } },
+  { id:'birthday', name:'Birthday', emoji:'🎂', colors:['#f472b6','#facc15'], beats:2, trans:['flash','zoom','circle'], filter:'vivid', vig:0, motion:['in','out'], speeds:[1],
+    title:{ text:'Happy Birthday! 🎂', font:'Lobster', size:130, bold:false, color:'#fff1f2', stroke:true, strokeColor:'#be185d', anim:'pop', y:.2 } },
+  { id:'party', name:'Party Night', emoji:'🪩', colors:['#7c3aed','#ec4899'], beats:1, trans:['flash','glitch','zoom','none'], filter:'drama', vig:.25, motion:['in','out'], speeds:[1],
+    title:{ text:'PARTY MODE 🪩', font:'Monoton', size:120, bold:false, color:'#f0abfc', glow:true, anim:'pop', y:.2 } },
+  { id:'retro', name:'Retro VHS', emoji:'📼', colors:['#f97316','#7c3aed'], beats:2, trans:['glitch','dip','wipe'], filter:'vintage', vig:.3, motion:['in','left'], speeds:[1],
+    title:{ text:'REC ● 1998', font:'Russo One', size:90, color:'#ffffff', anim:'type', y:.12 } },
+  { id:'love', name:'Love Story', emoji:'💕', colors:['#fb7185','#fda4af'], beats:4, trans:['dissolve','fade','blur'], filter:'dream', vig:.2, motion:['in','out'], speeds:[.75, 1],
+    title:{ text:'Our Story 💕', font:'Dancing Script', size:130, color:'#fff1f2', shadow:true, anim:'fade', y:.5 } },
+  { id:'nature', name:'Nature Calm', emoji:'🌿', colors:['#15803d','#86efac'], beats:4, trans:['dissolve','fade'], filter:'golden', vig:.2, motion:['in','left','right','out'], speeds:[.75],
+    title:{ text:'breathe 🌿', font:'Playfair Display', size:110, color:'#f0fdf4', shadow:true, anim:'fade', y:.5 } },
+  { id:'sports', name:'Sports Highlights', emoji:'🏏', colors:['#1d4ed8','#16a34a'], beats:1, trans:['whip','flash','push'], filter:'drama', vig:.2, motion:['in','out'], speeds:[1, .5],
+    title:{ text:'HIGHLIGHTS 🏏', font:'Teko', size:170, color:'#ffffff', stroke:true, strokeColor:'#1e3a8a', anim:'pop', y:.15 } },
+  { id:'festival', name:'Festival / Diwali', emoji:'🪔', colors:['#b45309','#f43f5e'], beats:2, trans:['flash','fade','zoom'], filter:'golden', vig:.3, motion:['in','out'], speeds:[1],
+    title:{ text:'शुभ दीपावली 🪔', font:'Yatra One', size:130, color:'#ffe08a', stroke:true, strokeColor:'#7c2d12', anim:'pop', y:.2 } },
+  { id:'gurpurab', name:'Gurpurab / Punjabi', emoji:'🙏', colors:['#ea580c','#1e3a8a'], beats:3, trans:['fade','dissolve','zoom'], filter:'golden', vig:.25, motion:['in','out'], speeds:[1],
+    title:{ text:'ਗੁਰਪੁਰਬ ਦੀਆਂ ਲੱਖ ਲੱਖ ਵਧਾਈਆਂ', font:'Baloo Paaji 2', size:84, color:'#fff7ed', stroke:true, strokeColor:'#7c2d12', anim:'fade', y:.2 } },
+  { id:'unbox', name:'Unboxing / Review', emoji:'📦', colors:['#0f172a','#38bdf8'], beats:2, trans:['zoom','slide','push'], filter:'cool', vig:.1, motion:['in','out'], speeds:[1],
+    title:{ text:"WHAT'S INSIDE? 📦", font:'Archivo Black', size:110, bold:false, color:'#ffffff', box:true, boxColor:'#0ea5e9', boxAlpha:1, anim:'pop', y:.15 } },
+);
+
+TEMPLATES.push(
+  { cat:'Intros', name:'Kids Channel Intro', card:['#38bdf8','#f472b6'], dur:4, texts:[T('🎈🌈⭐', { size:150, bold:false, anim:'pop', y:.26 }), T('FUN TIME!', { font:'Bangers', size:200, bold:false, color:'#ffe600', stroke:true, strokeColor:'#1e3a8a', anim:'pop', y:.5, start:.3 }), T('a new episode', { font:'Baloo 2', size:66, color:'#ffffff', shadow:true, anim:'slide', y:.7, start:.8 })] },
+  { cat:'Intros', name:'Episode Number', card:['#1e1b4b','#7c3aed'], dur:3, texts:[T('EPISODE', { font:'Bebas Neue', size:90, bold:false, color:'#c4b5fd', anim:'fade', y:.4 }), T('01', { font:'Anton', size:260, bold:false, color:'#ffffff', anim:'pop', y:.58, start:.3 })] },
+  { cat:'Intros', name:'Birthday Wish', card:['#f472b6','#facc15'], dur:4, texts:[T('🎂🎉🎈', { size:140, bold:false, anim:'pop', y:.28 }), T('Happy Birthday', { font:'Lobster', size:150, bold:false, color:'#ffffff', stroke:true, strokeColor:'#be185d', anim:'pop', y:.5, start:.3 }), T('Name here', { font:'Pacifico', size:80, bold:false, color:'#fff1f2', anim:'fade', y:.7, start:.8 })] },
+  { cat:'Intros', name:'Diwali Greeting', card:['#7c2d12','#f59e0b'], dur:4, texts:[T('🪔✨🪔', { size:140, bold:false, anim:'pop', y:.28 }), T('शुभ दीपावली', { font:'Yatra One', size:150, color:'#ffe08a', stroke:true, strokeColor:'#7c2d12', anim:'pop', y:.5, start:.3 }), T('Happy Diwali', { font:'Playfair Display', size:66, color:'#fff7ed', anim:'fade', y:.7, start:.8 })] },
+  { cat:'Intros', name:'Gurpurab Greeting', card:['#ea580c','#1e3a8a'], dur:4, texts:[T('🙏', { size:150, bold:false, anim:'pop', y:.28 }), T('ਗੁਰਪੁਰਬ ਦੀਆਂ ਵਧਾਈਆਂ', { font:'Baloo Paaji 2', size:100, color:'#fff7ed', stroke:true, strokeColor:'#7c2d12', anim:'fade', y:.5, start:.3 })] },
+  { cat:'Titles', name:'Top 5 Countdown', texts:[T('TOP 5', { font:'Anton', size:200, bold:false, color:'#facc15', stroke:true, anim:'pop', y:.45, dur:2 }), T('#5', { font:'Anton', size:150, bold:false, stroke:true, x:.15, y:.15, anim:'pop', start:2, dur:2 }), T('#4', { font:'Anton', size:150, bold:false, stroke:true, x:.15, y:.15, anim:'pop', start:4, dur:2 }), T('#3', { font:'Anton', size:150, bold:false, stroke:true, x:.15, y:.15, anim:'pop', start:6, dur:2 }), T('#2', { font:'Anton', size:150, bold:false, stroke:true, x:.15, y:.15, anim:'pop', start:8, dur:2 }), T('#1 🏆', { font:'Anton', size:150, bold:false, color:'#facc15', stroke:true, x:.2, y:.15, anim:'pop', start:10, dur:2 })] },
+  { cat:'Titles', name:'Before / After', texts:[T('BEFORE', { font:'Archivo Black', size:80, bold:false, box:true, boxColor:'#111827', boxAlpha:.85, x:.2, y:.1, anim:'pop', dur:2.5 }), T('AFTER ✨', { font:'Archivo Black', size:80, bold:false, color:'#111111', box:true, boxColor:'#facc15', boxAlpha:1, x:.2, y:.1, anim:'pop', start:2.5, dur:2.5 })] },
+  { cat:'Titles', name:'Location Tag', texts:[T('📍 Amritsar, Punjab', { font:'Poppins', size:58, box:true, boxColor:'#ffffff', boxAlpha:.92, color:'#111111', x:.28, y:.88, anim:'slide', dur:3.5 })] },
+  { cat:'Titles', name:'Quote Card', texts:[T('“Small steps every day”', { font:'Playfair Display', size:90, shadow:true, anim:'fade', y:.46, dur:4 }), T('— Your name', { font:'Caveat', size:70, color:'#e5e7eb', anim:'fade', y:.6, start:.6, dur:3.4 })] },
+  { cat:'Titles', name:'Coming Up Next', texts:[T('COMING UP NEXT ⏭️', { font:'Bebas Neue', size:110, bold:false, box:true, boxColor:'#dc2626', boxAlpha:1, y:.12, anim:'slide', dur:3 })] },
+  { cat:'Social', name:'Giveaway', texts:[T('🎁 GIVEAWAY 🎁', { font:'Bangers', size:150, bold:false, color:'#facc15', stroke:true, anim:'pop', y:.3, dur:4 }), T('Follow + comment to enter', { font:'Poppins', size:56, box:true, boxColor:'#7c3aed', boxAlpha:1, y:.82, anim:'slide', start:.5, dur:3.5 })] },
+  { cat:'Social', name:'New Video Every Sunday', texts:[T('🔔 New video every Sunday', { font:'Righteous', size:62, color:'#111111', box:true, boxColor:'#facc15', boxAlpha:1, y:.86, anim:'slide', dur:4 })] },
+  { cat:'Social', name:'Like & Share (Hindi)', texts:[T('👍 लाइक करें · 🔔 सब्सक्राइब करें', { font:'Baloo 2', size:62, box:true, boxColor:'#dc2626', boxAlpha:1, y:.86, anim:'slide', dur:4 })] },
+  { cat:'Social', name:'Like & Share (Punjabi)', texts:[T('👍 ਲਾਈਕ ਕਰੋ · 🔔 ਸਬਸਕ੍ਰਾਈਬ ਕਰੋ', { font:'Baloo Paaji 2', size:62, box:true, boxColor:'#dc2626', boxAlpha:1, y:.86, anim:'slide', dur:4 })] },
+  { cat:'Outros', name:'Kids Outro', card:['#f472b6','#38bdf8'], dur:4, texts:[T('Bye bye! 👋', { font:'Bangers', size:180, bold:false, color:'#ffe600', stroke:true, strokeColor:'#1e3a8a', anim:'pop', y:.42 }), T('See you in the next video!', { font:'Baloo 2', size:66, color:'#ffffff', shadow:true, anim:'slide', y:.62, start:.6 })] },
+  { cat:'Outros', name:'Subscribe End Screen', card:['#0f172a','#1e293b'], dur:5, texts:[T('Thanks for watching!', { font:'Montserrat', size:96, anim:'fade', y:.3 }), T('▶ SUBSCRIBE', { font:'Archivo Black', size:80, bold:false, box:true, boxColor:'#dc2626', boxAlpha:1, y:.55, anim:'pop', start:.5 }), T('Watch next →', { font:'Poppins', size:52, color:'#cbd5e1', anim:'fade', y:.75, start:1 })] },
 );
 
 /* ---------- user storage: your fonts and your templates (kept on this computer) ---------- */
@@ -3210,7 +3389,7 @@ Actions you can use:
 {"do":"remove_silence","clip":N,"min_pause":0.6}
 {"do":"scene_cut","clip":N}
 {"do":"music","volume":0-2,"duck":true}
-{"do":"reel","style":"${REEL_STYLES.map(r => r.id).join('|')}","seconds":15|30|60}
+{"do":"reel","style":"${REEL_STYLES.map(r => r.id).join('|')}","seconds":S,"order":"shuffle|order","effects":"${Object.keys(FX_MOODS).join('|')}"}
 {"do":"marker","at":S}
 Rules: use only these actions and names; never invent files; keep times inside the video; if the request is unclear or impossible, return "actions":[] and explain in "reply".
 Example: user "make it brighter and add a title Hello" -> {"reply":"Brightened all clips and added your title.","actions":[{"do":"color","clip":"all","exposure":25},{"do":"text","text":"Hello","start":0,"seconds":3,"position":"middle","style":"Title"}]}
@@ -3251,7 +3430,7 @@ async function runAction(x){
     case 'remove_silence': { const r = await removeSilences(clipsOf(x.clip), { minPause:clamp(num(x.min_pause, .6), .2, 3) }); return `Removed ${r.toFixed(1)} s of silence`; }
     case 'scene_cut': { const c = clipsOf(x.clip)[0]; if (!c) throw new Error('which clip?'); const n = await sceneDetectCmd(c); return `Cut into ${n + 1} scenes`; }
     case 'music': { if (!S.audios.length) throw new Error('there is no music on the timeline'); S.audios.forEach(a => { if (x.volume != null) a.volume = clamp(num(x.volume, 1), 0, 2); if (x.duck != null) a.duck = !!x.duck; }); return 'Music adjusted'; }
-    case 'reel': { reel.style = REEL_STYLES.some(r => r.id === x.style) ? x.style : 'beat'; reel.len = [15, 30, 60].includes(+x.seconds) ? +x.seconds : 30; reel.mode = 'auto'; reel.items = S.clips.map(c => ({ ...reelItem(c.mediaId), a:c.in, b:c.out })); if (!reel.music && S.audios[0]) reel.music = S.audios[0].mediaId; await buildReel(); return `Made a ${reel.len}s reel`; }
+    case 'reel': { reel.style = REEL_STYLES.some(r => r.id === x.style) ? x.style : 'beat'; reel.len = clamp(num(x.seconds, 30), 5, 3600); if (x.order) reel.order = x.order === 'in order' || x.order === 'order' ? 'order' : 'shuffle'; if (x.effects && FX_MOODS[x.effects]){ reel.fxMode = 'mood'; reel.fxMood = x.effects; reel.fx = true; } reel.mode = 'auto'; reel.items = S.clips.map(c => ({ ...reelItem(c.mediaId), a:c.in, b:c.out })); if (!reel.music && S.audios[0]) reel.music = S.audios[0].mediaId; await buildReel(); return `Made a ${reel.len}s reel`; }
     case 'marker': { S.markers = S.markers || []; S.markers.push(clamp(num(x.at, playT), 0, T)); return `Marker at ${fmt(num(x.at, playT))}`; }
     default: throw new Error('unknown action “' + d + '”');
   }
@@ -3341,6 +3520,47 @@ async function runUpscale(){
   d.querySelector('[data-u="folder"]').onclick = () => DESK.showInFolder(r.path);
 }
 
+/* ---------- Optimize: edit-friendly copies of heavy phone videos (4K, HDR, HEVC, 60 fps) ---------- */
+const opt = { q:[], t:null };
+const optPref = () => { try { return localStorage.getItem('easycut.optimize') || 'ask'; } catch (e) { return 'ask'; } };
+function heavyUsed(){ const ids = new Set([...S.clips.map(c => c.mediaId), ...S.overlays.map(o => o.mediaId)]); return Object.values(media).filter(m => heavy(m) && !m.replacedBy && (ids.has(m.id) || !S.clips.length)); }
+function heavy(m){ return m.type === 'video' && !m.optimized && (Math.min(m.w, m.h) > 1080 || /\.(mov|hevc|mkv|m4v)$/i.test(m.name)); }
+function optCheck(m){
+  if (!UPB || !UPB.optimize || !heavy(m) || optPref() === 'never') return;
+  opt.q.push(m); clearTimeout(opt.t); opt.t = setTimeout(() => { const list = opt.q.splice(0); if (optPref() === 'always') runOptimize(list); else optAsk(list); }, 900);
+}
+function optAsk(list, manual){
+  const mm = upModal(), d = $('#dlgUp'); opt.pending = list;
+  d.innerHTML = `<h2>⚡ Optimize for smooth editing?</h2><div class="hint" style="margin:8px 0">${list.length === 1 ? `<b style="color:var(--text)">${esc(list[0].name)}</b> (${list[0].w} × ${list[0].h})` : list.length + ' videos'} ${manual ? '' : 'is a heavy phone/camera video. These can stutter and freeze while playing and in reels.'}</div>
+    <div class="hint" style="margin-bottom:10px">EasyCut makes a smooth editing copy: 1080p, 30 fps, quick to jump around in, and iPhone HDR turned into normal colors. Your original file is not changed. Exports will be 1080p.</div>
+    ${manual ? '' : `<label class="chk"><input type="checkbox" id="optAlways"> Always do this for heavy videos</label>`}
+    <div class="row"><button class="btn" data-o="no">${manual ? 'Cancel' : 'Keep original'}</button><button class="btn pri" data-o="yes">⚡ Optimize</button></div>`;
+  d.querySelectorAll('[data-o]').forEach(b => b.onclick = () => {
+    const al = $('#optAlways'); if (al && al.checked) try { localStorage.setItem('easycut.optimize', b.dataset.o === 'yes' ? 'always' : 'never'); } catch (e) {}
+    if (b.dataset.o === 'yes') runOptimize(opt.pending); else mm.classList.remove('on');
+  });
+  mm.classList.add('on');
+}
+async function runOptimize(list){
+  const mm = upModal(), d = $('#dlgUp'); mm.classList.add('on'); let done = 0;
+  for (const [i, m] of list.entries()){
+    const show = p => { d.innerHTML = `<h2>⚡ Optimizing ${list.length > 1 ? `${i + 1} of ${list.length}` : ''}</h2><div class="hint">${esc(m.name)}</div><div class="bar" style="margin:12px 0 6px"><i style="width:${(p.pct || 0).toFixed(1)}%"></i></div><div class="crow"><span class="hint">${esc(p.msg || '')}</span><b>${Math.round(p.pct || 0)}%</b></div><div class="row"><button class="btn" data-u="cancel">Cancel</button></div>`; };
+    show({ pct:0, msg:'Starting…' }); const off = UPB.onProgress(show);
+    let r; try { const o = { name:m.name }; if (m.path) o.input = m.path; else o.data = await (await fetch(m.url)).arrayBuffer(); r = await UPB.optimize(o); } catch (e) { r = { ok:false, error:e.message }; }
+    off();
+    if (!r.ok){ if (r.cancelled) break; toast('Could not optimize ' + m.name + ': ' + r.error, 5000); continue; }
+    const buf = await DESK.readFile(r.path), nm = await importOne(new File([buf], m.name.replace(/\.[^.]+$/, '') + ' (edit).mp4', { type:'video/mp4' }), uid(), r.path);
+    if (!nm) continue; nm.optimized = true;
+    let n = 0; for (const c of S.clips) if (c.mediaId === m.id){ c.mediaId = nm.id; n++; }
+    for (const o of S.overlays) if (o.mediaId === m.id) o.mediaId = nm.id;
+    for (const it of reel.items) if (it.mid === m.id) it.mid = nm.id;
+    if (reel.music === m.id) reel.music = nm.id;
+    m.replacedBy = nm.id; done++;
+  }
+  mm.classList.remove('on'); refreshAll(); seekPreview(); renderPanel(); if (studio().classList.contains('on')) renderStudio();
+  if (done) toast(`⚡ ${done} video${done === 1 ? '' : 's'} optimized — playback and reels will be smooth now`, 4500);
+}
+
 /* ---------- glue ---------- */
 function refreshAll(){
   applyCanvasSize();
@@ -3357,7 +3577,7 @@ document.fonts?.ready.then(scheduleRender);
 
 renderRail(); applyCanvasSize(); refreshAll(); setPps(60); renderLabels();
 loadUserStuff();
-window.__ec = { get S(){ return S; }, totalDur, videoEnd, EFFECTS, REEL_FX, FX_BY_ID };
+window.__ec = { get S(){ return S; }, totalDur, videoEnd, EFFECTS, REEL_FX, FX_BY_ID, reel, media, planParts, partCapacity, REEL_STYLES };
 })();
 </script>
 </body>
