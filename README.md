@@ -3,6 +3,11 @@
 An easy, InShot-style video editor for Windows, made for vloggers and reel makers.
 
 ## Features
+- **InShot-style interface**: start screen, big preview, a bottom toolbar of tools (Media, Reel, Templates, Text, Sticker, GIF, Logo, Music, PIP, Filter, Canvas) plus one-tap clip tools (Split, Speed, Volume, Crop, Transition, Freeze, Rotate, Flip, Copy, Delete)
+- **GIFs from the internet** (GIPHY): search GIFs and see-through animated stickers, drop them on your video. Needs a free GIPHY API key (developers.giphy.com → Create an App → API). Your own .gif / animated .webp files work too
+- **Logos**: save your logos, make a text logo, add it to the whole video in any corner with size and opacity
+- **Stickers**: 200+ emoji in 11 categories (incl. India) plus badge stickers (NEW, WOW!, SALE, LIVE…)
+- **16 transitions**: fade, dissolve, dip to black, zoom in/out, slide, slide up, push, wipe, circle, spin, whip, blur, flash, glitch — with adjustable length
 - **Reel Maker** (its own screen): add many clips, drag to reorder, choose the part of each clip to use. **Automatic** mode: pick a song and a style (Beat Drop, Travel Vibes, Cinematic, Glow Up, Day in My Life, Memories, Hype Montage, Desi Wedding, Bhangra Beat, Gym Motivation, Soft Aesthetic, Food Reel). EasyCut finds the song's beat and cuts your clips to it, adding transitions, a look and titles. **Manual** mode: set each clip's length, transition and caption yourself
 - Progress percentages for importing, reel making, opening projects and exporting (with time left)
 - Fast preview: draws at screen size, exports at full 1080p
@@ -17,7 +22,6 @@ An easy, InShot-style video editor for Windows, made for vloggers and reel maker
 - Split, trim, reorder, duplicate, undo/redo, freeze frame, extract audio
 - Speed (0.25x–4x), volume, sound fades, voice effects (Clean voice, Echo, Hall, Radio)
 - Motion (zoom in/out, pan), 12 filters, brightness/contrast/saturation, vignette, rotate, mirror
-- Transitions: fade, zoom, slide, blur, flash
 - Text styles, emoji stickers, music with auto-ducking under speech, voiceover recording
 - Canvas sizes: 16:9, 9:16, 1:1, 4:5, 4:3
 - Save and open projects (.easycut), save any frame as a PNG thumbnail

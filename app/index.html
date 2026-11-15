@@ -16,7 +16,7 @@
 }
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:14px/1.4 "Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
-body{display:grid;grid-template-rows:54px minmax(0,1fr) 270px;grid-template-columns:minmax(0,1fr);height:100vh;overflow:hidden;user-select:none}
+body{display:grid;grid-template-rows:54px minmax(0,1fr) 250px 76px;grid-template-columns:minmax(0,1fr);height:100vh;overflow:hidden;user-select:none}
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 input,select,textarea{font:inherit;color:var(--text)}
 svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
@@ -40,15 +40,23 @@ svg.i.f{fill:currentColor;stroke:none}
 .btn.danger{color:#ff7b8f}
 
 /* workspace */
-.ws{display:grid;grid-template-columns:68px 270px minmax(0,1fr) 300px;min-height:0}
-.rail{background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;gap:4px;padding:8px 6px;overflow-y:auto;min-height:0;scrollbar-width:none}
+.ws{display:grid;grid-template-columns:0 minmax(0,1fr) 300px;min-height:0;transition:grid-template-columns .2s}
+body.sheet .ws{grid-template-columns:300px minmax(0,1fr) 300px}
+body:not(.sheet) .panel{visibility:hidden;padding:0;border:0}
+.rail{background:var(--panel);border-top:1px solid var(--line);display:flex;flex-direction:row;align-items:center;gap:2px;padding:6px 10px;overflow-x:auto;overflow-y:hidden;min-width:0;scrollbar-width:thin}
+.tsep{width:1px;align-self:stretch;margin:6px 8px;background:var(--line);flex:none}
+.tgrp{font-size:9.5px;font-weight:800;letter-spacing:.6px;color:var(--dim);writing-mode:vertical-rl;transform:rotate(180deg);flex:none;margin-right:2px}
 .rail::-webkit-scrollbar{display:none}
-.tab{display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 0;border-radius:10px;color:var(--mut);font-size:11px;font-weight:600}
+.tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:7px 4px;min-width:66px;height:60px;border-radius:12px;color:var(--mut);font-size:11px;font-weight:600;flex:none}
+.tab.ct{color:#cfd3e1}
 .tab svg.i{width:20px;height:20px}
 .tab:hover{color:var(--text);background:var(--panel2)}
 .tab.on{color:#fff;background:var(--panel3)}
 .tab.on svg{color:var(--acc)}
-.panel{background:var(--panel);border-right:1px solid var(--line);overflow-y:auto;padding:14px}
+.panel{background:var(--panel);border-right:1px solid var(--line);overflow-y:auto;padding:0 14px 14px;min-width:0}
+.sheet-h{position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;background:var(--panel);padding:12px 0 10px;margin-bottom:6px;border-bottom:1px solid var(--line)}
+.sheet-h b{font-size:15px}
+.sheet-h .btn{padding:6px 14px;font-size:15px}
 .panel h3,.props h3{margin:0 0 12px;font-size:13px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;color:var(--mut)}
 .hint{color:var(--mut);font-size:12.5px}
 .drop{border:1.5px dashed var(--line);border-radius:12px;padding:16px;text-align:center;color:var(--mut);font-size:12.5px;margin-bottom:12px;cursor:pointer}
@@ -168,6 +176,36 @@ body.is-desk .desk{display:inline-flex!important}
 .ovlist{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
 .busy{position:fixed;inset:0;background:#000a;z-index:95;display:none;align-items:center;justify-content:center;font-weight:700;font-size:16px}
 .busy.on{display:flex}
+.home{position:fixed;inset:0;z-index:84;background:radial-gradient(ellipse at 30% 0%,#2a1520 0%,var(--bg) 55%);display:none;overflow-y:auto}
+.home.on{display:block}
+.home-in{max-width:880px;margin:0 auto;padding:48px 24px}
+.home-logo{display:flex;align-items:center;gap:14px;font-size:30px;font-weight:800;letter-spacing:-.5px}
+.home-logo .mk{width:52px;height:52px;border-radius:15px;background:linear-gradient(135deg,var(--acc),var(--acc2));display:grid;place-items:center;color:#fff;box-shadow:0 8px 24px #ff4d6d55}
+.htiles{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:30px 0 18px}
+.htile{border-radius:20px;padding:22px 16px;text-align:left;color:#fff;display:flex;flex-direction:column;gap:6px;min-height:150px;justify-content:flex-end;transition:transform .15s;box-shadow:0 10px 30px #0006}
+.htile:hover{transform:translateY(-3px)}
+.htile .em{font-size:34px;margin-bottom:auto}
+.htile b{font-size:18px}.htile small{opacity:.85;font-size:12.5px}
+.hrow{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:26px}
+.hrecent{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.hrc{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;text-align:left}
+.hrc:hover{border-color:var(--acc)}
+.hrc b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:760px){.htiles{grid-template-columns:1fr 1fr}}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.chip{padding:5px 11px;border-radius:20px;background:var(--panel2);font-size:12px;font-weight:600;color:var(--mut);border:1px solid var(--line)}
+.chip.on,.chip:hover{color:#fff;border-color:var(--acc)}
+.gifgrid{columns:2;column-gap:8px}
+.gifcell{display:block;width:100%;margin:0 0 8px;padding:0;border-radius:8px;overflow:hidden;background:var(--panel2);break-inside:avoid;border:2px solid transparent}
+.gifcell:hover{border-color:var(--acc)}
+.gifcell img{display:block;width:100%}
+.gifgrid.stk .gifcell{background:repeating-conic-gradient(#2a2f40 0 25%,#1f2331 0 50%) 0 0/16px 16px}
+.lgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px}
+.lcard{position:relative;background:repeating-conic-gradient(#2a2f40 0 25%,#1f2331 0 50%) 0 0/14px 14px;border-radius:10px;padding:8px;cursor:pointer;border:2px solid transparent;text-align:center}
+.lcard:hover{border-color:var(--acc)}
+.lcard img{width:100%;height:56px;object-fit:contain;display:block}
+.lcard span{display:block;font-size:10.5px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:4px}
+.lcard .ib{position:absolute;top:-6px;right:-6px;width:22px;height:22px;background:var(--panel3);border-radius:50%}
 .bufpill{position:fixed;left:50%;top:70px;transform:translateX(-50%);background:#000c;color:#fff;padding:6px 14px;border-radius:20px;font-size:12.5px;font-weight:700;z-index:60;display:none}
 .bufpill.on{display:block}
 .studio{position:fixed;inset:0;background:var(--bg);z-index:85;display:none;flex-direction:column}
@@ -222,22 +260,23 @@ body.is-desk .desk{display:inline-flex!important}
 #pool{position:fixed;left:0;top:0;width:2px;height:2px;overflow:hidden;opacity:0;pointer-events:none}
 
 @media (max-height:820px){
-  body{grid-template-rows:50px minmax(0,1fr) 230px}
-  .rail{gap:2px;padding:6px 5px}
-  .tab{padding:5px 0;gap:2px;font-size:10px}
+  body{grid-template-rows:50px minmax(0,1fr) 210px 66px}
+  .rail{padding:4px 8px}
+  .tab{height:54px;padding:4px;gap:3px;font-size:10px;min-width:58px}
   .tab svg.i{width:18px;height:18px}
   .transport{padding:4px 12px 8px}
   .play{width:40px;height:40px}
   .pv{padding:10px}
 }
-@media (max-height:640px){ body{grid-template-rows:48px minmax(0,1fr) 200px} .tab svg.i{width:16px;height:16px} }
-@media (max-width:1100px){.ws{grid-template-columns:62px 230px minmax(0,1fr) 260px}}
+@media (max-height:640px){ body{grid-template-rows:48px minmax(0,1fr) 180px 60px} .tab svg.i{width:16px;height:16px} }
+@media (max-width:1560px){.tab{min-width:56px;font-size:10.5px}.rail{padding:6px 6px}}
+@media (max-width:1100px){.ws{grid-template-columns:0 minmax(0,1fr) 260px}body.sheet .ws{grid-template-columns:250px minmax(0,1fr) 260px}}
 @media (max-width:860px){
   body{display:block;height:auto;overflow:auto}
   .ws{display:flex;flex-direction:column}
   .stage{order:1;height:56vh}
-  .rail{order:2;flex-direction:row;overflow-x:auto;border:0;border-bottom:1px solid var(--line)}
-  .tab{flex:1;min-width:58px}
+  .rail{position:sticky;bottom:0;z-index:20}
+  body:not(.sheet) .panel{display:none}
   .panel{order:3;max-height:300px;border:0}
   .props{order:4;border:0;border-top:1px solid var(--line)}
   .tl{height:260px}
@@ -256,6 +295,7 @@ body.is-desk .desk{display:inline-flex!important}
 </head>
 <body>
 <header class="top">
+  <button class="ib" id="bHome" title="Home"></button>
   <div class="logo"><div class="mk"><svg class="i f" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>EasyCut</div>
   <input class="pname" id="pname" value="My Vlog" spellcheck="false" aria-label="Project name">
   <div class="sp"></div>
@@ -268,7 +308,6 @@ body.is-desk .desk{display:inline-flex!important}
 </header>
 
 <div class="ws">
-  <nav class="rail" id="rail"></nav>
   <aside class="panel" id="panel"></aside>
   <section class="stage">
     <div class="pv" id="pv">
@@ -326,8 +365,11 @@ body.is-desk .desk{display:inline-flex!important}
   </div>
 </section>
 
+<nav class="rail" id="rail"></nav>
+
 <div class="modal" id="mExport"><div class="dlg" id="dlgExport"></div></div>
 <div class="studio" id="studio"></div>
+<div class="home on" id="home"></div>
 <div class="toast" id="toast"></div>
 <div class="dz" id="dz">Drop to add to your video</div>
 <input type="file" id="fileIn" multiple accept="video/*,image/*,audio/*" hidden>
@@ -338,6 +380,7 @@ body.is-desk .desk{display:inline-flex!important}
 <input type="file" id="fileReelMusic" accept="audio/*" hidden>
 <input type="file" id="fileFont" multiple accept=".ttf,.otf,.woff,.woff2,font/ttf,font/otf,font/woff,font/woff2" hidden>
 <input type="file" id="fileTpl" accept=".json,application/json" hidden>
+<input type="file" id="fileLogo" multiple accept="image/*" hidden>
 <div class="busy" id="busy"></div>
 <div class="bufpill" id="bufpill">Loading video…</div>
 <div id="pool"></div>
@@ -370,7 +413,9 @@ const IC = {
   rotate:'M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5',
   crop:'M6 2v14a2 2 0 0 0 2 2h14M18 22V8a2 2 0 0 0-2-2H2', layers:'M12 2 2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5',
   camera:'M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',
-  snow:'M12 2v20M2 12h20M4.9 4.9l14.2 14.2M19.1 4.9 4.9 19.1', wave:'M2 12h2l3-7 4 14 4-10 3 6h4', flip:'M12 3v18M16 7l4 5-4 5M8 7l-4 5 4 5',
+  snow:'M12 2v20M2 12h20M4.9 4.9l14.2 14.2M19.1 4.9 4.9 19.1', wave:'M2 12h2l3-7 4 14 4-10 3 6h4',
+  home:'M3 11l9-8 9 8M5 10v10h14V10', gif:'M3 5h18v14H3zM10 10H7v4h3v-2M13 10v4M16 14v-4h3M16 12h2', tag:'M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8zM7 7h.01',
+  speed:'M12 14l4-4M3.3 15a9 9 0 1 1 17.4 0', volume:'M11 5 6 9H2v6h4l5 4zM15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14', trans:'M3 5h7v14H3zM14 5h7v14h-7zM8 12h8', sparkle:'M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z', flip:'M12 3v18M16 7l4 5-4 5M8 7l-4 5 4 5',
 };
 const ICF = { play:'M8 5v14l11-7z', pause:'M6 5h4v14H6zM14 5h4v14h-4z', start:'M6 5h2v14H6zM20 5v14L9 12z', end:'M16 5h2v14h-2zM4 5v14l11-7z' };
 const ic = n => ICF[n] ? `<svg class="i f" viewBox="0 0 24 24"><path d="${ICF[n]}"/></svg>` : `<svg class="i" viewBox="0 0 24 24"><path d="${IC[n]}"/></svg>`;
@@ -384,7 +429,7 @@ const FILTERS = {
   fade:['Fade','contrast(.82) brightness(1.12) saturate(.75)'], drama:['Drama','contrast(1.4) saturate(1.15) brightness(.92)'],
   dream:['Dream','brightness(1.12) saturate(1.3) contrast(.9)'], bw:['B&W','grayscale(1) contrast(1.1)'], noir:['Noir','grayscale(1) contrast(1.5) brightness(.9)'],
 };
-const TRANS = [['none','None'],['fade','Fade'],['zoom','Zoom'],['slide','Slide'],['blur','Blur'],['flash','Flash']];
+const TRANS = [['none','None'],['fade','Fade'],['dissolve','Dissolve'],['dip','Dip to black'],['zoom','Zoom in'],['zoomout','Zoom out'],['slide','Slide'],['slideup','Slide up'],['push','Push'],['wipe','Wipe'],['circle','Circle'],['spin','Spin'],['whip','Whip'],['blur','Blur'],['flash','Flash'],['glitch','Glitch']];
 const FONT_GROUPS = [
   ['Clean', ['Plus Jakarta Sans','Poppins','Montserrat','Raleway','Rajdhani','Arial','Verdana','Trebuchet MS']],
   ['Bold & display', ['Anton','Bebas Neue','Oswald','Archivo Black','Russo One','Teko','Bangers','Righteous','Bungee','Abril Fatface','Shrikhand','Monoton','Impact']],
@@ -476,20 +521,49 @@ updatePlayBtn();
 let toastT;
 function toast(msg, ms = 2600){ const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), ms); }
 
-const TABS = [['media','Media','media'],['templates','Templates','canvas'],['overlay','Overlay','layers'],['text','Text','text'],['sticker','Stickers','sticker'],['music','Audio','music'],['filter','Filters','filter'],['canvas','Canvas','crop']];
-function renderRail(){ $('#rail').innerHTML = TABS.map(([k, l, i]) => `<button class="tab ${tab === k ? 'on' : ''}" data-tab="${k}">${ic(i)}${l}</button>`).join(''); }
-$('#rail').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (!b) return; tab = b.dataset.tab; renderRail(); renderPanel(); });
+const TABS = [['media','Media','media'],['reel','Reel','sparkle'],['templates','Templates','canvas'],['text','Text','text'],['sticker','Sticker','sticker'],['gif','GIF','gif'],['logos','Logo','tag'],['music','Music','music'],['overlay','PIP','layers'],['filter','Filter','filter'],['canvas','Canvas','crop']];
+const CLIP_TOOLS = [['split','Split','split'],['speed','Speed','speed'],['volume','Volume','volume'],['crop','Crop','crop'],['trans','Transition','trans'],['freeze','Freeze','snow'],['rotate','Rotate','rotate'],['flip','Flip','flip'],['dup','Copy','copy'],['del','Delete','trash']];
+const sheetOpen = () => document.body.classList.contains('sheet');
+function openSheet(k){ if (k) tab = k; document.body.classList.add('sheet'); renderRail(); renderPanel(); if (tab === 'gif' && gif.key && !gif.items.length && !gif.loading) gifLoad('Trending'); }
+function closeSheet(){ document.body.classList.remove('sheet'); renderRail(); }
+function renderRail(){
+  $('#rail').innerHTML = TABS.map(([k, l, i]) => `<button class="tab ${sheetOpen() && tab === k ? 'on' : ''}" data-tab="${k}">${ic(i)}${l}</button>`).join('')
+    + `<span class="tsep"></span><span class="tgrp">CLIP</span>` + CLIP_TOOLS.map(([k, l, i]) => `<button class="tab ct" data-ct="${k}" title="${l} the selected clip">${ic(i)}${l}</button>`).join('');
+}
+function focusSec(id){ const el = $('#' + id); if (!el) return; el.scrollIntoView({ block:'center', behavior:'smooth' }); el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
+function clipTool(k){
+  if (!sel || sel.type !== 'clip'){ const ca = clipAt(playT); if (!ca) return toast('Add a clip first'); setSel('clip', ca.c.id); }
+  const o = getSel(), m = media[o.mediaId];
+  if (k === 'split') return split();
+  if (k === 'speed'){ if (m.type !== 'video') return toast('Speed works on video clips'); return focusSec('secSpeed'); }
+  if (k === 'volume'){ if (m.type !== 'video') return toast('Photos have no sound — add music in the Music tool'); return focusSec('secVol'); }
+  if (k === 'crop') return enterBoxMode('crop', o.id);
+  if (k === 'trans'){ if (S.clips.indexOf(o) === 0) toast('Tip: transitions play at the start of a clip — pick the 2nd clip onward'); return focusSec('secTrans'); }
+  if (k === 'freeze') return freezeFrame();
+  if (k === 'rotate'){ push(); o.rotate = (o.rotate + 90) % 360; return refreshAll(); }
+  if (k === 'flip'){ push(); o.flipH = !o.flipH; return refreshAll(); }
+  if (k === 'dup') return dup();
+  if (k === 'del') return del();
+}
+$('#rail').addEventListener('click', e => {
+  const ct = e.target.closest('[data-ct]'); if (ct) return clipTool(ct.dataset.ct);
+  const b = e.target.closest('[data-tab]'); if (!b) return;
+  const k = b.dataset.tab;
+  if (k === 'reel') return openReel();
+  if (sheetOpen() && tab === k) return closeSheet();
+  openSheet(k);
+});
 
 /* ---------- left panel ---------- */
 function mediaCard(m){
-  const dur = m.type === 'image' ? 'Photo' : fmtS(Math.round(m.duration * 10) / 10);
+  const dur = m.type === 'image' ? 'Photo' : m.type === 'anim' ? 'GIF' : fmtS(Math.round(m.duration * 10) / 10);
   const th = m.type === 'audio'
     ? `<div class="mthumb aud" style="${m.wave ? `background-image:url('${m.wave}')` : ''}">${m.wave ? '' : ic('music')}</div>`
     : `<div class="mthumb" style="${m.thumb ? `background-image:url('${m.thumb}')` : ''}"></div>`;
   return `<div class="mcard ${m.loading ? 'loading' : ''}" draggable="true" data-mid="${m.id}" title="Click to add at the playhead">${th}<span class="tbadge">${m.type}</span><span class="badge">${m.loading ? '…' : dur}</span><div class="mname">${esc(m.name)}</div><div class="add">${ic('plus')}</div></div>`;
 }
 function renderPanel(){
-  const p = $('#panel'); let h = '';
+  const p = $('#panel'); let h = ''; const tName = (TABS.find(x => x[0] === tab) || [0, 'Tools'])[1];
   const all = Object.values(media);
   if (tab === 'media'){
     const vis = all.filter(m => m.type !== 'audio');
@@ -515,7 +589,11 @@ function renderPanel(){
       + TEXT_PRESETS.map((t, i) => { const p2 = { ...TEXT_BASE, ...t.p }; const st = `font-family:'${p2.font}';font-weight:${p2.bold ? 800 : 400};color:${p2.color};${p2.stroke ? 'text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000;' : ''}${p2.glow ? `text-shadow:0 0 8px ${p2.color};` : ''}${p2.box ? `background:${hexA(p2.boxColor, Math.max(.35, p2.boxAlpha))};` : ''}`; return `<button class="preset" data-tp="${i}" style="${st}" title="${t.name}">${esc(t.name)}</button>`; }).join('') + `</div>`;
   h += `<h3 style="margin-top:20px">Fonts</h3><div class="hint" style="margin-bottom:10px">${FONTS.length} fonts are built in, including Hindi and Punjabi. You can add any .ttf, .otf or .woff2 font file too.${userFonts.length ? ` Your fonts: ${userFonts.map(esc).join(', ')}.` : ''}</div><button class="btn sm full" data-act="addFont">${ic('plus')}Add your own font</button><div style="margin-top:14px"><button class="btn sm full" data-act="toTemplates">More text templates →</button></div>`;
   } else if (tab === 'sticker'){
-    h = `<h3>Stickers</h3><div class="hint" style="margin-bottom:12px">Tap to drop on the video. They animate in with a pop.</div><div class="egrid">${EMOJI.map(e => `<button class="emo" data-emo="${e}">${e}</button>`).join('')}</div>`;
+    h = stickersHTML();
+  } else if (tab === 'gif'){
+    h = gifHTML();
+  } else if (tab === 'logos'){
+    h = logosHTML();
   } else if (tab === 'music'){
     const aud = all.filter(m => m.type === 'audio');
     h = `<h3>Music & sound</h3><div class="drop" data-act="importAud">${ic('music')}<div style="margin-top:6px"><b style="color:var(--text)">Import music or sound</b><br>MP3, WAV, M4A…</div></div>`
@@ -534,7 +612,7 @@ function renderPanel(){
       + `<h3>Export quality</h3><div class="seg sec" data-gseg="res">${[[720,'720p HD'],[1080,'1080p Full HD']].map(([v, l]) => `<button data-val="${v}" class="${S.res === v ? 'on' : ''}">${l}</button>`).join('')}</div>`
       + `<h3>Frame rate</h3><div class="seg" data-gseg="fps">${[[30,'30 fps'],[60,'60 fps (smoother)']].map(([v, l]) => `<button data-val="${v}" class="${(S.fps || 30) === v ? 'on' : ''}">${l}</button>`).join('')}</div>`;
   }
-  p.innerHTML = h;
+  p.innerHTML = `<div class="sheet-h"><b>${esc(tName)}</b><button class="btn pri" data-act="closeSheet" title="Done">✓</button></div>` + h;
 }
 $('#panel').addEventListener('click', e => {
   const t = e.target;
@@ -551,6 +629,21 @@ $('#panel').addEventListener('click', e => {
   const gs = t.closest('[data-gseg] button'); if (gs){ const k = gs.parentElement.dataset.gseg; push(); S[k] = k === 'res' || k === 'fps' ? +gs.dataset.val : gs.dataset.val; if (k === 'fit') S.clips.forEach(c => c.fit = 'auto'); applyCanvasSize(); return refreshAll(); }
   if (act === 'importOv') return $('#fileOv').click();
   if (act === 'reel') return openReel();
+  if (act === 'closeSheet') return closeSheet();
+  if (act === 'toGif'){ e.preventDefault(); tab = 'gif'; gif.kind = 'stickers'; renderRail(); renderPanel(); if (gif.key) gifLoad('Trending'); return; }
+  if (act === 'gifKeySave'){ const k = (($('#gifKey') || {}).value || '').trim(); if (!k) return toast('Paste your GIPHY API key first'); gif.key = k; try { localStorage.setItem('easycut.giphyKey', k); } catch (er) {} return gifLoad('Trending'); }
+  if (act === 'gifKeyReset'){ e.preventDefault(); gif.key = ''; try { localStorage.removeItem('easycut.giphyKey'); } catch (er) {} return renderPanel(); }
+  if (act === 'gifSearch') return gifLoad((($('#gifQ') || {}).value || '').trim());
+  if (act === 'logoUpload') return $('#fileLogo').click();
+  if (act === 'logoMake') return makeTextLogo();
+  const bd = t.closest('[data-badge]'); if (bd){ const [tx, bg, fg] = BADGES[+bd.dataset.badge]; return addText({ text:tx, font:'Bungee', size:70, bold:false, color:fg, box:true, boxColor:bg, boxAlpha:1, anim:'pop', y:.2, x:.5 + (Math.random() - .5) * .3 }); }
+  const sc = t.closest('[data-scat]'); if (sc){ stickerCat = +sc.dataset.scat; return renderPanel(); }
+  const gc = t.closest('[data-gchip]'); if (gc) return gifLoad(gc.dataset.gchip);
+  const gcell = t.closest('[data-gif]'); if (gcell) return addGif(+gcell.dataset.gif);
+  const gk = t.closest('[data-gk] button'); if (gk){ gif.kind = gk.dataset.val; return gifLoad(gif.q || 'Trending'); }
+  const ld = t.closest('[data-logodel]'); if (ld){ e.stopPropagation(); return store.del('logos', ld.dataset.logodel).then(loadLogos).then(renderPanel); }
+  const lg = t.closest('[data-logo]'); if (lg) return addLogo(lg.dataset.logo);
+  const lp = t.closest('[data-lpos] button'); if (lp){ logoSet.pos = lp.dataset.val; return renderPanel(); }
   if (act === 'saveTpl') return saveMyTemplate(($('#myTplName') || {}).value);
   if (act === 'exportTpl') return exportMyTemplates();
   if (act === 'importTpl') return $('#fileTpl').click();
@@ -563,8 +656,8 @@ $('#panel').addEventListener('click', e => {
   const tpl = t.closest('[data-tpl]'); if (tpl) return applyTemplate(+tpl.dataset.tpl);
   const ov = t.closest('[data-ov]'); if (ov) return addOverlay(ov.dataset.ov);
 });
-$('#panel').addEventListener('keydown', e => { if (e.target.matches('input:not([type=range]),textarea,select')){ e.stopPropagation(); if (e.key === 'Enter' && e.target.id === 'myTplName') saveMyTemplate(e.target.value); } });
-$('#panel').addEventListener('input', e => { const k = e.target.dataset.g; if (!k) return; checkpoint('g' + k); S[k] = e.target.value; scheduleRender(); });
+$('#panel').addEventListener('keydown', e => { if (e.target.matches('input:not([type=range]),textarea,select')){ e.stopPropagation(); if (e.key === 'Enter' && e.target.id === 'myTplName') saveMyTemplate(e.target.value); if (e.key === 'Enter' && e.target.id === 'gifQ') gifLoad(e.target.value.trim()); if (e.key === 'Enter' && e.target.id === 'gifKey') $('[data-act="gifKeySave"]').click(); } });
+$('#panel').addEventListener('input', e => { if (e.target.dataset.lset){ const k = e.target.dataset.lset; logoSet[k] = e.target.type === 'checkbox' ? e.target.checked : +e.target.value; const rv = e.target.parentElement.querySelector('.rv'); if (rv) rv.textContent = Math.round(logoSet[k] * 100) + '%'; return; } const k = e.target.dataset.g; if (!k) return; checkpoint('g' + k); S[k] = e.target.value; scheduleRender(); });
 $('#panel').addEventListener('dragstart', e => { const mc = e.target.closest('[data-mid]'); if (mc){ e.dataTransfer.setData('text/x-media', mc.dataset.mid); e.dataTransfer.effectAllowed = 'copy'; } });
 
 /* ---------- import ---------- */
@@ -589,6 +682,32 @@ async function videoThumb(url, t){
   try { await once(v, 'loadeddata'); v.currentTime = t; await once(v, 'seeked'); const w = 240, h = Math.max(1, Math.round(w * v.videoHeight / v.videoWidth)) || 135; const c = document.createElement('canvas'); c.width = w; c.height = h; c.getContext('2d').drawImage(v, 0, 0, w, h); return c.toDataURL('image/jpeg', .72); }
   catch (e) { return ''; } finally { v.removeAttribute('src'); v.load(); v.remove(); }
 }
+/* animated GIF / WebP stickers: decode every frame once, then pick the frame by time */
+async function decodeAnim(file, m){
+  if (!('ImageDecoder' in window)) return false;
+  const name = (file.name || '').toLowerCase();
+  const type = file.type || (name.endsWith('.webp') ? 'image/webp' : name.endsWith('.gif') ? 'image/gif' : '');
+  if (!/gif|webp/.test(type)) return false;
+  try {
+    if (!(await ImageDecoder.isTypeSupported(type))) return false;
+    const dec = new ImageDecoder({ data:await file.arrayBuffer(), type });
+    await dec.tracks.ready; const tr = dec.tracks.selectedTrack;
+    if (!tr || tr.frameCount < 2){ dec.close(); return false; }
+    const n = Math.min(tr.frameCount, 300), frames = []; let t = 0, rw = 0;
+    for (let i = 0; i < n; i++){
+      const r = await dec.decode({ frameIndex:i }), vf = r.image;
+      if (!rw) rw = Math.min(vf.displayWidth, 640);
+      const bmp = await createImageBitmap(vf, { resizeWidth:rw, resizeHeight:Math.max(1, Math.round(rw * vf.displayHeight / vf.displayWidth)), resizeQuality:'high' });
+      const d = Math.max(.02, (vf.duration || 100000) / 1e6); vf.close();
+      frames.push({ bmp, t0:t }); t += d;
+    }
+    dec.close();
+    m.type = 'anim'; m.frames = frames; m.animDur = t; m.duration = t; m.el = frames[0].bmp; m.w = m.el.width; m.h = m.el.height;
+    const c = document.createElement('canvas'); c.width = 160; c.height = Math.max(1, Math.round(160 * m.h / m.w)); c.getContext('2d').drawImage(m.el, 0, 0, c.width, c.height); m.thumb = c.toDataURL('image/png');
+    return true;
+  } catch (e) { return false; }
+}
+function animFrame(m, t){ const T = m.animDur || 1, x = ((t % T) + T) % T, f = m.frames; let lo = 0, hi = f.length - 1; while (lo < hi){ const mid = (lo + hi + 1) >> 1; if (f[mid].t0 <= x) lo = mid; else hi = mid - 1; } return f[lo].bmp; }
 async function loadMedia(m, file){
   if (m.type === 'video'){
     const v = document.createElement('video'); v.preload = 'auto'; v.playsInline = true; v.src = m.url; pool.appendChild(v);
@@ -600,6 +719,7 @@ async function loadMedia(m, file){
     v.addEventListener('loadeddata', () => scheduleRender());
     m.el = v; m.thumb = await videoThumb(m.url, Math.min(1, m.duration / 3));
   } else if (m.type === 'image'){
+    if (await decodeAnim(file, m)) return;
     const img = new Image(); img.src = m.url; await img.decode(); m.w = img.naturalWidth; m.h = img.naturalHeight; m.el = img; m.thumb = m.url;
   } else {
     const buf = await file.arrayBuffer();
@@ -827,7 +947,7 @@ function dup(){
 function setSel(type, id){ if (cropMode && (type !== 'clip' || id !== cropMode.clipId)) cropMode = null; sel = type ? { type, id } : null; renderProps(); renderTimeline(); if (tab === 'filter') renderPanel(); scheduleRender(); }
 
 /* ---------- properties panel ---------- */
-const fmtVal = (k, v) => ['volume','boxAlpha','scale','opacity','keyTol','vig','panX'].includes(k) ? Math.round(v * 100) + '%' : ['b','c','s'].includes(k) ? Math.round(v) + '%' : ['fadeIn','fadeOut','afIn','afOut'].includes(k) ? (+v).toFixed(1) + 's' : Math.round(v);
+const fmtVal = (k, v) => ['volume','boxAlpha','scale','opacity','keyTol','vig','panX'].includes(k) ? Math.round(v * 100) + '%' : ['b','c','s'].includes(k) ? Math.round(v) + '%' : ['fadeIn','fadeOut','afIn','afOut','tdur'].includes(k) ? (+v).toFixed(1) + 's' : Math.round(v);
 const range = (k, min, max, step, v) => `<div class="rng"><input type="range" data-k="${k}" data-t="num" min="${min}" max="${max}" step="${step}" value="${v}"><span class="rv" data-v="${k}">${fmtVal(k, v)}</span></div>`;
 const seg = (k, opts, v, t = 'str') => `<div class="seg" data-seg="${k}" data-t="${t}">${opts.map(([val, l]) => `<button data-val="${val}" class="${String(val) === String(v) ? 'on' : ''}">${l}</button>`).join('')}</div>`;
 const row = (l, inner, id = '') => `<div class="prow" ${id ? `id="${id}"` : ''}><label>${l}</label>${inner}</div>`;
@@ -862,12 +982,12 @@ function renderProps(){
     h = `<div class="phead"><span class="dot" style="background:var(--vid)"></span><span class="t">${esc(m.name)}</span><small>${fmt(clipLen(o))}</small></div>${acts()}`
       + `<div class="acts"><button class="btn sm" data-pa="crop">${ic('crop')}Crop</button><button class="btn sm" data-pa="logo">${ic('x')}Remove logo${nl ? ` (${nl})` : ''}</button>${vid ? `<button class="btn sm" data-pa="freeze">${ic('snow')}Freeze frame</button><button class="btn sm" data-pa="extract">${ic('wave')}Extract audio</button>` : ''}</div>`
       + row('Framing', seg('fit', [['auto','Canvas default'],['fit','Fit'],['fill','Fill (no bars)']], o.fit || 'auto'))
-      + (vid ? row('Speed', seg('speed', [[.25,'.25x'],[.5,'.5x'],[1,'1x'],[1.5,'1.5x'],[2,'2x'],[3,'3x'],[4,'4x']], o.speed, 'num')) + row('Volume', range('volume', 0, 2, .05, o.volume))
+      + (vid ? row('Speed', seg('speed', [[.25,'.25x'],[.5,'.5x'],[1,'1x'],[1.5,'1.5x'],[2,'2x'],[3,'3x'],[4,'4x']], o.speed, 'num'), 'secSpeed') + row('Volume', range('volume', 0, 2, .05, o.volume), 'secVol')
              + `<div class="two">${row('Sound fade in', range('afIn', 0, 3, .1, o.afIn || 0))}${row('Sound fade out', range('afOut', 0, 3, .1, o.afOut || 0))}</div>`
              + row('Voice effect', seg('aeff', FX_NAMES, o.aeff || 'none'))
              : row('Duration (seconds)', `<input class="inp" type="number" min="0.2" max="600" step="0.1" data-k="len" data-t="num" value="${clipLen(o).toFixed(1)}">`))
       + row('Motion', seg('motion', [['none','None'],['in','Zoom in'],['out','Zoom out'],['left','Pan ←'],['right','Pan →']], motionOf(o)))
-      + row('Transition in', seg('trans', TRANS, o.trans), 'secTrans')
+      + row('Transition in', seg('trans', TRANS, o.trans) + (o.trans !== 'none' ? `<div style="margin-top:8px">${range('tdur', .2, 1.5, .05, o.tdur || .5)}</div>` : ''), 'secTrans')
       + row('Filter', `<select class="inp" data-k="filter" data-t="str">${Object.entries(FILTERS).map(([k, [n]]) => `<option value="${k}" ${o.filter === k ? 'selected' : ''}>${n}</option>`).join('')}</select>`)
       + row('Brightness', range('b', 50, 150, 1, o.b)) + row('Contrast', range('c', 50, 150, 1, o.c)) + row('Saturation', range('s', 0, 200, 1, o.s))
       + row('Vignette', range('vig', 0, .9, .05, o.vig || 0))
@@ -1032,13 +1152,13 @@ async function saveProject(){
       list.push({ id:m.id, type:m.type, name:m.name, path:m.path });
     }
     await DESK.writeFile(fp, JSON.stringify({ app:'EasyCut', version:1, name:$('#pname').value, state:JSON.parse(snap()), media:list }, null, 1));
-    projPath = fp; toast('Project saved');
+    projPath = fp; addRecent($('#pname').value, fp); toast('Project saved');
   } catch (e) { toast('Could not save the project: ' + e.message, 5000); }
   busy(false);
 }
 async function openProject(){
   if (!DESK) return;
-  const r = await DESK.openProject(); if (!r) return;
+  let r; try { r = typeof arguments[0] === 'string' ? await DESK.openProjectPath(arguments[0]) : await DESK.openProject(); } catch (e) { return toast('Could not open that project — it may have been moved or deleted', 4000); } if (!r) return;
   let j; try { j = JSON.parse(r.text); } catch (e) { return toast('That file is not an EasyCut project'); }
   if (!j || j.app !== 'EasyCut') return toast('That file is not an EasyCut project');
   if (playing) pause(); busy(true, 'Opening project…');
@@ -1055,7 +1175,7 @@ async function openProject(){
   Object.assign(S, { aspect:'16:9', res:1080, fps:30, fit:'fit', bg:'blur', bgColor:'#111111', clips:[], texts:[], audios:[], overlays:[] }, j.state || {});
   const ok = o => !!media[o.mediaId];
   S.clips = S.clips.filter(ok); S.audios = S.audios.filter(ok); S.overlays = S.overlays.filter(ok);
-  $('#pname').value = j.name || 'Project'; projPath = r.path; playT = 0;
+  $('#pname').value = j.name || 'Project'; projPath = r.path; playT = 0; addRecent(j.name, r.path);
   progressDone(); applyCanvasSize(); refreshAll(); fitZoom(); seekPreview(); updUndo();
   toast(missing.length ? `Opened, but some files are missing: ${missing.join(', ')}` : 'Project opened', 5000);
 }
@@ -1072,11 +1192,12 @@ function rr(g, x, y, w, h, r){ r = Math.min(r, w / 2, h / 2); g.beginPath(); g.m
 /* logo removal works on a copy of the source frame */
 const pre = document.createElement('canvas'), prex = pre.getContext('2d', { willReadFrequently:true });
 const tmpc = document.createElement('canvas'), tctx = tmpc.getContext('2d');
-function sourceFor(c, m){
-  if (!c.logos || !c.logos.length) return { el:m.el, w:m.w, h:m.h };
+function sourceFor(c, m, srcT){
+  const base = m.type === 'anim' ? animFrame(m, srcT || 0) : m.el;
+  if (!c.logos || !c.logos.length) return { el:base, w:m.w, h:m.h };
   const k = Math.min(1, Math.max(480, cv.width, cv.height) / Math.max(m.w, m.h)), w = Math.max(2, Math.round(m.w * k)), h = Math.max(2, Math.round(m.h * k));
   if (pre.width !== w || pre.height !== h){ pre.width = w; pre.height = h; }
-  prex.filter = 'none'; prex.drawImage(m.el, 0, 0, w, h);
+  prex.filter = 'none'; prex.drawImage(base, 0, 0, w, h);
   for (const L of c.logos) removeLogo(prex, L, w, h);
   return { el:pre, w, h };
 }
@@ -1110,6 +1231,40 @@ function removeLogo(g, L, W, H){
   g.drawImage(g.canvas, x - 6, y - 6, w + 12, h + 12, x - 6, y - 6, w + 12, h + 12); g.restore();
 }
 
+/* draws one clip at a moment inside it; used for normal playback and for transitions (which also draw the clip before) */
+function drawClipAt(c, local, o = {}){
+  const m = media[c.mediaId]; if (!m || !m.el) return false;
+  if (m.type === 'video' && m.el.readyState < 2) return false;
+  const W = cv.width, Hh = cv.height;
+  const s = sourceFor(c, m, c.in + local * c.speed), cr = c.crop || FULL;
+  const sr = [cr.x * s.w, cr.y * s.h, Math.max(1, cr.w * s.w), Math.max(1, cr.h * s.h)];
+  const rot = ((c.rotate % 360) + 360) % 360, swp = rot === 90 || rot === 270;
+  const dw = swp ? sr[3] : sr[2], dh = swp ? sr[2] : sr[3], fit = fitOf(c);
+  ctx.save();
+  ctx.translate(o.ox || 0, o.oy || 0);
+  if (o.clip){ ctx.beginPath(); o.clip(ctx); ctx.clip(); }
+  const a = o.alpha == null ? 1 : o.alpha;
+  if (o.bg && S.bg === 'blur' && fit !== 'fill'){
+    small.width = 48; small.height = Math.max(1, Math.round(48 * Hh / W));
+    const ks = Math.max(small.width / dw, small.height / dh);
+    sctx.filter = filterStr(c); drawMedia(sctx, s.el, small.width, small.height, ks, rot, c.flipH, sr); sctx.filter = 'none';
+    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high'; ctx.globalAlpha = a;
+    ctx.drawImage(small, 0, 0, W, Hh); ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.fillRect(0, 0, W, Hh);
+  } else if (o.bg && o.clip){ ctx.globalAlpha = a; ctx.fillStyle = S.bg === 'white' ? '#ffffff' : S.bg === 'color' ? S.bgColor : '#000000'; ctx.fillRect(0, 0, W, Hh); }
+  let k = fit === 'fill' ? Math.max(W / dw, Hh / dh) : Math.min(W / dw, Hh / dh);
+  const mo = motionOf(c), q = local / Math.max(.01, clipLen(c)); let mx = 0;
+  if (mo === 'in') k *= 1 + .15 * q;
+  else if (mo === 'out') k *= 1.15 - .15 * q;
+  else if (mo === 'left' || mo === 'right'){ k *= 1.18; const span = Math.max(0, dw * k - W) / 2; mx = (mo === 'left' ? 1 : -1) * span * (1 - 2 * q); }
+  k *= o.k || 1;
+  let fs = filterStr(c); if (o.blur > .2) fs = (fs === 'none' ? '' : fs + ' ') + `blur(${o.blur.toFixed(1)}px)`;
+  ctx.globalAlpha = a; ctx.filter = fs;
+  drawMedia(ctx, s.el, W, Hh, k, rot + (o.rot || 0), c.flipH, sr, mx, 0);
+  ctx.filter = 'none';
+  if (c.vig > 0){ const g = ctx.createRadialGradient(W / 2, Hh / 2, Math.min(W, Hh) * .3, W / 2, Hh / 2, Math.hypot(W, Hh) / 2); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, `rgba(0,0,0,${c.vig})`); ctx.fillStyle = g; ctx.fillRect(0, 0, W, Hh); }
+  ctx.restore();
+  return true;
+}
 function renderFrame(t = playT){
   if (cropMode) return renderBoxEditor();
   const W = cv.width, Hh = cv.height;
@@ -1117,37 +1272,32 @@ function renderFrame(t = playT){
   ctx.fillStyle = S.bg === 'white' ? '#ffffff' : S.bg === 'color' ? S.bgColor : '#000000'; ctx.fillRect(0, 0, W, Hh);
   const ca = clipAt(t);
   if (ca){
-    const c = ca.c, m = media[c.mediaId];
-    const ready = m && m.el && (m.type === 'image' || m.el.readyState >= 2);
-    if (ready){
-      const s = sourceFor(c, m), cr = c.crop || FULL;
-      const sr = [cr.x * s.w, cr.y * s.h, Math.max(1, cr.w * s.w), Math.max(1, cr.h * s.h)];
-      const rot = ((c.rotate % 360) + 360) % 360, swp = rot === 90 || rot === 270;
-      const dw = swp ? sr[3] : sr[2], dh = swp ? sr[2] : sr[3];
-      const TD = .5, p = c.trans !== 'none' && ca.local < TD ? ca.local / TD : 1, e = easeOut(p);
-      const fit = fitOf(c);
-      if (S.bg === 'blur' && fit !== 'fill'){
-        small.width = 48; small.height = Math.max(1, Math.round(48 * Hh / W));
-        const ks = Math.max(small.width / dw, small.height / dh);
-        sctx.filter = filterStr(c); drawMedia(sctx, s.el, small.width, small.height, ks, rot, c.flipH, sr); sctx.filter = 'none';
-        ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high'; ctx.globalAlpha = c.trans === 'fade' || c.trans === 'zoom' ? e : 1;
-        ctx.drawImage(small, 0, 0, W, Hh); ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.fillRect(0, 0, W, Hh); ctx.globalAlpha = 1;
-      }
-      let k = fit === 'fill' ? Math.max(W / dw, Hh / dh) : Math.min(W / dw, Hh / dh);
-      const mo = motionOf(c), q = ca.local / Math.max(.01, clipLen(c));
-      let ox = 0, oy = 0, alpha = 1, fs = filterStr(c);
-      if (mo === 'in') k *= 1 + .15 * q;
-      else if (mo === 'out') k *= 1.15 - .15 * q;
-      else if (mo === 'left' || mo === 'right'){ k *= 1.18; const span = Math.max(0, dw * k - W) / 2; ox = (mo === 'left' ? 1 : -1) * span * (1 - 2 * q); }
-      if (c.trans === 'fade') alpha = e;
-      else if (c.trans === 'zoom'){ k *= 1 + .3 * (1 - e); alpha = Math.min(1, e * 1.4); }
-      else if (c.trans === 'slide') ox += W * (1 - e);
-      else if (c.trans === 'blur' && p < 1) fs = (fs === 'none' ? '' : fs + ' ') + `blur(${((1 - e) * Math.min(W, Hh) / 30).toFixed(1)}px)`;
-      ctx.globalAlpha = alpha; ctx.filter = fs;
-      drawMedia(ctx, s.el, W, Hh, k, rot, c.flipH, sr, ox, oy);
-      ctx.filter = 'none'; ctx.globalAlpha = 1;
-      if (c.vig > 0){ const g = ctx.createRadialGradient(W / 2, Hh / 2, Math.min(W, Hh) * .3, W / 2, Hh / 2, Math.hypot(W, Hh) / 2); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, `rgba(0,0,0,${c.vig})`); ctx.fillStyle = g; ctx.fillRect(0, 0, W, Hh); }
-      if (c.trans === 'flash' && p < 1){ ctx.fillStyle = `rgba(255,255,255,${(1 - e).toFixed(3)})`; ctx.fillRect(0, 0, W, Hh); }
+    const c = ca.c, l = ca.local, TD = c.tdur || .5, p = c.trans !== 'none' && l < TD ? l / TD : 1, e = easeOut(p), mn = Math.min(W, Hh);
+    const prev = ca.i > 0 ? S.clips[ca.i - 1] : null;
+    const drawPrev = (o = {}) => { if (!prev) return false; const pm = media[prev.mediaId]; if (pm && pm === media[c.mediaId] && pm.type === 'video') return false; return drawClipAt(prev, clipLen(prev) - .001, { bg:true, ...o }); };
+    const veil = (col, a) => { if (a <= 0) return; ctx.fillStyle = col; ctx.globalAlpha = clamp(a, 0, 1); ctx.fillRect(0, 0, W, Hh); ctx.globalAlpha = 1; };
+    if (p >= 1) drawClipAt(c, l, { bg:true });
+    else switch (c.trans){
+      case 'fade': drawClipAt(c, l, { bg:true, alpha:e }); break;
+      case 'dissolve': drawPrev(); drawClipAt(c, l, { bg:true, alpha:e }); break;
+      case 'dip': if (p < .5){ drawPrev(); veil('#000', p * 2); } else { drawClipAt(c, l, { bg:true }); veil('#000', (1 - p) * 2); } break;
+      case 'zoom': drawClipAt(c, l, { bg:true, k:1 + .3 * (1 - e), alpha:Math.min(1, e * 1.4) }); break;
+      case 'zoomout': drawPrev(); drawClipAt(c, l, { bg:false, k:.55 + .45 * e, alpha:Math.min(1, e * 1.6) }); break;
+      case 'slide': drawPrev(); drawClipAt(c, l, { bg:true, ox:W * (1 - e) }); break;
+      case 'slideup': drawPrev(); drawClipAt(c, l, { bg:true, oy:Hh * (1 - e) }); break;
+      case 'push': drawPrev({ ox:-W * e }); drawClipAt(c, l, { bg:true, ox:W * (1 - e) }); break;
+      case 'wipe': drawPrev(); drawClipAt(c, l, { bg:true, clip:g => g.rect(0, 0, W * e, Hh) }); break;
+      case 'circle': drawPrev(); drawClipAt(c, l, { bg:true, clip:g => g.arc(W / 2, Hh / 2, Math.max(1, Math.hypot(W, Hh) / 2 * e), 0, Math.PI * 2) }); break;
+      case 'spin': drawPrev(); drawClipAt(c, l, { bg:false, rot:-120 * (1 - e), k:.4 + .6 * e, alpha:Math.min(1, e * 1.5) }); break;
+      case 'whip': drawPrev({ ox:-W * e, blur:e * mn / 25 }); drawClipAt(c, l, { bg:true, ox:W * (1 - e), blur:(1 - e) * mn / 25 }); break;
+      case 'blur': drawClipAt(c, l, { bg:true, blur:(1 - e) * mn / 30 }); break;
+      case 'flash': drawClipAt(c, l, { bg:true }); veil('#fff', 1 - e); break;
+      case 'glitch': {
+        drawClipAt(c, l, { bg:true }); const amt = 1 - p, seed = Math.floor(l * 30);
+        if (amt > .05){ for (let i = 0; i < 7; i++){ const r = Math.abs(Math.sin(seed * 12.9898 + i * 78.233)) , hgt = Hh * (.03 + .08 * r), y = (Hh - hgt) * Math.abs(Math.sin(seed * 3.1 + i * 7.7)), dx = (r - .5) * W * .18 * amt; ctx.drawImage(cv, 0, y, W, hgt, dx, y, W, hgt); }
+          ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = .35 * amt; ctx.drawImage(cv, W * .012 * amt, 0); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1; }
+        break; }
+      default: drawClipAt(c, l, { bg:true });
     }
   }
   ctx.restore();
@@ -1160,7 +1310,7 @@ function renderFrame(t = playT){
 /* ---------- overlays (picture-in-picture, logos, green screen) ---------- */
 const keyCv = document.createElement('canvas'), keyCx = keyCv.getContext('2d', { willReadFrequently:true });
 function ovEl(o){
-  const m = media[o.mediaId]; if (!m) return null; if (m.type === 'image') return m.el;
+  const m = media[o.mediaId]; if (!m) return null; if (m.type !== 'video') return m.el;
   let el = ovEls[o.id];
   if (!el){ el = document.createElement('video'); el.preload = 'auto'; el.playsInline = true; el.src = m.url; pool.appendChild(el); el.addEventListener('seeked', () => { if (!playing) scheduleRender(); }); el.addEventListener('loadeddata', () => scheduleRender()); ovEls[o.id] = el; }
   return el;
@@ -1181,7 +1331,8 @@ function drawCell(o, m, el, lt){
   const W = cv.width, Hh = cv.height, A = .3, a = Math.min(clamp(lt / A, 0, 1), clamp((o.dur - lt) / A, 0, 1));
   const x = o.cell.x * W, y = o.cell.y * Hh, w = o.cell.w * W, h = o.cell.h * Hh;
   const box = { id:o.id, x, y, w, h }; ovBoxes.push(box);
-  if (m.type === 'image' || el.readyState >= 2){
+  if (m.type !== 'video' || el.readyState >= 2){
+    if (m.type === 'anim') el = animFrame(m, lt);
     const ra = w / h, sa = m.w / m.h; let sw = m.w, sh = m.h; if (sa > ra) sw = m.h * ra; else sh = m.w / ra;
     const sx = (m.w - sw) * (o.panX == null ? .5 : o.panX), sy = (m.h - sh) * .5;
     ctx.save(); ctx.globalAlpha = o.anim === 'none' ? o.opacity : o.opacity * a;
@@ -1205,13 +1356,13 @@ function drawOverlay(o, lt){
   const box = { id:o.id, x:cx - bw / 2, y:cy - bh / 2, w:bw, h:bh }; ovBoxes.push(box);
   const isSel = sel && sel.id === o.id && !exporting;
   if (isSel){ const hs = Math.min(W, Hh) * .03; ovHandle = { id:o.id, x:box.x + box.w - hs / 2, y:box.y + box.h - hs / 2, s:hs }; }
-  const ready = m.type === 'image' || el.readyState >= 2;
+  const ready = m.type !== 'video' || el.readyState >= 2;
   if (ready && alpha > .001){
-    let src = el;
+    let src = m.type === 'anim' ? animFrame(m, lt) : el;
     if (o.chroma){
       const cw = Math.min(640, m.w), chh = Math.max(1, Math.round(cw * m.h / m.w));
       if (keyCv.width !== cw || keyCv.height !== chh){ keyCv.width = cw; keyCv.height = chh; }
-      keyCx.clearRect(0, 0, cw, chh); keyCx.drawImage(el, 0, 0, cw, chh);
+      keyCx.clearRect(0, 0, cw, chh); keyCx.drawImage(src, 0, 0, cw, chh);
       const id = keyCx.getImageData(0, 0, cw, chh); keyOut(id.data, o.keyColor, o.keyTol); keyCx.putImageData(id, 0, 0); src = keyCv;
     }
     ctx.save(); ctx.globalAlpha = alpha; ctx.translate(cx, cy + oy); ctx.rotate(rot * Math.PI / 180); ctx.scale(sc * (o.flipH ? -1 : 1), sc);
@@ -1236,7 +1387,7 @@ function renderBoxEditor(){
   ctx.save(); ctx.setTransform(1,0,0,1,0,0); ctx.filter = 'none'; ctx.globalAlpha = 1; ctx.fillStyle = '#0b0c10'; ctx.fillRect(0, 0, W, Hh);
   const k = Math.min(W * .88 / m.w, Hh * .84 / m.h), dw = m.w * k, dh = m.h * k, ox = (W - dw) / 2, oy = (Hh - dh) / 2;
   cropView = { ox, oy, dw, dh };
-  if (m.type === 'image' || m.el.readyState >= 2){ const s = sourceFor(c, m); ctx.filter = filterStr(c); ctx.drawImage(s.el, 0, 0, s.w, s.h, ox, oy, dw, dh); ctx.filter = 'none'; }
+  if (m.type !== 'video' || m.el.readyState >= 2){ const s = sourceFor(c, m, c.in); ctx.filter = filterStr(c); ctx.drawImage(s.el, 0, 0, s.w, s.h, ox, oy, dw, dh); ctx.filter = 'none'; }
   const lw = Math.max(2, Math.min(W, Hh) / 360), hs = Math.min(W, Hh) * .022;
   const handles = (r, edges) => {
     ctx.fillStyle = '#fff'; ctx.strokeStyle = '#ff4d6d'; ctx.lineWidth = lw;
@@ -1453,7 +1604,9 @@ function syncAudios(st, dt, ca){
 function seekPreview(){
   if (playing) return;
   const ca = clipAt(playT);
-  if (ca){ const m = media[ca.c.mediaId]; if (m && m.type === 'video'){ const want = Math.min(ca.c.in + ca.local * ca.c.speed, m.duration - .02); if (Math.abs(m.el.currentTime - want) > .01) m.el.currentTime = want; } }
+  if (ca){ const m = media[ca.c.mediaId]; if (m && m.type === 'video'){ const want = Math.min(ca.c.in + ca.local * ca.c.speed, m.duration - .02); if (Math.abs(m.el.currentTime - want) > .01) m.el.currentTime = want; }
+    const pv = ca.i > 0 && ca.c.trans !== 'none' && ca.local < (ca.c.tdur || .5) ? S.clips[ca.i - 1] : null, pm = pv && media[pv.mediaId];
+    if (pm && pm !== m && pm.type === 'video'){ const pw = Math.max(0, pv.out - .04); if (Math.abs(pm.el.currentTime - pw) > .05) pm.el.currentTime = pw; } }
   for (const o of S.overlays){ const m = media[o.mediaId]; if (!m || m.type !== 'video' || !activeOv(o, playT)) continue; const oe = ovEl(o), want = Math.min(o.offset + playT - o.start, m.duration - .02); if (Math.abs(oe.currentTime - want) > .01) oe.currentTime = want; }
   renderFrame(); updateTimeUI();
 }
@@ -1582,7 +1735,7 @@ function renderTimeline(){
 function updateTimeUI(follow){
   $('#playhead').style.left = playT * pps + 'px';
   $('#tc').innerHTML = `<b>${fmt(playT)}</b> / ${fmt(totalDur())}`;
-  if (follow){ const x = playT * pps; if (x > tlScroll.scrollLeft + tlScroll.clientWidth - 60 || x < tlScroll.scrollLeft) tlScroll.scrollLeft = x - 80; }
+  if (follow){ const x = playT * pps; tlScroll.scrollLeft = Math.max(0, x - tlScroll.clientWidth / 2); }
 }
 function scrollToPlayhead(){ const x = playT * pps; if (x < tlScroll.scrollLeft || x > tlScroll.scrollLeft + tlScroll.clientWidth - 40) tlScroll.scrollLeft = Math.max(0, x - 80); }
 
@@ -1622,7 +1775,7 @@ tlInner.addEventListener('pointermove', e => {
         playT = clipStarts()[idx] + clipLen(o) - .02;
       } else {
         o.in = clamp(g.in + d * o.speed, m.type === 'video' ? 0 : -1e9, o.out - .1 * o.speed);
-        if (m.type === 'image'){ o.out = o.out - o.in; o.in = 0; o.out = Math.max(.1, o.out); }
+        if (m.type !== 'video'){ o.out = o.out - o.in; o.in = 0; o.out = Math.max(.1, o.out); }
         playT = clipStarts()[idx];
       }
       renderTimeline(); seekPreview();
@@ -1988,6 +2141,137 @@ async function buildReel(){
   toast(`${style.emoji} ${style.name} reel ready: ${S.clips.length} clips${reel.mode === 'auto' && mus ? ` cut on the beat (${beat.bpm} BPM)` : ''}. Press play — everything is editable.`, 5000);
 }
 
+/* ---------- stickers ---------- */
+const STICKER_CATS = [
+  ['Smileys', '😀 😃 😄 😁 😆 😅 🤣 😂 🙂 😉 😊 😇 🥰 😍 🤩 😘 😋 😛 😜 🤪 😎 🤓 🥳 😏 😒 😔 😢 😭 😤 😡 🤯 😱 🥵 🥶 😴 🤔 🤫 🙄 😬 🤗'],
+  ['Love', '❤️ 🧡 💛 💚 💙 💜 🖤 🤍 💕 💞 💓 💗 💖 💘 💝 💌 😻 🌹 💐 💋'],
+  ['Hands', '👍 👎 👏 🙌 🙏 🤝 👌 ✌️ 🤞 🤟 🤘 👋 💪 👉 👈 👆 👇 ☝️ ✍️ 🫶'],
+  ['Party', '🎉 🎊 🥳 🎂 🎁 🎈 🍾 🥂 🎆 🎇 ✨ 🌟 ⭐ 💫 🔥 💯 🏆 🥇 🎵 🎶'],
+  ['Travel', '✈️ 🚗 🚕 🏍️ 🚂 🚢 🏖️ 🏝️ 🏔️ ⛰️ 🗺️ 🧳 📍 🌅 🌄 🌇 🌃 🗽 🕌 🛕'],
+  ['Food', '🍕 🍔 🍟 🌮 🍜 🍛 🍚 🍣 🍩 🍪 🎂 🍦 ☕ 🍵 🥤 🍹 🥭 🍉 🍓 🌶️'],
+  ['Animals', '🐶 🐱 🐭 🐰 🦊 🐻 🐼 🐨 🐯 🦁 🐮 🐷 🐸 🐵 🐔 🐧 🦄 🐝 🦋 🐬'],
+  ['Nature', '🌸 🌺 🌻 🌼 🌷 🌱 🌿 🍀 🍁 🍂 🌈 ☀️ 🌙 ☁️ ⛈️ ❄️ 🌊 💧 🌍 🌋'],
+  ['Sports', '🏏 ⚽ 🏀 🏈 🎾 🏐 🏓 🏸 🥊 🏋️ 🚴 🏃 🧘 🏊 ⛳ 🎯 🎮 🕹️ 🏁 🥇'],
+  ['India', '🇮🇳 🪔 🛕 🕉️ 🙏 🪷 🐘 🥭 🍛 🫓 🏏 🎆 🪁 🥁 💃 🕺 👳 🚩 🌶️ 🧿'],
+  ['Signs', '➡️ ⬅️ ⬆️ ⬇️ ↗️ ↘️ 🔄 ✅ ❌ ❗ ❓ ⚠️ 🚫 💡 📢 🔔 🔴 🟢 ⏰ 📌'],
+].map(([n, e]) => [n, e.split(' ')]);
+const BADGES = [
+  ['NEW', '#ff4d6d', '#fff'], ['WOW!', '#facc15', '#111'], ['OMG 😱', '#7c3aed', '#fff'], ['LOL 😂', '#f97316', '#fff'],
+  ['SALE', '#dc2626', '#fff'], ['🔴 LIVE', '#111111', '#fff'], ['SUBSCRIBE', '#e11d2e', '#fff'], ['LIKE 👍', '#2563eb', '#fff'],
+  ['FOLLOW ✨', '#ec4899', '#fff'], ['WAIT…', '#ffffff', '#111'], ['PART 2', '#16a34a', '#fff'], ['100% 💯', '#0ea5e9', '#fff'],
+];
+let stickerCat = 0;
+function stickersHTML(){
+  return `<h3>Badges</h3><div class="pgrid sec">${BADGES.map(([t, bg, fg], i) => `<button class="preset" data-badge="${i}" style="font:800 15px 'Bungee','Plus Jakarta Sans';background:${bg};color:${fg};padding:10px 4px">${esc(t)}</button>`).join('')}</div>
+  <h3>Emoji stickers</h3><div class="chips">${STICKER_CATS.map(([n], i) => `<button class="chip ${i === stickerCat ? 'on' : ''}" data-scat="${i}">${n}</button>`).join('')}</div>
+  <div class="egrid">${STICKER_CATS[stickerCat][1].map(e => `<button class="emo" data-emo="${e}">${e}</button>`).join('')}</div>
+  <div class="hint" style="margin-top:12px">Want moving stickers? Open <a href="#" data-act="toGif" style="color:var(--acc)">GIFs → Stickers</a>, or import your own GIF.</div>`;
+}
+
+/* ---------- GIFs (GIPHY) ---------- */
+const gif = { kind:'gifs', q:'', items:[], loading:false, err:'', key:'' };
+try { gif.key = localStorage.getItem('easycut.giphyKey') || ''; } catch (e) {}
+const GIF_CHIPS = ['Trending','Funny','Wow','Love','Party','Dance','Thumbs up','Subscribe','Cricket','Bollywood','Thank you','Cat','Fire','Clapping'];
+function gifHTML(){
+  if (!gif.key) return `<h3>GIFs & animated stickers</h3>
+    <div class="hint" style="margin-bottom:12px">EasyCut finds GIFs on the internet using <b style="color:var(--text)">GIPHY</b>. GIPHY needs a free key (one time, about 2 minutes):</div>
+    <ol class="hint" style="padding-left:18px;margin:0 0 12px;line-height:1.7"><li>Go to <a href="https://developers.giphy.com/dashboard/" target="_blank" rel="noopener" style="color:var(--acc)">developers.giphy.com</a> and sign up (free)</li><li>Click <b>Create an App</b> → choose <b>API</b></li><li>Give it any name, then copy the <b>API key</b></li><li>Paste it below</li></ol>
+    <div style="display:flex;gap:6px"><input class="inp" id="gifKey" placeholder="Paste your GIPHY API key"><button class="btn sm pri" data-act="gifKeySave">Save</button></div>
+    <div class="hint" style="margin-top:14px">You can also import your own .gif or animated .webp files from the Media or Overlay tab — they move in your video.</div>`;
+  const list = gif.items.map((g, i) => `<button class="gifcell" data-gif="${i}" title="${esc(g.title || '')}"><img loading="lazy" src="${esc(g.thumb)}" alt=""></button>`).join('');
+  return `<h3>GIFs & animated stickers</h3>
+    <div class="seg sec" data-gk="1">${[['gifs','GIFs'],['stickers','Stickers (see-through)']].map(([v, l]) => `<button data-val="${v}" class="${gif.kind === v ? 'on' : ''}">${l}</button>`).join('')}</div>
+    <div style="display:flex;gap:6px;margin-bottom:10px"><input class="inp" id="gifQ" placeholder="Search GIFs…" value="${esc(gif.q)}"><button class="btn sm pri" data-act="gifSearch">Search</button></div>
+    <div class="chips">${GIF_CHIPS.map(c => `<button class="chip ${(gif.q || 'Trending') === c ? 'on' : ''}" data-gchip="${esc(c)}">${c}</button>`).join('')}</div>
+    ${gif.loading ? '<div class="hint">Loading…</div>' : gif.err ? `<div class="hint" style="color:#ff9aa9">${esc(gif.err)}</div>` : `<div class="gifgrid ${gif.kind === 'stickers' ? 'stk' : ''}">${list}</div>`}
+    <div class="crow" style="margin-top:12px"><span class="hint" style="font-weight:700">Powered by GIPHY</span><a href="#" data-act="gifKeyReset" class="hint" style="color:var(--mut)">Change key</a></div>`;
+}
+async function gifLoad(q){
+  gif.q = q || ''; gif.loading = true; gif.err = ''; renderPanel();
+  const base = `https://api.giphy.com/v1/${gif.kind}/`, qs = `api_key=${encodeURIComponent(gif.key)}&limit=36&rating=pg-13`;
+  const url = !gif.q || gif.q === 'Trending' ? `${base}trending?${qs}` : `${base}search?${qs}&q=${encodeURIComponent(gif.q)}`;
+  try {
+    const r = await fetch(url); const j = await r.json();
+    if (!r.ok || !j.data) throw new Error(j?.meta?.msg || j?.message || `GIPHY said ${r.status}`);
+    gif.items = j.data.map(d => { const im = d.images || {}; return { title:d.title, thumb:(im.fixed_width_small || im.fixed_width || im.original || {}).url, full:(gif.kind === 'stickers' ? (im.original?.webp || im.original?.url) : (im.downsized_medium?.url || im.original?.url)) }; }).filter(x => x.thumb && x.full);
+    if (!gif.items.length) gif.err = 'No GIFs found. Try another word.';
+  } catch (e) {
+    gif.items = [];
+    gif.err = /401|403|Unauthorized|Invalid authentication|API key/i.test(String(e.message)) ? 'GIPHY did not accept that key. Click “Change key” and paste it again.'
+      : DESK ? 'Could not reach GIPHY. Check your internet connection.' : 'GIF search works in the EasyCut Windows app. This web preview blocks internet requests.';
+  }
+  gif.loading = false; renderPanel();
+}
+async function addGif(i){
+  const g = gif.items[i]; if (!g) return;
+  progress('Adding GIF…', 15, g.title || 'Downloading');
+  try {
+    const r = await fetch(g.full); if (!r.ok) throw new Error('download failed');
+    const blob = await r.blob(); progress('Adding GIF…', 60, 'Preparing frames');
+    const ext = /webp/.test(blob.type) || /\.webp/.test(g.full) ? 'webp' : 'gif';
+    const m = await importOne(new File([blob], (g.title || 'GIF').slice(0, 40).replace(/[\\/:*?"<>|]+/g, '') + '.' + ext, { type:blob.type || 'image/' + ext }));
+    progressDone();
+    if (m) addOverlay(m.id, { shape:'rect', border:false, shadow:false, anim:'pop', scale:gif.kind === 'stickers' ? .3 : .45, x:.5, y:gif.kind === 'stickers' ? .35 : .5, dur:Math.max(3, Math.min(6, (m.animDur || 3) * Math.ceil(3 / (m.animDur || 3)))) });
+  } catch (e) { progressDone(); toast('Could not download that GIF. Try another one.'); }
+}
+
+/* ---------- logos ---------- */
+let myLogos = [];
+const logoSet = { pos:'tr', size:.14, opacity:.85, whole:true };
+const LOGO_POS = { tl:[.1, .1], tr:[.9, .1], bl:[.1, .9], br:[.9, .9], c:[.5, .5] };
+function logosHTML(){
+  return `<h3>Your logos</h3>
+    <div class="hint" style="margin-bottom:10px">Upload your channel or business logo once — it's saved in EasyCut. A PNG with a see-through background looks best.</div>
+    <button class="btn pri full" data-act="logoUpload">${ic('import')}Upload logo</button>
+    ${myLogos.length ? `<div class="lgrid">${myLogos.map(l => `<div class="lcard" data-logo="${l.id}" title="Add to video"><img src="${l.url}" alt=""><button class="ib" data-logodel="${l.id}" title="Delete">${ic('x')}</button><span>${esc(l.name)}</span></div>`).join('')}</div>` : ''}
+    <h3 style="margin-top:18px">Where to put it</h3>
+    <div class="seg" data-lpos="1" style="margin-bottom:10px">${[['tl','↖ Top left'],['tr','↗ Top right'],['bl','↙ Bottom left'],['br','↘ Bottom right'],['c','Center']].map(([v, l]) => `<button data-val="${v}" class="${logoSet.pos === v ? 'on' : ''}">${l}</button>`).join('')}</div>
+    <div class="prow"><label>Size</label><div class="rng"><input type="range" data-lset="size" min=".05" max=".5" step=".01" value="${logoSet.size}"><span class="rv">${Math.round(logoSet.size * 100)}%</span></div></div>
+    <div class="prow"><label>Opacity</label><div class="rng"><input type="range" data-lset="opacity" min=".2" max="1" step=".05" value="${logoSet.opacity}"><span class="rv">${Math.round(logoSet.opacity * 100)}%</span></div></div>
+    <label class="chk"><input type="checkbox" data-lset="whole" ${logoSet.whole ? 'checked' : ''}>Show for the whole video</label>
+    <h3 style="margin-top:18px">Make a text logo</h3>
+    <div class="prow"><input class="inp" id="lmText" placeholder="Channel name, e.g. AMITOJ VLOGS" maxlength="24"></div>
+    <div class="two"><div class="prow"><label>Style</label><select class="inp" id="lmShape"><option value="circle">Circle badge</option><option value="pill">Pill</option><option value="square">Rounded square</option><option value="plain">Text only</option></select></div>
+      <div class="prow"><label>Font</label><select class="inp" id="lmFont">${['Bebas Neue','Anton','Poppins','Montserrat','Pacifico','Bungee','Playfair Display','Baloo 2','Baloo Paaji 2'].map(f => `<option>${f}</option>`).join('')}</select></div></div>
+    <div class="crow" style="margin-bottom:10px"><span class="hint">Colors</span><span class="crow" style="gap:6px"><input type="color" id="lmBg" value="#ff4d6d"><input type="color" id="lmFg" value="#ffffff"></span></div>
+    <button class="btn sm full" data-act="logoMake">✨ Create text logo</button>`;
+}
+async function loadLogos(){ for (const l of myLogos) URL.revokeObjectURL(l.url); myLogos = (await store.all('logos')).map(l => ({ ...l, url:URL.createObjectURL(l.blob) })); }
+async function saveLogo(blob, name){ const l = { id:uid(), name:name.slice(0, 30), blob }; await store.put('logos', l); await loadLogos(); if (tab === 'logos') renderPanel(); return l; }
+async function uploadLogos(files){
+  for (const f of files){ if (!/^image\//.test(f.type) && !/\.(png|jpe?g|webp|svg|gif)$/i.test(f.name)) continue; await saveLogo(f, f.name.replace(/\.[^.]+$/, '')); }
+  toast('Logo saved — click it to add it to your video');
+}
+async function makeTextLogo(){
+  const text = (($('#lmText') || {}).value || '').trim(); if (!text) return toast('Type your channel or brand name first');
+  const shape = $('#lmShape').value, font = $('#lmFont').value, bg = $('#lmBg').value, fg = $('#lmFg').value;
+  await document.fonts?.load(`800 80px "${font}"`).catch(() => {});
+  const S0 = 600, c = document.createElement('canvas'), g = c.getContext('2d');
+  const initials = text.split(/\s+/).map(w => [...w][0] || '').join('').slice(0, 3).toUpperCase();
+  if (shape === 'circle'){
+    c.width = c.height = S0; g.fillStyle = bg; g.beginPath(); g.arc(S0 / 2, S0 / 2, S0 / 2 - 8, 0, Math.PI * 2); g.fill();
+    g.lineWidth = 14; g.strokeStyle = fg; g.globalAlpha = .9; g.beginPath(); g.arc(S0 / 2, S0 / 2, S0 / 2 - 34, 0, Math.PI * 2); g.stroke(); g.globalAlpha = 1;
+    g.fillStyle = fg; g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = `800 ${initials.length > 2 ? 170 : 220}px "${font}", sans-serif`; g.fillText(initials, S0 / 2, S0 / 2 - 20);
+    g.font = `700 46px "${font}", sans-serif`; let t = text.toUpperCase(); while (g.measureText(t).width > S0 * .7 && t.length > 3) t = t.slice(0, -1); g.fillText(t, S0 / 2, S0 / 2 + 140);
+  } else {
+    g.font = `800 120px "${font}", sans-serif`; const tw = g.measureText(text).width, pad = shape === 'plain' ? 20 : 70;
+    c.width = Math.ceil(tw + pad * 2); c.height = 220; g.font = `800 120px "${font}", sans-serif`;
+    if (shape !== 'plain'){ g.fillStyle = bg; rr(g, 4, 4, c.width - 8, c.height - 8, shape === 'pill' ? 106 : 40); g.fill(); }
+    g.fillStyle = shape === 'plain' ? bg : fg; g.textAlign = 'center'; g.textBaseline = 'middle';
+    if (shape === 'plain'){ g.lineWidth = 10; g.strokeStyle = fg; g.lineJoin = 'round'; g.strokeText(text, c.width / 2, c.height / 2 + 6); }
+    g.fillText(text, c.width / 2, c.height / 2 + 6);
+  }
+  const blob = await new Promise(r => c.toBlob(r, 'image/png'));
+  await saveLogo(blob, text); toast('Text logo created and saved');
+}
+async function addLogo(id){
+  const l = myLogos.find(x => x.id === id); if (!l) return;
+  const m = await importOne(new File([l.blob], l.name + '.png', { type:l.blob.type || 'image/png' })); if (!m) return;
+  const [x, y] = LOGO_POS[logoSet.pos] || LOGO_POS.tr, total = totalDur();
+  addOverlay(m.id, { x, y, scale:logoSet.size, opacity:logoSet.opacity, shape:'rect', border:false, shadow:false, anim:logoSet.whole ? 'none' : 'fade', start:logoSet.whole ? 0 : playT, dur:logoSet.whole && total > 0 ? total : 4 });
+  toast(logoSet.whole ? 'Logo added for the whole video — drag it on the preview to move it' : 'Logo added at the playhead');
+}
+
 /* ---------- more built-in templates ---------- */
 TEMPLATES.push(
   { cat:'Intros', name:'Gaming Intro', card:['#4c1d95','#0ea5e9'], dur:3.5, texts:[T('🎮', { size:150, bold:false, anim:'pop', y:.28 }), T('GAME ON', { font:'Bungee', size:150, bold:false, color:'#a7f3d0', glow:true, anim:'pop', y:.5, start:.2 }), T('Let’s play!', { font:'Rajdhani', size:64, anim:'slide', y:.68, start:.6 })] },
@@ -2026,8 +2310,8 @@ REEL_STYLES.push(
 
 /* ---------- user storage: your fonts and your templates (kept on this computer) ---------- */
 const store = {
-  db:null, mem:{ fonts:[], tpl:[] },
-  async open(){ if (this.db !== null) return this.db; try { this.db = await new Promise((res, rej) => { const r = indexedDB.open('easycut', 1); r.onupgradeneeded = () => { r.result.createObjectStore('fonts', { keyPath:'id' }); r.result.createObjectStore('tpl', { keyPath:'id' }); }; r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); } catch (e) { this.db = false; } return this.db; },
+  db:null, mem:{ fonts:[], tpl:[], logos:[] },
+  async open(){ if (this.db !== null) return this.db; try { this.db = await new Promise((res, rej) => { const r = indexedDB.open('easycut', 2); r.onupgradeneeded = () => { for (const n of ['fonts','tpl','logos']) if (!r.result.objectStoreNames.contains(n)) r.result.createObjectStore(n, { keyPath:'id' }); }; r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); } catch (e) { this.db = false; } return this.db; },
   async all(name){ const db = await this.open(); if (!db) return this.mem[name].slice(); return new Promise(res => { try { const q = db.transaction(name).objectStore(name).getAll(); q.onsuccess = () => res(q.result || []); q.onerror = () => res([]); } catch (e) { res([]); } }); },
   async put(name, v){ const db = await this.open(); if (!db){ this.mem[name] = this.mem[name].filter(x => x.id !== v.id).concat(v); return; } return new Promise(res => { try { const t = db.transaction(name, 'readwrite'); t.objectStore(name).put(v); t.oncomplete = res; t.onerror = res; } catch (e) { res(); } }); },
   async del(name, id){ const db = await this.open(); if (!db){ this.mem[name] = this.mem[name].filter(x => x.id !== id); return; } return new Promise(res => { try { const t = db.transaction(name, 'readwrite'); t.objectStore(name).delete(id); t.oncomplete = res; t.onerror = res; } catch (e) { res(); } }); },
@@ -2036,7 +2320,7 @@ let myTemplates = [];
 async function registerFont(name, data){ const face = new FontFace(name, data); await face.load(); document.fonts.add(face); if (!userFonts.includes(name)) userFonts.push(name); }
 async function loadUserStuff(){
   for (const f of await store.all('fonts')){ try { await registerFont(f.name, f.data); } catch (e) {} }
-  myTemplates = await store.all('tpl');
+  myTemplates = await store.all('tpl'); await loadLogos();
   if (tab === 'templates' || tab === 'text') renderPanel(); renderProps(); scheduleRender();
 }
 async function importFonts(files){
@@ -2071,7 +2355,42 @@ async function importTemplatePack(file){
   } catch (e) { toast('That file is not an EasyCut template pack', 4000); }
 }
 $('#fileFont').addEventListener('change', e => { const fs = [...e.target.files]; e.target.value = ''; importFonts(fs); });
+$('#fileLogo').addEventListener('change', e => { const fs = [...e.target.files]; e.target.value = ''; uploadLogos(fs); });
 $('#fileTpl').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; if (f) importTemplatePack(f); });
+
+/* ---------- home screen ---------- */
+function recents(){ try { return JSON.parse(localStorage.getItem('easycut.recent') || '[]'); } catch (e) { return []; } }
+function addRecent(name, path){ if (!path) return; try { const r = recents().filter(x => x.path !== path); r.unshift({ name:name || 'Project', path, at:Date.now() }); localStorage.setItem('easycut.recent', JSON.stringify(r.slice(0, 8))); } catch (e) {} }
+function renderHome(){
+  const has = S.clips.length || S.texts.length || S.overlays.length, rc = DESK ? recents() : [];
+  $('#home').innerHTML = `<div class="home-in">
+    <div class="home-logo"><div class="mk"><svg class="i f" viewBox="0 0 24 24" style="width:24px;height:24px"><path d="M8 5v14l11-7z"/></svg></div>EasyCut</div>
+    <div class="hint" style="font-size:14px;margin-top:6px">Make videos and reels in minutes.</div>
+    <div class="htiles">
+      <button class="htile" data-h="video" style="background:linear-gradient(135deg,#ff4d6d,#ff8a5c)"><span class="em">🎬</span><b>Video</b><small>Edit clips & photos</small></button>
+      <button class="htile" data-h="reel" style="background:linear-gradient(135deg,#7c3aed,#ec4899)"><span class="em">✨</span><b>Reel Maker</b><small>Clips + song → a reel</small></button>
+      <button class="htile" data-h="templates" style="background:linear-gradient(135deg,#0284c7,#22d3ee)"><span class="em">🧩</span><b>Templates</b><small>Intros, titles, layouts</small></button>
+      <button class="htile" data-h="logos" style="background:linear-gradient(135deg,#16a34a,#84cc16)"><span class="em">🏷️</span><b>Logo</b><small>Brand your videos</small></button>
+    </div>
+    <div class="hrow">${has ? `<button class="btn pri" data-h="continue">▶ Continue editing</button>` : ''}${DESK ? `<button class="btn" data-h="open">📂 Open project</button>` : ''}<button class="btn" data-h="gif">GIFs & stickers</button></div>
+    ${rc.length ? `<h3 style="color:var(--mut);font-size:13px;text-transform:uppercase;letter-spacing:.3px">Recent projects</h3><div class="hrecent">${rc.map(x => `<button class="hrc" data-hp="${esc(x.path)}"><b>${esc(x.name)}</b><span class="hint">${new Date(x.at).toLocaleDateString()}</span></button>`).join('')}</div>` : ''}
+  </div>`;
+}
+function showHome(){ if (playing) pause(); renderHome(); $('#home').classList.add('on'); }
+function hideHome(){ $('#home').classList.remove('on'); applyCanvasSize(); }
+$('#home').addEventListener('click', e => {
+  const b = e.target.closest('[data-h],[data-hp]'); if (!b) return;
+  if (b.dataset.hp){ hideHome(); return openProject(b.dataset.hp); }
+  const h = b.dataset.h; hideHome();
+  if (h === 'video'){ if (!S.clips.length) $('#fileIn').click(); }
+  else if (h === 'reel') openReel();
+  else if (h === 'templates') openSheet('templates');
+  else if (h === 'logos') openSheet('logos');
+  else if (h === 'gif') openSheet('gif');
+  else if (h === 'open') openProject();
+});
+$('#bHome').innerHTML = ic('home'); $('#bHome').onclick = showHome;
+renderHome();
 
 /* ---------- glue ---------- */
 function refreshAll(){

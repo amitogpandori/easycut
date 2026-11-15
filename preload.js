@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld('easycutDesktop', {
   pathForFile: (file) => { try { return webUtils.getPathForFile(file) || ''; } catch (e) { return ''; } },
   chooseProjectSave: (name) => ipcRenderer.invoke('choose-project-save', name),
   openProject: () => ipcRenderer.invoke('open-project'),
+  openProjectPath: (p) => ipcRenderer.invoke('open-project-path', p),
   writeFile: (filePath, data) => ipcRenderer.invoke('write-file', { filePath, data }),
   readFile: (filePath) => ipcRenderer.invoke('read-file', filePath),
   platform: process.platform,

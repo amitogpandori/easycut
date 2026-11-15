@@ -110,6 +110,10 @@ app.whenReady().then(() => {
     }
     return { path: p, text: await fs.readFile(p, 'utf8') };
   });
+  ipcMain.handle('open-project-path', async (e, p) => {
+    if (typeof p !== 'string' || !p.toLowerCase().endsWith('.easycut')) throw new Error('not a project');
+    return { path: p, text: await fs.readFile(p, 'utf8') };
+  });
   ipcMain.handle('write-file', async (e, { filePath, data }) => {
     if (typeof filePath !== 'string') throw new Error('bad path');
     await fs.mkdir(path.dirname(filePath), { recursive: true });

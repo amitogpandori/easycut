@@ -28,6 +28,9 @@ function check(cond, msg) {
     await page.waitForSelector('#bExport');
     check(await page.title() === 'EasyCut — Video Editor', 'app window opens');
     check(await page.evaluate(() => !!window.easycutDesktop && document.body.classList.contains('is-desk')), 'desktop features are switched on');
+    check(await count('#home.on') === 1, 'home screen shows at start');
+    await page.click('#home [data-h="templates"]'); await page.click('[data-act="closeSheet"]');
+    check(await count('#home.on') === 0, 'home → editor');
 
     // Import & basic editing
     await page.setInputFiles('#fileIn', [media('logo.mp4'), media('photo.png'), media('clip2.mp4'), media('music.mp3')]);
@@ -63,6 +66,18 @@ function check(cond, msg) {
     await page.click('[data-tab="templates"]');
     await page.click('[data-tpl="6"]'); await waitCount('.titem', 2);
     check(true, 'lower-third template');
+    // Transitions, GIFs, stickers and logos
+    await page.locator('.vclip').nth(1).click();
+    await page.click('#props [data-seg="trans"] button[data-val="dissolve"]');
+    check(await count('#props [data-seg="trans"] button') === 16, '16 transitions available');
+    await page.keyboard.press('Space');
+    const o0 = await count('.oitem');
+    await page.setInputFiles('#fileOv', [media('anim.gif'), media('sticker.webp')]); await waitCount('.oitem', o0 + 2);
+    check(true, 'animated GIF and WebP sticker added as overlays');
+    await page.click('[data-tab="logos"]');
+    await page.setInputFiles('#fileLogo', [media('logo.png')]); await page.waitForSelector('[data-logo]');
+    await page.locator('[data-logo]').first().click(); await waitCount('.oitem', o0 + 3);
+    check(true, 'logo saved and added to the video');
     await page.screenshot({ path: path.join(out, 'editor.png') });
 
     // Save project, then open it again
