@@ -70,6 +70,10 @@ function check(cond, msg) {
     await page.locator('.vclip').nth(1).click();
     await page.click('#props [data-seg="trans"] button[data-val="dissolve"]');
     check(await count('#props [data-seg="trans"] button') === 16, '16 transitions available');
+    await page.click('[data-tab="effects"]');
+    await page.click('[data-fx="shake"]'); await waitCount('.eitem', 1);
+    await page.click('[data-tab="effects"]').catch(() => {});
+    check(await count('.eitem') === 1, 'effect added on the Effects track');
     await page.keyboard.press('Space');
     const o0 = await count('.oitem');
     await page.setInputFiles('#fileOv', [media('anim.gif'), media('sticker.webp')]); await waitCount('.oitem', o0 + 2);
