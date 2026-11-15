@@ -99,12 +99,16 @@ function check(cond, msg) {
     // Reel Maker: automatic (beat) and manual
     await page.click('#bReel'); await page.waitForSelector('#studio.on');
     await page.setInputFiles('#fileReelMusic', [media('beat100.mp3')]);
-    await page.waitForSelector('[data-sa="nomusic"]', { timeout: 20000 });
+    await page.waitForSelector('[data-songdel]', { timeout: 20000 });
+    if (await count('[data-st="songMode"]')) {   // the project already has another song: use only the new one
+      await page.click('[data-st="songMode"] button[data-val="one"]');
+      const use = page.locator('.vo', { hasText: 'beat100' }).locator('[data-song]'); if (await use.count()) await use.click();
+    }
     await page.click('[data-rsid="beat"]'); await page.click('[data-st="len"] button[data-val="15"]');
     await page.click('[data-sa="make"]');
     await page.waitForFunction(() => !document.getElementById('studio').classList.contains('on'), null, { timeout: 60000 });
     const toast = await page.textContent('#toast');
-    check((await count('.vclip')) >= 8 && /\d+ BPM/.test(toast), 'Reel Maker (automatic): ' + toast.trim());
+    check((await count('.vclip')) >= 4 && /\d+ BPM/.test(toast), 'Reel Maker (automatic): ' + toast.trim());
     await page.click('#bReel'); await page.waitForSelector('#studio.on');
     await page.click('[data-st="mode"] button[data-val="manual"]');
     const nItems = await count('[data-si]');

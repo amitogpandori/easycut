@@ -3,6 +3,11 @@
 An easy, InShot-style video editor for Windows, made for vloggers and reel makers.
 
 ## Features
+- **Project menu** (📁 Project): New project (Ctrl+N), Open (Ctrl+O), recent projects, Save (Ctrl+S), Save as (Ctrl+Shift+S), Rename, Export (Ctrl+E), Project info, Remove unused media, Optimize heavy videos, Close project (Ctrl+W). Asks to save unsaved changes before closing or starting a new project
+- **Reel Maker songs**: add several songs at once; EasyCut counts them, shows the total music time and asks whether to use **all songs one after another** (cuts follow each song's own beat, video matches the songs) or **only one**. Reorder or remove songs. Length option "Match the songs"
+- **How long each clip should be**: follow the beat, 1 / 2 / 3 / 5 / 8 s or type any length (kept on the beat when there's a song)
+- **Effects amount**: Light (default) / Medium / Strong / None
+- Music never jumps back during playback (the song keeps the time)
 - **Reel Maker 2.0**: shows how much footage you have (e.g. "7:45 of video + 2 photos"), lets you pick 15s / 30s / 1 min / 1:30 / 3 min / all footage or type any length (45, 2:30, 1:05:00). Picks different moments from across every clip, **never uses the same footage twice**, and shuffles them (or keeps them in order). 🎲 New mix makes a fresh version. Effects: the style's own, **shuffled by video type** (Kids, Party, Cinematic, Energetic, Retro, Love, Calm, Travel) or **picked by you**, on some or every cut. 22 styles including new Kids Cartoon, Birthday, Party Night, Retro VHS, Love Story, Nature Calm, Sports Highlights, Festival/Diwali, Gurpurab/Punjabi and Unboxing
 - **Smooth playback**: a second player per video so cuts between different parts of the same video are ready in advance; **⚡ Optimize** (Windows) makes edit-friendly copies of heavy phone/4K/HDR videos (1080p, 30 fps, keyframe every ½ s, iPhone HDR to normal colors) — offered on import, in Media (Optimize all), in Reel Maker, and automatically when playback keeps freezing; **Preview quality** Full / Half / Third in Canvas; uses the dedicated NVIDIA/AMD GPU on dual-graphics laptops
 - **59 templates** (16 new: kids intro/outro, episode number, birthday, Diwali, Gurpurab, Top 5 countdown, before/after, location tag, quote card, coming up next, giveaway, upload schedule, Hindi/Punjabi like & subscribe, subscribe end screen)
