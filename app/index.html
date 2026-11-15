@@ -169,6 +169,7 @@ input[type=color]{width:34px;height:28px;border:1px solid var(--line);border-rad
 .oitem{height:30px;background:#5a2a08 repeat-x left center/auto 100%}
 .oitem::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,#f97316cc,#f9731640);pointer-events:none}
 .oitem .lbl{top:7px;z-index:1}
+.beats{position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(90deg,rgba(255,255,255,.55) 0 1px,transparent 1px);background-repeat:repeat-x}
 .eitem{height:24px;background:linear-gradient(135deg,#a16207,#eab308)}
 .eitem .lbl{top:3px}
 .fxcard{font-size:13px;font-weight:700;padding:12px 4px;white-space:normal}
@@ -643,6 +644,7 @@ $('#panel').addEventListener('click', e => {
   if (act === 'trRandom'){ if (S.clips.length < 2) return toast('Add at least 2 clips'); push(); const ks = TRANS.map(x => x[0]).filter(x => x !== 'none'); S.clips.forEach((c, i) => { if (i > 0){ c.trans = ks[Math.floor(Math.random() * ks.length)]; c.tdur = transDur; } }); toast('Random transitions added'); return refreshAll(); }
   if (act === 'trNone'){ push(); S.clips.forEach(c => c.trans = 'none'); return refreshAll(); }
   const fc2 = t.closest('[data-fxcat]'); if (fc2){ fxCat = fc2.dataset.fxcat; return renderPanel(); }
+  if (act === 'fxBeatAll'){ if (!S.clips.length) return toast('Add a clip first'); push(); const x = { id:uid(), type:'punch', start:0, dur:Math.max(.5, videoEnd()), k:.8 }; S.effects.push(x); sel = { type:'effect', id:x.id }; return refreshAll(); }
   const fx = t.closest('[data-fx]'); if (fx) return addEffect(fx.dataset.fx);
   const tr = t.closest('[data-tr]'); if (tr) return transitionAtPlayhead(tr.dataset.tr);
   if (act === 'toGif'){ e.preventDefault(); tab = 'gif'; gif.kind = 'stickers'; renderRail(); renderPanel(); if (gif.key) gifLoad('Trending'); return; }
@@ -825,7 +827,7 @@ function addToTimeline(mid, t, noHistory){
   playT = clipStarts()[idx]; sel = { type:'clip', id:c.id };
   refreshAll(); seekPreview();
 }
-function addAudio(mid, start, extra = {}){ const m = media[mid]; push(); const a = { id:uid(), mediaId:mid, start:Math.max(0, start || 0), offset:0, dur:m.duration, volume:1, fadeIn:0, fadeOut:0, duck:false, aeff:'none', voice:/^Voiceover/.test(m.name), ...extra }; S.audios.push(a); sel = { type:'audio', id:a.id }; refreshAll(); }
+function addAudio(mid, start, extra = {}){ const m = media[mid]; push(); setTimeout(() => ensureBeat(m), 50); const a = { id:uid(), mediaId:mid, start:Math.max(0, start || 0), offset:0, dur:m.duration, volume:1, fadeIn:0, fadeOut:0, duck:false, aeff:'none', voice:/^Voiceover/.test(m.name), ...extra }; S.audios.push(a); sel = { type:'audio', id:a.id }; refreshAll(); }
 function addText(p){
   push(); const x = { ...TEXT_BASE, ...p, id:uid(), start:playT };
   const end = totalDur(); if (end > 0 && x.start >= end - .05) x.start = Math.max(0, end - x.dur);
@@ -1729,6 +1731,11 @@ $('#zIn').onclick = () => setPps(pps * 1.4); $('#zOut').onclick = () => setPps(p
 tlScroll.addEventListener('wheel', e => { if (e.ctrlKey || e.metaKey){ e.preventDefault(); setPps(pps * (e.deltaY < 0 ? 1.15 : 1 / 1.15), xToTime(e.clientX)); } }, { passive:false });
 const xToTime = cx => Math.max(0, (cx - tlInner.getBoundingClientRect().left) / pps);
 function lanes(items){ const s = [...items].sort((a, b) => a.start - b.start), ends = [], map = {}; for (const it of s){ let l = ends.findIndex(e => e <= it.start + 1e-6); if (l < 0){ l = ends.length; ends.push(0); } ends[l] = it.start + it.dur; map[it.id] = l; } return { map, n:Math.max(1, ends.length) }; }
+function beatMarks(a, m){
+  if (!m || !m.beat){ if (m && m.type === 'audio') setTimeout(() => ensureBeat(m), 0); return ''; } const p = m.beat.period, px = p * pps; if (px < 5) return '';
+  const first = m.beat.offset + Math.ceil((a.offset - m.beat.offset) / p) * p, x0 = (first - a.offset) * pps;
+  return `<div class="beats" style="background-size:${px}px 100%;background-position:${x0}px 0"></div>`;
+}
 function renderTimeline(){
   const T = totalDur(), W = Math.max(tlScroll.clientWidth, (T + 10) * pps + 40);
   tlInner.style.width = W + 'px';
@@ -1754,7 +1761,7 @@ function renderTimeline(){
   $('#trkT').innerHTML = S.texts.map(x => `<div class="item titem ${sel && sel.id === x.id ? 'sel' : ''}" data-type="text" data-id="${x.id}" style="left:${x.start * pps}px;width:${Math.max(6, x.dur * pps)}px;top:${5 + lt.map[x.id] * 30}px"><div class="lbl">${esc((x.text || '').replace(/\n/g, ' '))}</div><div class="h h-l"></div><div class="h h-r"></div></div>`).join('') || `<div class="temp">Text & stickers</div>`;
   const la = lanes(S.audios), hA = la.n * 36 + 5;
   $('#trkA').style.height = hA + 'px'; $('#lA').style.height = hA + 'px';
-  $('#trkA').innerHTML = S.audios.map(a => { const m = media[a.mediaId] || {}; return `<div class="item aitem ${sel && sel.id === a.id ? 'sel' : ''}" data-type="audio" data-id="${a.id}" style="left:${a.start * pps}px;width:${Math.max(6, a.dur * pps)}px;top:${5 + la.map[a.id] * 36}px;${m.wave ? `background-image:url('${m.wave}');background-size:${m.duration * pps}px 100%;background-position:${-a.offset * pps}px 0` : ''}"><div class="lbl">♪ ${esc(m.name || '')}</div><div class="h h-l"></div><div class="h h-r"></div></div>`; }).join('') || `<div class="temp">Music & voiceover</div>`;
+  $('#trkA').innerHTML = S.audios.map(a => { const m = media[a.mediaId] || {}; return `<div class="item aitem ${sel && sel.id === a.id ? 'sel' : ''}" data-type="audio" data-id="${a.id}" style="left:${a.start * pps}px;width:${Math.max(6, a.dur * pps)}px;top:${5 + la.map[a.id] * 36}px;${m.wave ? `background-image:url('${m.wave}');background-size:${m.duration * pps}px 100%;background-position:${-a.offset * pps}px 0` : ''}">${beatMarks(a, m)}<div class="lbl">♪ ${esc(m.name || '')}${m.beat ? ` · ${m.beat.bpm} BPM` : ''}</div><div class="h h-l"></div><div class="h h-r"></div></div>`; }).join('') || `<div class="temp">Music & voiceover</div>`;
   tlInner.style.height = (26 + 65 + hO + hE + hT + hA) + 'px';
   updateTimeUI();
 }
@@ -2113,7 +2120,7 @@ async function buildReel(){
   const v = $('#stVid'); if (v) v.pause();
   let beat = { period:.5, offset:0, duration:Infinity, bpm:120 };
   if (mus && reel.mode === 'auto'){
-    try { beat = await detectBeat(mus, (p, sub) => progress('Making your reel…', p * .8, sub)); }
+    try { beat = mus.beat || await detectBeat(mus, (p, sub) => progress('Making your reel…', p * .8, sub)); mus.beat = beat; }
     catch (e) { toast('Could not read the song’s beat, using 120 BPM'); }
   }
   progress('Making your reel…', 85, 'Cutting your clips');
@@ -2315,10 +2322,20 @@ function particles(n, fn){ ctx.save(); for (let i = 0; i < n; i++) fn(i); ctx.re
 function star(g, x, y, r){ g.beginPath(); for (let i = 0; i < 8; i++){ const a = i * Math.PI / 4, rr2 = i % 2 ? r * .28 : r; g.lineTo(x + Math.cos(a) * rr2, y + Math.sin(a) * rr2); } g.closePath(); g.fill(); }
 const CONF = ['#ff4d6d','#facc15','#22d3ee','#a855f7','#22c55e','#f97316','#ffffff'];
 const EFFECTS = [
+  // Beat: follow the song on the Audio track (120 BPM if there is no song)
+  ['Beat','punch','💥 Beat zoom', (t, k) => { const b = beatNow(t); drawScaled(ctx, snapCanvas(), 1 + .14 * k * Math.pow(1 - b.ph, 3)); }],
+  ['Beat','beatflash','💡 Beat flash', (t, k) => { const b = beatNow(t); overlayFill('#fff', .55 * k * Math.max(0, 1 - b.ph * b.period / .12)); }],
+  ['Beat','heart','💓 Heartbeat', (t, k) => { const b = beatNow(t, 2), ph = b.ph, z = ph < .15 ? Math.sin(ph / .15 * Math.PI) : ph > .25 && ph < .4 ? Math.sin((ph - .25) / .15 * Math.PI) * .7 : 0; drawScaled(ctx, snapCanvas(), 1 + .1 * k * z); }],
+  ['Beat','beatshake','📳 Beat shake', (t, k) => { const b = beatNow(t), a = Math.pow(1 - b.ph, 4), f = Math.floor(t * 40); if (a > .02) drawScaled(ctx, snapCanvas(), 1.06, 0, (rnd(f, 1) - .5) * cv.width * .06 * k * a, (rnd(f, 2) - .5) * cv.height * .06 * k * a); }],
+  ['Beat','beatglitch','👾 Beat glitch', (t, k) => { const b = beatNow(t), W = cv.width, H = cv.height; if (b.ph * b.period < .14){ rgbSplit(.014 * k); const f = Math.floor(t * 30); for (let i = 0; i < 5; i++){ const r = rnd(f, i), h = H * (.03 + .08 * r), y = (H - h) * rnd(f, i + 20); ctx.drawImage(cv, 0, y, W, h, (r - .5) * W * .18 * k, y, W, h); } } }],
+  ['Beat','beatrgb','🌈 Beat RGB', (t, k) => { const b = beatNow(t); rgbSplit(.016 * k * Math.pow(1 - b.ph, 2)); }],
+  ['Beat','strobe','⚡ Beat strobe', (t, k) => { const b = beatNow(t, .5); if (b.ph < .5) overlayFill('#000', .85 * k); }],
+  ['Beat','beatbw','⚫ Beat B&W', (t, k) => { const b = beatNow(t); if (b.n % 2) colorPass('grayscale(1) contrast(1.2)', k); }],
+  ['Beat','beathue','🎨 Beat colors', (t, k) => { const b = beatNow(t); colorPass(`hue-rotate(${(b.n * 67) % 360}deg) saturate(1.5)`, k); }],
+  ['Beat','beatblur','💧 Beat blur', (t, k) => { const b = beatNow(t), a = Math.pow(1 - b.ph, 3); if (a > .05){ const s = snapCanvas(); ctx.save(); ctx.filter = `blur(${(a * cv.width / 60 * k).toFixed(1)}px)`; ctx.drawImage(s, 0, 0); ctx.restore(); } }],
+  ['Beat','beatconf','🎊 Beat confetti', (t, k) => { const b = beatNow(t), W = cv.width, H = cv.height, s2 = Math.min(W, H) / 55, lt = b.ph * b.period; ctx.save(); ctx.globalAlpha = Math.max(0, 1 - lt / .9); for (let i = 0; i < Math.round(50 * k); i++){ const a = rnd(b.n, i) * Math.PI * 2, sp = (.3 + .7 * rnd(b.n, i + 50)) * Math.min(W, H) * .9; ctx.fillStyle = CONF[i % CONF.length]; ctx.fillRect(W / 2 + Math.cos(a) * sp * lt - s2 / 2, H / 2 + Math.sin(a) * sp * lt + lt * lt * H * .4, s2, s2 / 2); } ctx.restore(); }],
   // Camera
   ['Camera','shake','📳 Shake', (t, k) => { const s = snapCanvas(), f = Math.floor(t * 30); drawScaled(ctx, s, 1.06, 0, (rnd(f, 1) - .5) * cv.width * .045 * k, (rnd(f, 2) - .5) * cv.height * .045 * k); }],
-  ['Camera','punch','💥 Beat zoom', (t, k) => { const ph = (t % .5) / .5; drawScaled(ctx, snapCanvas(), 1 + .14 * k * Math.pow(1 - ph, 3)); }],
-  ['Camera','heart','💓 Heartbeat', (t, k) => { const ph = t % 1, z = ph < .15 ? Math.sin(ph / .15 * Math.PI) : ph > .25 && ph < .4 ? Math.sin((ph - .25) / .15 * Math.PI) * .7 : 0; drawScaled(ctx, snapCanvas(), 1 + .1 * k * z); }],
   ['Camera','zoomin','🔍 Slow zoom in', (t, k, d) => drawScaled(ctx, snapCanvas(), 1 + .3 * k * t / d)],
   ['Camera','zoomout','🔎 Slow zoom out', (t, k, d) => drawScaled(ctx, snapCanvas(), 1 + .3 * k * (1 - t / d))],
   ['Camera','dolly','🎥 Dolly in', (t, k, d) => drawScaled(ctx, snapCanvas(), 1 + .6 * k * easeOut(Math.min(1, t / d)))],
@@ -2330,7 +2347,6 @@ const EFFECTS = [
   ['Glitch','rgb','🌈 RGB split', (t, k) => rgbSplit(.006 * k + .004 * k * Math.sin(t * 8))],
   ['Glitch','vhs','📼 VHS', (t, k) => { const W = cv.width, H = cv.height; rgbSplit(.004 * k); ctx.save(); ctx.globalAlpha = .18 * k; ctx.fillStyle = '#000'; for (let y = 0; y < H; y += Math.max(2, Math.round(H / 240))) ctx.fillRect(0, y, W, Math.max(1, H / 480)); ctx.restore(); const by = ((t * .35) % 1.2 - .1) * H; overlayFill('#fff', 0); ctx.save(); ctx.globalAlpha = .12 * k; ctx.fillStyle = '#fff'; ctx.fillRect(0, by, W, H * .04); ctx.restore(); grain(.25 * k, t); ctx.save(); ctx.font = `700 ${Math.round(H * .045)}px "Courier New", monospace`; ctx.fillStyle = `rgba(255,255,255,${.85 * k})`; ctx.fillText('▶ PLAY', W * .05, H * .1); ctx.restore(); }],
   ['Glitch','pixel','🟪 Pixelate', (t, k) => { const W = cv.width, H = cv.height, s = snapCanvas(), b = Math.max(1, Math.round(W / (12 + 120 * (1 - k)))); const tw = Math.max(1, Math.round(W / b)), th = Math.max(1, Math.round(H / b)); if (chCv.width !== tw || chCv.height !== th){ chCv.width = tw; chCv.height = th; } chCx.drawImage(s, 0, 0, tw, th); ctx.save(); ctx.imageSmoothingEnabled = false; ctx.drawImage(chCv, 0, 0, tw, th, 0, 0, W, H); ctx.restore(); }],
-  ['Glitch','strobe','⚡ Strobe', (t, k) => { if (Math.floor(t * 10) % 2) overlayFill('#000', .85 * k); }],
   ['Glitch','static','📺 TV static', (t, k) => grain(.7 * k, t)],
   ['Glitch','scan','🖥️ Scanlines', (t, k) => { const W = cv.width, H = cv.height; ctx.save(); ctx.globalAlpha = .3 * k; ctx.fillStyle = '#000'; const st = Math.max(3, Math.round(H / 180)); for (let y = (t * 30) % st; y < H; y += st) ctx.fillRect(0, y, W, st / 2); ctx.restore(); }],
   // Color
@@ -2347,7 +2363,6 @@ const EFFECTS = [
   ['Color','glow','✨ Glow', (t, k) => { const s = snapCanvas(); ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = .3 * k; ctx.filter = `blur(${Math.round(cv.width / 50)}px)`; ctx.drawImage(s, 0, 0); ctx.restore(); }],
   // Light
   ['Light','flash','📸 Flash', (t, k) => overlayFill('#fff', k * Math.max(0, 1 - t / .35))],
-  ['Light','beatflash','💡 Beat flash', (t, k) => overlayFill('#fff', .55 * k * Math.max(0, 1 - (t % .5) / .12))],
   ['Light','fadeout','⬛ Fade to black', (t, k, d) => overlayFill('#000', k * t / d)],
   ['Light','fadein','◼️ Fade from black', (t, k, d) => overlayFill('#000', k * (1 - t / d))],
   ['Light','fadewhite','⬜ Fade to white', (t, k, d) => overlayFill('#fff', k * t / d)],
@@ -2377,8 +2392,31 @@ const EFFECTS = [
 ];
 const FX_BY_ID = Object.fromEntries(EFFECTS.map(e => [e[1], e]));
 const FX_CATS = [...new Set(EFFECTS.map(e => e[0]))];
-let fxCat = FX_CATS[0];
+let fxCat = 'Beat';
+/* beat of the song on the Audio track at timeline time T (fallback: 120 BPM from the effect's start) */
+let fxT = 0, fxLocal = 0;
+function songAt(T){
+  for (const a of S.audios){ if (T < a.start || T >= a.start + a.dur) continue; const m = media[a.mediaId]; if (m && m.beat) return { a, m }; }
+  return null;
+}
+function beatNow(localT, mult = 1){
+  const sg = songAt(fxT);
+  if (sg){ const p = sg.m.beat.period * mult, x = (sg.a.offset + (fxT - sg.a.start) - sg.m.beat.offset) / p; return { ph:x - Math.floor(x), n:Math.floor(x), period:p, synced:true }; }
+  const p = .5 * mult, x = localT / p; return { ph:x - Math.floor(x), n:Math.floor(x), period:p, synced:false };
+}
+async function ensureBeat(m){
+  if (!m || m.beat || m._beating || m._beatTried || m.type !== 'audio') return;
+  m._beating = true; m._beatTried = true;
+  try { m.beat = await detectBeat(m); if (!(m.beat.period > .2)) m.beat = null; } catch (e) { m.beat = null; }
+  m._beating = false; renderTimeline(); scheduleRender(); if (tab === 'effects' && sheetOpen()) renderPanel();
+}
+function beatStatus(){
+  const a = S.audios.find(x => media[x.mediaId]); if (!a) return 'Beat effects use 120 BPM. Add a song on the Audio track and they follow its beat.';
+  const m = media[a.mediaId]; if (m.beat) return `🎵 Beat effects follow “${m.name}” — ${m.beat.bpm} BPM.`;
+  ensureBeat(m); return `🎵 Finding the beat of “${m.name}”…`;
+}
 function applyEffects(t){
+  fxT = t;
   for (const x of S.effects || []){ if (t < x.start || t >= x.start + x.dur) continue; const e = FX_BY_ID[x.type]; if (!e) continue; try { ctx.save(); e[3](t - x.start, x.k == null ? 1 : x.k, x.dur); ctx.restore(); } catch (er) { ctx.restore(); } }
 }
 function addEffect(type){
@@ -2392,7 +2430,8 @@ function effectsHTML(){
   return `<div class="hint" style="margin-bottom:10px">Put the playhead where you want the effect, then tap one. It appears on the <b style="color:var(--text)">Effects</b> track — drag it to move it, drag its edges to make it longer or shorter.</div>
   <div class="chips">${FX_CATS.map(c => `<button class="chip ${c === fxCat ? 'on' : ''}" data-fxcat="${c}">${c}</button>`).join('')}</div>
   <div class="pgrid">${EFFECTS.filter(e => e[0] === fxCat).map(e => `<button class="preset fxcard" data-fx="${e[1]}">${esc(e[2])}</button>`).join('')}</div>
-  <div class="hint" style="margin-top:12px">${EFFECTS.length} effects. Each one has a Strength slider on the right after you add it.</div>`;
+  <div class="hint" style="margin-top:12px">${EFFECTS.length} effects. Each one has a Strength slider on the right after you add it.</div>
+  ${fxCat === 'Beat' ? `<div class="vo" style="margin-top:12px"><div class="hint" style="flex:1;color:var(--text)">${esc(beatStatus())}</div></div><button class="btn sm full" data-act="fxBeatAll" style="margin-top:8px">💥 Beat zoom on the whole video</button>` : ''}`;
 }
 
 /* ---------- Transitions panel: put a transition exactly where the playhead is ---------- */

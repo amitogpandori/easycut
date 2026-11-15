@@ -71,9 +71,8 @@ function check(cond, msg) {
     await page.click('#props [data-seg="trans"] button[data-val="dissolve"]');
     check(await count('#props [data-seg="trans"] button') === 16, '16 transitions available');
     await page.click('[data-tab="effects"]');
-    await page.click('[data-fx="shake"]'); await waitCount('.eitem', 1);
-    await page.click('[data-tab="effects"]').catch(() => {});
-    check(await count('.eitem') === 1, 'effect added on the Effects track');
+    await page.click('[data-fx="punch"]'); await waitCount('.eitem', 1);
+    check(await count('.eitem') === 1, 'beat effect added on the Effects track');
     await page.keyboard.press('Space');
     const o0 = await count('.oitem');
     await page.setInputFiles('#fileOv', [media('anim.gif'), media('sticker.webp')]); await waitCount('.oitem', o0 + 2);
@@ -93,6 +92,8 @@ function check(cond, msg) {
     await page.keyboard.press('Control+o');
     await page.waitForFunction(() => document.getElementById('toast').textContent.includes('Project opened') || document.getElementById('toast').textContent.includes('missing'), null, { timeout: 60000 });
     const after = { v: await count('.vclip'), t: await count('.titem'), o: await count('.oitem') };
+    await page.waitForFunction(() => [...document.querySelectorAll('.aitem .lbl')].some(l => l.textContent.includes('BPM')), null, { timeout: 30000 }).catch(() => {});
+    check(await page.evaluate(() => [...document.querySelectorAll('.aitem .lbl')].some(l => l.textContent.includes('BPM'))), 'song beat detected for beat effects');
     check(JSON.stringify(before) === JSON.stringify(after), `project re-opened with everything in place ${JSON.stringify(after)}`);
 
     // Reel Maker: automatic (beat) and manual
