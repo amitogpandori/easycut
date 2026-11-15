@@ -6,7 +6,7 @@
 <title>EasyCut — Video Editor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Poppins:wght@500;800&family=Anton&family=Bebas+Neue&family=Montserrat:wght@500;800&family=Pacifico&family=Permanent+Marker&family=Noto+Sans+Devanagari:wght@500;800&family=Noto+Sans+Gurmukhi:wght@500;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Poppins:wght@500;800&family=Anton&family=Bebas+Neue&family=Montserrat:wght@500;800&family=Pacifico&family=Permanent+Marker&family=Noto+Sans+Devanagari:wght@500;800&family=Noto+Sans+Gurmukhi:wght@500;800&family=Oswald:wght@500;700&family=Raleway:wght@500;800&family=Playfair+Display:wght@600;800&family=Lobster&family=Dancing+Script:wght@600;700&family=Caveat:wght@600;700&family=Righteous&family=Bangers&family=Satisfy&family=Kaushan+Script&family=Russo+One&family=Archivo+Black&family=Teko:wght@500;700&family=Rajdhani:wght@600;700&family=Abril+Fatface&family=Bungee&family=Shrikhand&family=Monoton&family=Baloo+2:wght@600;800&family=Mukta:wght@500;800&family=Yatra+One&family=Rozha+One&family=Baloo+Paaji+2:wght@600;800&family=Mukta+Mahee:wght@500;800&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#0c0e13;--panel:#141720;--panel2:#1b1f2b;--panel3:#232838;--line:#262b3a;
@@ -314,6 +314,8 @@ body.is-desk .desk{display:inline-flex!important}
 <input type="file" id="fileLayout" multiple accept="video/*,image/*" hidden>
 <input type="file" id="fileReel" multiple accept="video/*,image/*" hidden>
 <input type="file" id="fileReelMusic" accept="audio/*" hidden>
+<input type="file" id="fileFont" multiple accept=".ttf,.otf,.woff,.woff2,font/ttf,font/otf,font/woff,font/woff2" hidden>
+<input type="file" id="fileTpl" accept=".json,application/json" hidden>
 <div class="busy" id="busy">Working…</div>
 <div id="pool"></div>
 
@@ -360,7 +362,16 @@ const FILTERS = {
   dream:['Dream','brightness(1.12) saturate(1.3) contrast(.9)'], bw:['B&W','grayscale(1) contrast(1.1)'], noir:['Noir','grayscale(1) contrast(1.5) brightness(.9)'],
 };
 const TRANS = [['none','None'],['fade','Fade'],['zoom','Zoom'],['slide','Slide'],['blur','Blur'],['flash','Flash']];
-const FONTS = ['Plus Jakarta Sans','Poppins','Montserrat','Anton','Bebas Neue','Pacifico','Permanent Marker','Noto Sans Devanagari','Noto Sans Gurmukhi','Arial','Georgia','Impact','Courier New','Trebuchet MS','Comic Sans MS'];
+const FONT_GROUPS = [
+  ['Clean', ['Plus Jakarta Sans','Poppins','Montserrat','Raleway','Rajdhani','Arial','Verdana','Trebuchet MS']],
+  ['Bold & display', ['Anton','Bebas Neue','Oswald','Archivo Black','Russo One','Teko','Bangers','Righteous','Bungee','Abril Fatface','Shrikhand','Monoton','Impact']],
+  ['Script & handwritten', ['Pacifico','Lobster','Dancing Script','Caveat','Satisfy','Kaushan Script','Permanent Marker','Comic Sans MS']],
+  ['Classic', ['Playfair Display','Georgia','Times New Roman','Courier New']],
+  ['हिन्दी (Hindi)', ['Noto Sans Devanagari','Baloo 2','Mukta','Yatra One','Rozha One']],
+  ['ਪੰਜਾਬੀ (Punjabi)', ['Noto Sans Gurmukhi','Baloo Paaji 2','Mukta Mahee']],
+];
+const userFonts = [];
+const FONTS = FONT_GROUPS.flatMap(g => g[1]);
 const TEXT_BASE = { text:'Text', font:'Plus Jakarta Sans', size:72, bold:true, color:'#ffffff', stroke:false, strokeColor:'#000000', box:false, boxColor:'#000000', boxAlpha:.6, glow:false, shadow:false, align:'center', anim:'fade', x:.5, y:.5, dur:3 };
 const TEXT_PRESETS = [
   { name:'Title', p:{ text:'Your Title', font:'Poppins', size:100, stroke:true, shadow:true, anim:'pop', y:.45 } },
@@ -455,7 +466,10 @@ function renderPanel(){
     for (const cat of ['Intros','Titles','Social','Outros']){
       h += `<h3>${cat}</h3><div class="pgrid sec">${TEMPLATES.map((t, i) => t.cat !== cat ? '' : `<button class="preset" data-tpl="${i}" style="font-size:12.5px;font-weight:700;padding:16px 6px;${t.card ? `background:linear-gradient(135deg,${t.card[0]},${t.card[1]});color:#fff` : ''}">${esc(t.name)}</button>`).join('')}</div>`;
     }
-    h += `<div class="hint">Intros are added at the start and outros at the end. Titles and social templates go at the playhead.</div>`;
+    h += `<h3>My templates</h3><div class="sec">${myTemplates.length ? `<div class="pgrid" style="margin-bottom:10px">${myTemplates.map(t => `<div style="position:relative"><button class="preset" data-mytpl="${t.id}" style="width:100%;font-size:12.5px;font-weight:700;padding:16px 6px;border-color:#f97316">${esc(t.name)}</button><button class="ib" data-mytpldel="${t.id}" title="Delete" style="position:absolute;top:-6px;right:-6px;width:22px;height:22px;background:var(--panel3);border-radius:50%">${ic('x')}</button></div>`).join('')}</div>` : '<div class="hint" style="margin-bottom:10px">Style some text, put the playhead where it shows, then save it here to reuse it any time.</div>'}
+      <div style="display:flex;gap:6px;margin-bottom:8px"><input class="inp" id="myTplName" placeholder="Template name" maxlength="40"><button class="btn sm pri" data-act="saveTpl">Save</button></div>
+      <div style="display:flex;gap:6px"><button class="btn sm" data-act="exportTpl" style="flex:1;justify-content:center">Export pack</button><button class="btn sm" data-act="importTpl" style="flex:1;justify-content:center">Import pack</button></div></div>`;
+    h += `<div class="hint">Intros are added at the start and outros at the end. Titles and social templates go at the playhead. Saving a template keeps all the text that's on screen at the playhead.</div>`;
   } else if (tab === 'overlay'){
     const vis = all.filter(m => m.type !== 'audio' && !m.loading);
     h = `<h3>Overlay / picture-in-picture</h3><div class="hint" style="margin-bottom:12px">Put a video, photo or your logo on top of the main video. Drag it on the preview to move it, and drag its white corner to resize. Green-screen clips can have their background removed.</div>
@@ -464,6 +478,7 @@ function renderPanel(){
   } else if (tab === 'text'){
     h = `<h3>Text styles</h3><div class="hint" style="margin-bottom:12px">Click a style to add it at the playhead. Drag the text on the preview to move it.</div><div class="pgrid">`
       + TEXT_PRESETS.map((t, i) => { const p2 = { ...TEXT_BASE, ...t.p }; const st = `font-family:'${p2.font}';font-weight:${p2.bold ? 800 : 400};color:${p2.color};${p2.stroke ? 'text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000;' : ''}${p2.glow ? `text-shadow:0 0 8px ${p2.color};` : ''}${p2.box ? `background:${hexA(p2.boxColor, Math.max(.35, p2.boxAlpha))};` : ''}`; return `<button class="preset" data-tp="${i}" style="${st}" title="${t.name}">${esc(t.name)}</button>`; }).join('') + `</div>`;
+  h += `<h3 style="margin-top:20px">Fonts</h3><div class="hint" style="margin-bottom:10px">${FONTS.length} fonts are built in, including Hindi and Punjabi. You can add any .ttf, .otf or .woff2 font file too.${userFonts.length ? ` Your fonts: ${userFonts.map(esc).join(', ')}.` : ''}</div><button class="btn sm full" data-act="addFont">${ic('plus')}Add your own font</button><div style="margin-top:14px"><button class="btn sm full" data-act="toTemplates">More text templates →</button></div>`;
   } else if (tab === 'sticker'){
     h = `<h3>Stickers</h3><div class="hint" style="margin-bottom:12px">Tap to drop on the video. They animate in with a pop.</div><div class="egrid">${EMOJI.map(e => `<button class="emo" data-emo="${e}">${e}</button>`).join('')}</div>`;
   } else if (tab === 'music'){
@@ -501,12 +516,19 @@ $('#panel').addEventListener('click', e => {
   const gs = t.closest('[data-gseg] button'); if (gs){ const k = gs.parentElement.dataset.gseg; push(); S[k] = k === 'res' || k === 'fps' ? +gs.dataset.val : gs.dataset.val; if (k === 'fit') S.clips.forEach(c => c.fit = 'auto'); applyCanvasSize(); return refreshAll(); }
   if (act === 'importOv') return $('#fileOv').click();
   if (act === 'reel') return openReel();
+  if (act === 'saveTpl') return saveMyTemplate(($('#myTplName') || {}).value);
+  if (act === 'exportTpl') return exportMyTemplates();
+  if (act === 'importTpl') return $('#fileTpl').click();
+  if (act === 'addFont') return $('#fileFont').click();
+  const mtd = t.closest('[data-mytpldel]'); if (mtd) return deleteMyTemplate(mtd.dataset.mytpldel);
+  const mt = t.closest('[data-mytpl]'); if (mt){ const tp = myTemplates.find(x => x.id === mt.dataset.mytpl); if (tp) return applyTemplate(tp); }
   if (act === 'toTemplates'){ e.preventDefault(); tab = 'templates'; renderRail(); return renderPanel(); }
   if (act === 'addAll'){ push(); Object.values(media).filter(m => m.type !== 'audio' && !m.loading).forEach(m => S.clips.push(newClip(m.id))); return refreshAll(); }
   const lay = t.closest('[data-layout]'); if (lay) return startLayout(lay.dataset.layout);
   const tpl = t.closest('[data-tpl]'); if (tpl) return applyTemplate(+tpl.dataset.tpl);
   const ov = t.closest('[data-ov]'); if (ov) return addOverlay(ov.dataset.ov);
 });
+$('#panel').addEventListener('keydown', e => { if (e.target.matches('input:not([type=range]),textarea,select')){ e.stopPropagation(); if (e.key === 'Enter' && e.target.id === 'myTplName') saveMyTemplate(e.target.value); } });
 $('#panel').addEventListener('input', e => { const k = e.target.dataset.g; if (!k) return; checkpoint('g' + k); S[k] = e.target.value; scheduleRender(); });
 $('#panel').addEventListener('dragstart', e => { const mc = e.target.closest('[data-mid]'); if (mc){ e.dataTransfer.setData('text/x-media', mc.dataset.mid); e.dataTransfer.effectAllowed = 'copy'; } });
 
@@ -716,7 +738,7 @@ async function makeCard(colors, name){
   return importOne(new File([blob], name + '.png', { type:'image/png' }));
 }
 async function applyTemplate(i){
-  const tp = TEMPLATES[i]; if (!tp) return;
+  const tp = typeof i === 'object' ? i : TEMPLATES[i]; if (!tp) return;
   for (const x of tp.texts) document.fonts?.load(`${x.bold === false ? 500 : 800} 40px "${x.font || TEXT_BASE.font}"`).catch(() => {});
   let t0 = playT;
   if (tp.card){
@@ -834,7 +856,7 @@ function renderProps(){
   } else if (sel.type === 'text'){
     h = `<div class="phead"><span class="dot" style="background:var(--txt)"></span><span class="t">Text</span><small>${fmt(o.dur)}</small></div>${acts()}`
       + row('Text', `<textarea class="inp" id="txtArea" data-k="text" data-t="str" spellcheck="false">${esc(o.text)}</textarea>`)
-      + row('Font', `<select class="inp" data-k="font" data-t="str">${FONTS.map(f => `<option ${o.font === f ? 'selected' : ''} style="font-family:'${f}'">${f}</option>`).join('')}</select>`)
+      + row('Font', `<div style="display:flex;gap:6px"><select class="inp" data-k="font" data-t="str">${(userFonts.length ? [['My fonts', userFonts], ...FONT_GROUPS] : FONT_GROUPS).map(([g, fs]) => `<optgroup label="${esc(g)}">${fs.map(f => `<option ${o.font === f ? 'selected' : ''}>${esc(f)}</option>`).join('')}</optgroup>`).join('')}${[...FONTS, ...userFonts].includes(o.font) ? '' : `<option selected>${esc(o.font)}</option>`}</select><button class="btn sm" data-pa="addFont" title="Add your own font file">${ic('plus')}Font</button></div>`)
       + row('Size', range('size', 16, 340, 1, o.size))
       + `<div class="prow"><div class="crow"><label class="chk"><input type="checkbox" data-k="bold" data-t="bool" ${o.bold ? 'checked' : ''}>Bold</label><span class="crow" style="gap:6px"><span class="hint">Color</span><input type="color" data-k="color" data-t="str" value="${o.color}"></span></div>`
       + chk('stroke', 'Outline', o.stroke, 'strokeColor', o.strokeColor) + chk('box', 'Background box', o.box, 'boxColor', o.boxColor)
@@ -876,6 +898,7 @@ $('#props').addEventListener('click', e => {
   const o = getSel();
   const pa = e.target.closest('[data-pa]')?.dataset.pa;
   if (pa === 'boxDone') return exitBoxMode();
+  if (pa === 'addFont') return $('#fileFont').click();
   if (pa === 'cropReset'){ const c = getObj('clip', cropMode.clipId); push(); c.crop = { ...FULL }; cropMode.ratio = 'free'; renderProps(); return renderFrame(); }
   if (pa === 'logoAdd'){ const c = getObj('clip', cropMode.clipId); push(); c.logos.push({ x:.05, y:.05, w:.22, h:.12, mode:'smart' }); cropMode.idx = c.logos.length - 1; renderProps(); return renderFrame(); }
   if (pa === 'logoDel'){ const c = getObj('clip', cropMode.clipId); push(); c.logos.splice(cropMode.idx, 1); cropMode.idx = Math.max(0, c.logos.length - 1); if (!c.logos.length) return exitBoxMode(); renderProps(); return renderFrame(); }
@@ -1816,6 +1839,91 @@ async function makeReel(){
   toast(`${style.emoji} ${style.name} reel ready: ${S.clips.length} cuts${mus ? ` on the beat (${beat.bpm} BPM)` : ''}. Press play!`, 4500);
 }
 
+/* ---------- more built-in templates ---------- */
+TEMPLATES.push(
+  { cat:'Intros', name:'Gaming Intro', card:['#4c1d95','#0ea5e9'], dur:3.5, texts:[T('🎮', { size:150, bold:false, anim:'pop', y:.28 }), T('GAME ON', { font:'Bungee', size:150, bold:false, color:'#a7f3d0', glow:true, anim:'pop', y:.5, start:.2 }), T('Let’s play!', { font:'Rajdhani', size:64, anim:'slide', y:.68, start:.6 })] },
+  { cat:'Intros', name:'Fitness', card:['#111827','#16a34a'], dur:3.5, texts:[T('💪 NO EXCUSES', { font:'Oswald', size:130, color:'#bbf7d0', stroke:true, anim:'pop', y:.46 }), T('Day 1 of 30', { font:'Teko', size:80, anim:'slide', y:.62, start:.4 })] },
+  { cat:'Intros', name:'Birthday', card:['#f472b6','#facc15'], dur:4, texts:[T('🎂🎉', { size:130, bold:false, anim:'pop', y:.28 }), T('Happy Birthday!', { font:'Lobster', size:130, bold:false, shadow:true, anim:'pop', y:.5, start:.2 }), T('Name here', { font:'Dancing Script', size:80, anim:'fade', y:.68, start:.7 })] },
+  { cat:'Intros', name:'Wedding', card:['#78350f','#d97706'], dur:4.5, texts:[T('Save the Date', { font:'Satisfy', size:110, bold:false, color:'#fde68a', anim:'fade', y:.42 }), T('AMAN  ♥  PREET', { font:'Playfair Display', size:80, anim:'fade', y:.56, start:.5 }), T('12 · 12 · 2026', { font:'Raleway', size:46, anim:'fade', y:.66, start:1 })] },
+  { cat:'Intros', name:'Diwali', card:['#7c2d12','#f59e0b'], dur:4, texts:[T('🪔✨', { size:130, bold:false, anim:'pop', y:.28 }), T('शुभ दीपावली', { font:'Yatra One', size:140, bold:false, color:'#fde68a', glow:true, anim:'pop', y:.5, start:.2 }), T('Happy Diwali', { font:'Dancing Script', size:72, anim:'fade', y:.68, start:.6 })] },
+  { cat:'Intros', name:'Cricket Match', card:['#14532d','#65a30d'], dur:3.5, texts:[T('🏏', { size:150, bold:false, anim:'pop', y:.28 }), T('MATCH DAY', { font:'Archivo Black', size:130, bold:false, color:'#ffffff', stroke:true, strokeColor:'#14532d', anim:'pop', y:.5, start:.2 }), T('Team A vs Team B', { font:'Rajdhani', size:60, anim:'slide', y:.66, start:.6 })] },
+  { cat:'Intros', name:'Podcast', card:['#0f172a','#7c3aed'], dur:3.5, texts:[T('🎙️ THE PODCAST', { font:'Oswald', size:110, anim:'pop', y:.45 }), T('Episode 12 · with a special guest', { size:44, bold:false, color:'#c4b5fd', anim:'fade', y:.58, start:.5 })] },
+  { cat:'Intros', name:'Bhangra / Punjabi', card:['#ea580c','#facc15'], dur:3.5, texts:[T('ਬੱਲੇ ਬੱਲੇ!', { font:'Baloo Paaji 2', size:160, color:'#ffffff', stroke:true, strokeColor:'#7c2d12', anim:'pop', y:.46 }), T('Punjabi vibes 🥁', { font:'Kaushan Script', size:70, bold:false, anim:'slide', y:.64, start:.5 })] },
+  { cat:'Titles', name:'News Headline', texts:[T('BREAKING', { font:'Oswald', size:44, box:true, boxColor:'#dc2626', boxAlpha:1, x:.13, y:.8, anim:'slide', dur:4 }), T('Your headline goes here', { font:'Oswald', size:52, color:'#111111', box:true, boxColor:'#ffffff', boxAlpha:.95, x:.45, y:.88, anim:'slide', start:.2, dur:3.8 })] },
+  { cat:'Titles', name:'Price Tag', texts:[T('SALE ₹499', { font:'Bungee', size:80, bold:false, color:'#111111', box:true, boxColor:'#facc15', boxAlpha:1, x:.8, y:.2, anim:'pop', dur:3 })] },
+  { cat:'Titles', name:'Recipe Step', texts:[T('STEP 1', { font:'Teko', size:70, color:'#fde68a', shadow:true, x:.2, y:.12, anim:'pop', dur:3 }), T('Chop the onions finely', { font:'Caveat', size:70, shadow:true, x:.3, y:.2, anim:'slide', start:.2, dur:2.8 })] },
+  { cat:'Titles', name:'Fun Fact', texts:[T('💡 Did you know?', { font:'Righteous', size:60, box:true, boxColor:'#2563eb', boxAlpha:1, y:.2, anim:'pop', dur:4 }), T('Write your fact here', { size:46, bold:false, box:true, boxAlpha:.6, y:.3, anim:'fade', start:.4, dur:3.6 })] },
+  { cat:'Titles', name:'Retro Neon', texts:[T('RETRO', { font:'Monoton', size:180, bold:false, color:'#f0abfc', glow:true, anim:'fade', y:.5, dur:3 })] },
+  { cat:'Titles', name:'Elegant Title', texts:[T('Chapter One', { font:'Playfair Display', size:110, shadow:true, anim:'fade', y:.47, dur:3 }), T('— a new beginning —', { font:'Raleway', size:40, bold:false, color:'#e5e7eb', anim:'fade', y:.57, start:.5, dur:2.5 })] },
+  { cat:'Titles', name:'Hindi Title', texts:[T('आज का सफ़र', { font:'Rozha One', size:130, bold:false, stroke:true, anim:'pop', y:.5, dur:3 })] },
+  { cat:'Social', name:'POV', texts:[T('POV:', { font:'Archivo Black', size:70, bold:false, box:true, boxAlpha:.7, x:.15, y:.12, anim:'pop', dur:4 }), T('you finally took the trip', { size:52, shadow:true, x:.5, y:.2, anim:'type', start:.3, dur:3.7 })] },
+  { cat:'Social', name:'Link in Bio', texts:[T('🔗 Link in bio', { font:'Righteous', size:58, color:'#111111', box:true, boxColor:'#ffffff', boxAlpha:.95, y:.86, anim:'pop', dur:3.5 })] },
+  { cat:'Social', name:'Comment Below', texts:[T('💬 Comment “YES” below', { size:56, box:true, boxColor:'#7c3aed', boxAlpha:1, y:.86, anim:'slide', dur:3.5 })] },
+  { cat:'Social', name:'Part 2?', texts:[T('PART 2? 👀', { font:'Bangers', size:150, bold:false, color:'#facc15', stroke:true, anim:'pop', y:.5, dur:2.5 })] },
+  { cat:'Social', name:'Poll Question', texts:[T('Which one? 🤔', { font:'Poppins', size:76, shadow:true, y:.14, anim:'pop', dur:4 }), T('A', { font:'Bungee', size:110, bold:false, box:true, boxColor:'#2563eb', boxAlpha:1, x:.3, y:.86, anim:'pop', start:.3, dur:3.7 }), T('B', { font:'Bungee', size:110, bold:false, box:true, boxColor:'#dc2626', boxAlpha:1, x:.7, y:.86, anim:'pop', start:.4, dur:3.6 })] },
+  { cat:'Outros', name:'Follow for Part 2', card:['#111827','#be185d'], dur:4, texts:[T('Follow for Part 2', { font:'Bangers', size:140, bold:false, color:'#fbcfe8', stroke:true, anim:'pop', y:.46 }), T('@yourhandle', { size:52, box:true, boxAlpha:.6, anim:'slide', y:.62, start:.5 })] },
+  { cat:'Outros', name:'Thank You (Hindi)', card:['#0f766e','#14b8a6'], dur:4, texts:[T('धन्यवाद 🙏', { font:'Baloo 2', size:150, shadow:true, anim:'pop', y:.46 }), T('देखने के लिए', { font:'Mukta', size:60, anim:'fade', y:.62, start:.5 })] },
+);
+REEL_STYLES.push(
+  { id:'bhangra', name:'Bhangra Beat', emoji:'🥁', colors:['#ea580c','#facc15'], beats:1, trans:['flash','zoom','slide'], filter:'vivid', vig:.15, motion:['in','out'], speeds:[1],
+    title:{ text:'ਬੱਲੇ ਬੱਲੇ! 🥁', font:'Baloo Paaji 2', size:140, color:'#ffffff', stroke:true, strokeColor:'#7c2d12', anim:'pop', y:.2 } },
+  { id:'gym', name:'Gym Motivation', emoji:'💪', colors:['#111827','#16a34a'], beats:1, trans:['flash','none','zoom'], filter:'drama', vig:.35, motion:['in','out'], speeds:[1, .5],
+    title:{ text:'NO EXCUSES 💪', font:'Oswald', size:130, color:'#bbf7d0', stroke:true, anim:'pop', y:.18 } },
+  { id:'aesthetic', name:'Soft Aesthetic', emoji:'🌸', colors:['#fbcfe8','#c4b5fd'], beats:4, trans:['fade','blur'], filter:'fade', vig:0, motion:['in','left','right'], speeds:[.75, 1],
+    title:{ text:'little moments 🌸', font:'Dancing Script', size:110, color:'#ffffff', shadow:true, anim:'fade', y:.5 } },
+  { id:'food', name:'Food Reel', emoji:'🍜', colors:['#f97316','#facc15'], beats:2, trans:['zoom','slide','flash'], filter:'warm', vig:.1, motion:['in','out'], speeds:[1],
+    title:{ text:'must try 🤤', font:'Shrikhand', size:120, bold:false, color:'#fff7ed', stroke:true, strokeColor:'#9a3412', anim:'pop', y:.18 } },
+);
+
+/* ---------- user storage: your fonts and your templates (kept on this computer) ---------- */
+const store = {
+  db:null, mem:{ fonts:[], tpl:[] },
+  async open(){ if (this.db !== null) return this.db; try { this.db = await new Promise((res, rej) => { const r = indexedDB.open('easycut', 1); r.onupgradeneeded = () => { r.result.createObjectStore('fonts', { keyPath:'id' }); r.result.createObjectStore('tpl', { keyPath:'id' }); }; r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); } catch (e) { this.db = false; } return this.db; },
+  async all(name){ const db = await this.open(); if (!db) return this.mem[name].slice(); return new Promise(res => { try { const q = db.transaction(name).objectStore(name).getAll(); q.onsuccess = () => res(q.result || []); q.onerror = () => res([]); } catch (e) { res([]); } }); },
+  async put(name, v){ const db = await this.open(); if (!db){ this.mem[name] = this.mem[name].filter(x => x.id !== v.id).concat(v); return; } return new Promise(res => { try { const t = db.transaction(name, 'readwrite'); t.objectStore(name).put(v); t.oncomplete = res; t.onerror = res; } catch (e) { res(); } }); },
+  async del(name, id){ const db = await this.open(); if (!db){ this.mem[name] = this.mem[name].filter(x => x.id !== id); return; } return new Promise(res => { try { const t = db.transaction(name, 'readwrite'); t.objectStore(name).delete(id); t.oncomplete = res; t.onerror = res; } catch (e) { res(); } }); },
+};
+let myTemplates = [];
+async function registerFont(name, data){ const face = new FontFace(name, data); await face.load(); document.fonts.add(face); if (!userFonts.includes(name)) userFonts.push(name); }
+async function loadUserStuff(){
+  for (const f of await store.all('fonts')){ try { await registerFont(f.name, f.data); } catch (e) {} }
+  myTemplates = await store.all('tpl');
+  if (tab === 'templates' || tab === 'text') renderPanel(); renderProps(); scheduleRender();
+}
+async function importFonts(files){
+  let last = null;
+  for (const f of files){
+    const name = f.name.replace(/\.(ttf|otf|woff2?|TTF|OTF|WOFF2?)$/, '').replace(/[^\w\s-]/g, ' ').replace(/\s+/g, ' ').trim() || 'My Font';
+    try { const data = await f.arrayBuffer(); await registerFont(name, data.slice(0)); await store.put('fonts', { id:name, name, data }); last = name; }
+    catch (e) { toast(`Couldn't read ${f.name}. Use a .ttf, .otf or .woff2 font file.`, 4000); }
+  }
+  if (!last) return;
+  const o = getSel(); if (o && sel.type === 'text'){ push(); o.font = last; }
+  refreshAll(); toast(`Font “${last}” added — find it under “My fonts”`);
+}
+async function saveMyTemplate(name){
+  const on = S.texts.filter(x => playT >= x.start && playT < x.start + x.dur);
+  if (!on.length) return toast('Move the playhead to where your text is on screen, then save');
+  const t0 = Math.min(...on.map(x => x.start));
+  const tp = { id:uid(), cat:'Mine', name:(name || 'My template').slice(0, 40), texts:on.map(x => { const { id, ...rest } = x; return { ...rest, start:+(x.start - t0).toFixed(2) }; }) };
+  myTemplates.push(tp); await store.put('tpl', tp); renderPanel(); toast(`Saved “${tp.name}” to My templates`);
+}
+async function deleteMyTemplate(id){ myTemplates = myTemplates.filter(t => t.id !== id); await store.del('tpl', id); renderPanel(); }
+function exportMyTemplates(){
+  if (!myTemplates.length) return toast('Save a template first');
+  saveBlob(new Blob([JSON.stringify({ app:'EasyCut', kind:'templates', version:1, templates:myTemplates }, null, 1)], { type:'application/json' }), 'EasyCut templates.json');
+}
+async function importTemplatePack(file){
+  try {
+    const j = JSON.parse(await file.text()); const list = j && j.kind === 'templates' ? j.templates : null;
+    if (!Array.isArray(list)) throw new Error('not a template pack');
+    let n = 0; for (const t of list){ if (!t || !Array.isArray(t.texts)) continue; const tp = { id:uid(), cat:'Mine', name:String(t.name || 'Template').slice(0, 40), texts:t.texts.map(x => ({ ...x, text:String(x.text || '') })) }; myTemplates.push(tp); await store.put('tpl', tp); n++; }
+    renderPanel(); toast(`${n} template${n === 1 ? '' : 's'} added to My templates`);
+  } catch (e) { toast('That file is not an EasyCut template pack', 4000); }
+}
+$('#fileFont').addEventListener('change', e => { const fs = [...e.target.files]; e.target.value = ''; importFonts(fs); });
+$('#fileTpl').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; if (f) importTemplatePack(f); });
+
 /* ---------- glue ---------- */
 function refreshAll(){
   applyCanvasSize();
@@ -1830,6 +1938,7 @@ if (window.claude && typeof window.claude.use === 'function'){ window.claude.use
 document.fonts?.ready.then(scheduleRender);
 
 renderRail(); applyCanvasSize(); refreshAll(); setPps(60);
+loadUserStuff();
 })();
 </script>
 </body>

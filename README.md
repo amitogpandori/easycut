@@ -3,9 +3,11 @@
 An easy, InShot-style video editor for Windows, made for vloggers and reel makers.
 
 ## Features
-- **Auto Reel**: pick clips, a song and a style (Beat Drop, Travel Vibes, Cinematic, Glow Up, Day in My Life, Memories, Hype Montage, Desi Wedding). EasyCut finds the song's beat and cuts your clips to it, adding transitions, a look and titles.
+- **Auto Reel**: pick clips, a song and a style (Beat Drop, Travel Vibes, Cinematic, Glow Up, Day in My Life, Memories, Hype Montage, Desi Wedding, Bhangra Beat, Gym Motivation, Soft Aesthetic, Food Reel). EasyCut finds the song's beat and cuts your clips to it, adding transitions, a look and titles.
 - **Combine videos**: join clips one after another, or show them together with layouts (side by side, top/bottom, 3-up, 2×2 grid, 1 big + 2 small, picture-in-picture, reaction circle)
-- **Templates**: intros, titles, lower thirds, location tags, subscribe/follow buttons, 3-2-1 countdown, before/after, outros (Hindi and Punjabi too)
+- **43 templates**: intros (vlog, travel, gaming, fitness, birthday, wedding, Diwali, cricket, podcast, Bhangra…), titles, news headline, price tag, lower thirds, social (subscribe, POV, link in bio, poll, part 2), outros. Hindi and Punjabi too
+- **My templates & my fonts**: save your own text templates, export/import template packs, add any .ttf/.otf/.woff2 font (see CUSTOMIZING.md)
+- **40+ fonts** including Hindi and Punjabi
 - **Crop** with presets (Free, Fill canvas, 16:9, 9:16, 1:1, 4:5, 4:3)
 - **Fill (no bars)**: every clip fills the canvas with no blurred or colored borders
 - **Remove logo / watermark**: Smart fill, Blur or Pixelate
