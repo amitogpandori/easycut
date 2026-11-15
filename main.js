@@ -5,6 +5,11 @@ const fs = require('fs/promises');
 
 let win = null;
 
+// Laptops with two graphics chips (e.g. AMD Radeon + NVIDIA GTX): ask Windows for the fast one,
+// so preview, effects, color grading and export run on the dedicated GPU.
+app.commandLine.appendSwitch('force_high_performance_gpu');
+app.commandLine.appendSwitch('enable-gpu-rasterization');
+
 if (!app.requestSingleInstanceLock()) {
   app.quit();
 } else {
