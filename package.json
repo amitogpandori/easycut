@@ -1,14 +1,14 @@
 {
   "name": "easycut",
   "productName": "EasyCut",
-  "version": "1.15.0",
+  "version": "1.16.0",
   "description": "EasyCut - an easy video editor for vloggers",
   "main": "main.js",
   "author": "Amitoj",
   "license": "MIT",
   "scripts": {
     "start": "electron .",
-    "test": "node tests/smoke.js && node tests/photo-reels.js && node tests/wildlife.js && node tests/mobile-smooth.js",
+    "test": "node tests/updates-unit.js && node tests/smoke.js && node tests/photo-reels.js && node tests/wildlife.js && node tests/mobile-smooth.js && node tests/updates.js",
     "dist": "electron-builder --win --x64 --publish never"
   },
   "devDependencies": {
@@ -19,7 +19,7 @@
   "build": {
     "appId": "com.amitoj.easycut",
     "productName": "EasyCut",
-    "copyright": "Copyright \u00a9 2026 Amitoj",
+    "copyright": "Copyright © 2026 Amitoj",
     "directories": {
       "output": "dist",
       "buildResources": "build"
@@ -41,7 +41,8 @@
         }
       ],
       "icon": "build/icon.ico",
-      "artifactName": "EasyCut-Setup-${version}.exe"
+      "artifactName": "EasyCut-Setup-${version}.exe",
+      "verifyUpdateCodeSignature": false
     },
     "nsis": {
       "oneClick": false,
@@ -52,6 +53,17 @@
       "shortcutName": "EasyCut",
       "installerIcon": "build/icon.ico",
       "uninstallerIcon": "build/icon.ico"
-    }
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "amitogpandori",
+        "repo": "easycut",
+        "releaseType": "release"
+      }
+    ]
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.11"
   }
 }

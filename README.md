@@ -29,6 +29,7 @@ An easy, InShot-style video editor for Windows, made for vloggers and reel maker
 - **AI Editor (Windows app, free and offline)**: type what you want — "remove the pauses, add fades, a title and a cinematic look" — and a free AI model running on your own PC through [Ollama](https://ollama.com) edits the timeline for you. EasyCut finds Ollama, starts it, and downloads a model with one click (Qwen 3.5 2B recommended for 4 GB graphics cards; Llama 3.2 3B and Qwen 2.5 3B as options). Every AI change shows a list of what it did and can be undone in one tap. It can split, trim, reorder, shorten to a length, change speed/volume, add transitions, looks, color, filters, motion, text, templates, effects, change the canvas, remove silences, cut at scene changes, adjust music and make a reel
 - **Pro editing (Premiere-style)**: keyframes for position, scale, rotation, opacity and volume (with easing); Lumetri-style color grading on the graphics card (exposure, contrast, highlights, shadows, whites, blacks, temperature, tint, vibrance, saturation, fade, sharpen) with 10 looks, auto color, copy/paste grade and your own .cube LUTs; blend modes for overlays; markers (M); In/Out points (I/O, X) with export of just that range; jump between edits (↑/↓); J/K/L playback; slip edit (Alt+drag); mute/hide tracks; snapping on/off; audio level meter; export quality (Standard/High/Max)
 - **Smart cuts**: remove silent parts from talking clips automatically, and cut a clip at every scene change
+- **Automatic updates** (1.16.0+): Windows downloads new versions in the background and installs them when you close EasyCut; Android shows what's new and installs the new APK from inside the app
 - **Android app** (APK) with a phone layout: preview, timeline with a centred playhead you swipe, bottom toolbar, tools and clip settings slide up as sheets; videos save to Documents/EasyCut with a share sheet (Photos, WhatsApp, Instagram…); back button works
 - **InShot-style interface**: start screen, big preview, a bottom toolbar of tools (Media, Reel, Templates, Text, Sticker, GIF, Logo, Music, PIP, Filter, Canvas) plus one-tap clip tools (Split, Speed, Volume, Crop, Transition, Freeze, Rotate, Flip, Copy, Delete)
 - **GIFs from the internet** (GIPHY): search GIFs and see-through animated stickers, drop them on your video. Needs a free GIPHY API key (developers.giphy.com → Create an App → API). Your own .gif / animated .webp files work too
@@ -63,6 +64,11 @@ An easy, InShot-style video editor for Windows, made for vloggers and reel maker
 **Windows:** Go to **Releases** and download `EasyCut-Setup-x.y.z.exe`, then run it.
 Windows may show "Windows protected your PC" because the app isn't code-signed yet:
 click **More info → Run anyway**.
+
+### Updates (1.16.0 and newer)
+- **Windows:** EasyCut checks GitHub Releases when it opens and every 4 hours, downloads a new version in the background and shows a small banner: **Restart now**, or just close EasyCut and it installs itself.
+- **Android:** EasyCut asks GitHub for the latest release when it opens (at most once an hour) and when you come back to it (at most every 6 hours). If there's a newer version it shows what's new with an **Update** button, downloads the APK and opens Android's installer, where you tap **Update**. The first time, Android asks you to let EasyCut install apps (**Allow from this source**). If that can't work, it opens the download in your browser.
+- Both: 📁 Project → **Check for updates** any time, and **Check automatically** to switch the automatic checks off or on. 1.15.0 and older can't update themselves: install 1.16.0 by hand once.
 
 ## Develop
 ```

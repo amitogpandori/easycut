@@ -84,9 +84,19 @@ async function bench(app, page, cdp) {
   // 3. scrub by dragging slowly (a finger held on the timeline)
   R.scrub = await frames(page, async () => { await drag(cx + 100, y, -240, 40); }, 500);
   // swipe that starts on a clip (should scroll, not open the clip settings)
+  // start from the left edge, so the earlier swipes/scrubs can't leave the timeline already scrolled to its end (that read as "0 px")
+  await desel(); await page.evaluate(() => { document.getElementById('tlScroll').scrollLeft = 0; }); await page.waitForTimeout(250);
   { const vb = await page.locator('#trkV').boundingBox(), vy = Math.round(vb.y + vb.height / 2); const before = await page.evaluate(() => document.getElementById('tlScroll').scrollLeft);
+    const selBefore = await page.evaluate(() => {
+      const log = (window.__swLog = {}); const t = document.getElementById('tlInner'), sc = document.getElementById('tlScroll');
+      const add = (n) => (ev) => { log[n] = (log[n] || 0) + 1; };
+      window.__swOff = ['pointerdown', 'pointermove', 'pointerup', 'pointercancel', 'touchmove', 'touchend'].map((n) => { const f = add(n); t.addEventListener(n, f, { passive: true }); return () => t.removeEventListener(n, f); });
+      const fs = add('scroll'); sc.addEventListener('scroll', fs, { passive: true }); window.__swOff.push(() => sc.removeEventListener('scroll', fs));
+      return document.body.classList.contains('has-sel');
+    });
     await drag(cx + 100, vy, -150, 12); await page.waitForTimeout(300);
-    R.swipeOnClip = { moved: Math.round(await page.evaluate(() => document.getElementById('tlScroll').scrollLeft) - before), openedSheet: await page.evaluate(() => document.body.classList.contains('has-sel')) }; }
+    R.swipeOnClip = { moved: Math.round(await page.evaluate(() => document.getElementById('tlScroll').scrollLeft) - before), openedSheet: await page.evaluate(() => document.body.classList.contains('has-sel')), selBefore,
+      events: await page.evaluate(() => { window.__swOff.forEach((f) => f()); return JSON.stringify(window.__swLog); }) }; }
   await desel();
   // 4. playback
   await desel(); await page.evaluate(() => { window.__ec.playT = 0; }); await page.waitForTimeout(300);

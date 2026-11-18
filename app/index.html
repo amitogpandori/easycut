@@ -433,6 +433,14 @@ body.pro-on .tlpro{display:flex}
   .seg button{min-height:36px}
   .chk{padding:6px 0}
 }
+.updbar{position:fixed;right:16px;bottom:16px;z-index:95;display:none;align-items:center;gap:10px;max-width:min(560px,calc(100vw - 32px));background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 8px 8px 14px;font-size:13px;box-shadow:0 12px 32px #0008}
+.updbar.on{display:flex}.updbar span{flex:1;line-height:1.35}.updbar .updx{width:30px;height:30px}
+body.is-android .updbar{left:12px;right:12px;bottom:calc(84px + env(safe-area-inset-bottom));max-width:none}
+.updnotes{max-height:42vh;overflow-y:auto;font-size:13px;line-height:1.45;background:var(--panel2);border-radius:10px;padding:4px 14px;margin:6px 0 4px}
+.updnotes h4{margin:10px 0 4px;font-size:14px}.updnotes p{margin:6px 0}.updnotes ul{margin:6px 0;padding-left:18px}.updnotes a{color:#7dd3fc}
+.updbar-in{height:8px;border-radius:5px;background:var(--panel2);overflow:hidden;margin:12px 0 6px}.updbar-in i{display:block;height:100%;background:linear-gradient(90deg,#7c3aed,#ec4899);transition:width .2s}
+.updperm{background:#2a2410;border:1px solid #6b5a16;border-radius:10px;padding:10px 12px;margin-top:10px;font-size:13px;line-height:1.5}
+.homever{margin-top:28px;font-size:12px;color:var(--dim);display:flex;gap:10px;align-items:center;flex-wrap:wrap}.homever button{color:var(--mut);text-decoration:underline;font-size:12px}
 .mclose{display:none;position:sticky;top:0;z-index:6;justify-content:space-between;align-items:center;background:var(--panel);padding:10px 0 8px;margin-bottom:6px;border-bottom:1px solid var(--line)}
 </style>
 </head>
@@ -535,7 +543,9 @@ body.pro-on .tlpro{display:flex}
 <div class="busy" id="busy"></div>
 <div class="bufpill" id="bufpill">Loading video…</div>
 <div id="pool"></div>
+<div class="updbar" id="updbar" role="status"></div>
 
+<script src="updates.js"></script>
 <script>
 (() => {
 'use strict';
@@ -624,6 +634,12 @@ const duckState = {};        // audio item id -> current duck factor
 let cropMode = null, cropView = null, ovBoxes = [], ovHandle = null, projPath = '';
 const DESK = window.easycutDesktop || null;
 const CAP = window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform() ? window.Capacitor : null;
+// automatic updates (details further down, search for "automatic updates")
+const UPD_LIB = window.EasyCutUpdates || null;
+const UPD_NATIVE = CAP ? ((CAP.Plugins && CAP.Plugins.EasyCutUpdater) || (CAP.registerPlugin ? CAP.registerPlugin('EasyCutUpdater') : null)) : null;
+const UPD_DESK = DESK && DESK.updates ? DESK.updates : null;
+const UPD_ON = !!(UPD_LIB && (UPD_DESK || CAP));
+const upd = { cur:'', info:null, desk:null, busy:false, waitPerm:null, manual:false };
 let sel = null;              // {type:'clip'|'text'|'audio', id}
 let playT = 0, playing = false, exporting = null, lastNow = 0, stalled = false;
 let pps = 60, tab = 'media', voice = null, voN = 0, dlCap = null;
@@ -707,6 +723,8 @@ function updatePlayBtn(){ $('#bPlay').innerHTML = ic(playing && !exporting ? 'pa
 updatePlayBtn();
 
 let toastT;
+// speeds for display: max 2 decimals, no trailing zeros (0.6125000000000004 → 0.61)
+function fmtSpeed(v){ const n = Number(v); return isFinite(n) ? String(Math.round(n * 100) / 100) : '1'; }
 function toast(msg, ms = 2600){ const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), ms); }
 
 const TABS = [['ai','AI Editor','bot'],['media','Media','media'],['reel','Reel','sparkle'],['templates','Templates','canvas'],['effects','Effects','wand'],['transitions','Transition','trans'],['text','Text','text'],['sticker','Sticker','sticker'],['gif','GIF','gif'],['logos','Logo','tag'],['music','Music','music'],['overlay','PIP','layers'],['filter','Filter','filter'],['canvas','Canvas','crop']];
@@ -1586,7 +1604,7 @@ function renderPMenu(){
     <hr><button data-pm="info">ℹ️ Project info</button>
     <button data-pm="unused">🧹 Remove unused media</button>
     ${UPB && UPB.optimize ? `<button data-pm="optall">⚡ Optimize heavy videos</button>` : ''}
-    <hr><button data-pm="close">✖️ Close project<kbd>Ctrl+W</kbd></button>
+    <hr><button data-pm="close">✖️ Close project<kbd>Ctrl+W</kbd></button>${updMenuHtml()}
     ${localProj() ? '<div class="hint" style="padding:6px 10px">Projects are saved inside EasyCut on this device.</div>' : ''}`;
 }
 $('#bProj').onclick = e => { e.stopPropagation(); const m = $('#pmenu'); if (!m.classList.contains('on')) renderPMenu(); m.classList.toggle('on'); };
@@ -1600,6 +1618,7 @@ $('#pmenu').addEventListener('click', e => {
   else if (a === 'export') openExport(); else if (a === 'info') projectInfo(); else if (a === 'unused') removeUnused();
   else if (a === 'optall'){ const hv = heavyUsed(); hv.length ? optAsk(hv, true) : toast('No heavy videos in this project'); }
   else if (a === 'close') closeProject();
+  else if (a === 'updcheck') checkForUpdates(); else if (a === 'updauto') setUpdAuto(!updAuto());
 });
 function busy(on, msg){ if (on) progress(msg || 'Working…', 50, ''); else progressDone(); }
 $('#bSave').onclick = () => saveProject(); $('#bReel').onclick = () => openReel(); $('#bOpen').onclick = () => openProject();
@@ -2426,7 +2445,7 @@ function renderTimeline(){
   const st = clipStarts(); let vh = '';
   S.clips.forEach((c, i) => {
     const m = media[c.mediaId] || {}, w = Math.max(6, clipLen(c) * pps), on = sel && sel.id === c.id;
-    vh += `<div class="item vclip ${on ? 'sel' : ''}" data-type="clip" data-id="${c.id}" style="left:${st[i] * pps}px;width:${w}px;${m.thumb ? `background-image:url('${burl(m.thumb)}')` : ''}"><div class="lbl">${c.speed !== 1 ? `<b>${c.speed}x</b>` : ''}${c.crop && (c.crop.w < .999 || c.crop.h < .999) ? '<b>CROP</b>' : ''}${c.logos && c.logos.length ? '<b>LOGO✕</b>' : ''}${m.type === 'image' ? '🖼 ' : ''}${fmtS(+clipLen(c).toFixed(1))}</div>${kfDots(c)}<div class="h h-l"></div><div class="h h-r"></div></div>`;
+    vh += `<div class="item vclip ${on ? 'sel' : ''}" data-type="clip" data-id="${c.id}" style="left:${st[i] * pps}px;width:${w}px;${m.thumb ? `background-image:url('${burl(m.thumb)}')` : ''}"><div class="lbl">${c.speed !== 1 ? `<b>${fmtSpeed(c.speed)}x</b>` : ''}${c.crop && (c.crop.w < .999 || c.crop.h < .999) ? '<b>CROP</b>' : ''}${c.logos && c.logos.length ? '<b>LOGO✕</b>' : ''}${m.type === 'image' ? '🖼 ' : ''}${fmtS(+clipLen(c).toFixed(1))}</div>${kfDots(c)}<div class="h h-l"></div><div class="h h-r"></div></div>`;
     if (i > 0) vh += `<button class="junc ${c.trans !== 'none' ? 'has' : ''}" data-junc="${c.id}" style="left:${st[i] * pps}px" title="Transition: ${c.trans}">${c.trans !== 'none' ? '◆' : '+'}</button>`;
   });
   if (!S.clips.length) vh = `<div class="temp">Drop videos & photos here</div>`;
@@ -2468,7 +2487,11 @@ tlInner.addEventListener('pointerdown', e => {
   if (e.button !== 0) return;
   const mk = e.target.closest('[data-mk]'); if (mk){ const t = +mk.dataset.mk; if (e.altKey){ S.markers = (S.markers || []).filter(x => x !== t); push(); renderTimeline(); return; } if (playing) pause(); playT = t; seekPreview(); return; }
   const j = e.target.closest('[data-junc]');
-  if (j){ setSel('clip', j.dataset.junc); const s = $('#secTrans'); if (s){ s.scrollIntoView({ block:'center', behavior:'smooth' }); s.classList.remove('flash'); void s.offsetWidth; s.classList.add('flash'); } return; }
+  if (j){
+    // phone: the transition button between clips opens on release, so a swipe that starts on it just scrolls
+    if (isMob() && e.pointerType !== 'mouse'){ if (playing) pause(); lpStart(e, 'clip', j.dataset.junc); clearTimeout(lp.timer); lp.junc = true; return; }
+    openJunc(j.dataset.junc); return;
+  }
   const it = e.target.closest('.item'), x = e.clientX;
   if (it){
     const type = it.dataset.type, id = it.dataset.id, o = getObj(type, id); if (!o) return;
@@ -2484,13 +2507,17 @@ tlInner.addEventListener('pointerdown', e => {
   }
   tlInner.setPointerCapture(e.pointerId);
 });
+function openJunc(id){ setSel('clip', id); const s = $('#secTrans'); if (s){ s.scrollIntoView({ block:'center', behavior:'smooth' }); s.classList.remove('flash'); void s.offsetWidth; s.classList.add('flash'); } }
 /* phone: a tap selects (on release, so a swipe that starts on a clip just scrolls); holding still for a moment lifts the clip to drag it */
 const LP_MS = 380;
 let lp = null, edgeRaf = 0, lastPX = 0;
 function lpCancel(){ if (lp){ clearTimeout(lp.timer); lp = null; } }
+tlScroll.addEventListener('scroll', () => { if (lp && Math.abs(tlScroll.scrollLeft - lp.sl) > 10) lpCancel(); }, { passive:true });
+// touch moves still arrive while the browser scrolls the timeline (pointer moves may not), so they also end a pending tap/long-press
+tlInner.addEventListener('touchmove', e => { const t = e.touches[0]; if (lp && t && Math.hypot(t.clientX - lp.x, t.clientY - lp.y) > 10) lpCancel(); }, { passive:true });
 function lpStart(e, type, id){
   lpCancel();
-  lp = { type, id, x:e.clientX, y:e.clientY, pid:e.pointerId, t0:performance.now() };
+  lp = { type, id, x:e.clientX, y:e.clientY, pid:e.pointerId, t0:performance.now(), sl:tlScroll.scrollLeft };
   lp.timer = setTimeout(() => {
     const L = lp; lp = null; if (!L) return;
     const o = getObj(L.type, L.id); if (!o) return;
@@ -2561,7 +2588,8 @@ function dragMove(e){
   }
 }
 tlInner.addEventListener('pointerup', () => {
-  if (lp){ const L = lp; lpCancel(); if (performance.now() - L.t0 < LP_MS && (!sel || sel.id !== L.id)) setSel(L.type, L.id); return; }
+  // a tap selects; if the timeline scrolled under the finger it was a swipe (some phones/Windows hand the moves to the scroller), so don't
+  if (lp){ const L = lp; lpCancel(); const tap = performance.now() - L.t0 < LP_MS && Math.abs(tlScroll.scrollLeft - L.sl) < 6; if (tap && L.junc) openJunc(L.id); else if (tap && (!sel || sel.id !== L.id)) setSel(L.type, L.id); return; }
   document.body.classList.remove('tl-drag'); if (edgeRaf){ cancelAnimationFrame(edgeRaf); edgeRaf = 0; }
   if (!drag) return; flushMove(); if (drag.mode === 'scrub') flushScrub(); const dg = drag; drag = null;
   if (dg.type === 'clip' && dg.mode === 'move') trkV._h = null;
@@ -4043,11 +4071,13 @@ function renderHome(){
     </div>
     <div class="hrow">${has ? `<button class="btn pri" data-h="continue">▶ Continue editing</button>` : ''}<button class="btn" data-h="open">📂 Open project</button><button class="btn" data-h="gif">GIFs & stickers</button></div>
     ${rc.length ? `<h3 style="color:var(--mut);font-size:13px;text-transform:uppercase;letter-spacing:.3px">Recent projects</h3><div class="hrecent">${rc.map(x => `<button class="hrc" data-hp="${esc(x.path)}"><b>${esc(x.name)}</b><span class="hint">${new Date(x.at).toLocaleDateString()}</span></button>`).join('')}</div>` : ''}
+    ${UPD_LIB ? `<div class="homever"><span>EasyCut ${esc(upd.cur || '')}</span><button data-hupd="check">Check for updates</button></div>` : ''}
   </div>`;
 }
 function showHome(){ if (playing) pause(); renderHome(); $('#home').classList.add('on'); }
 function hideHome(){ $('#home').classList.remove('on'); applyCanvasSize(); }
 $('#home').addEventListener('click', e => {
+  if (e.target.closest('[data-hupd]')) return checkForUpdates();
   const b = e.target.closest('[data-h],[data-hp]'); if (!b) return;
   if (b.dataset.hp){ hideHome(); return openProject(b.dataset.hp); }
   const h = b.dataset.h; hideHome();
@@ -4154,6 +4184,7 @@ async function openLocalProject(id){
 if (CAP && CAP.Plugins && CAP.Plugins.App){
   CAP.Plugins.App.addListener('backButton', () => {
     if (exporting) return;
+    if ($('#mUpd') && $('#mUpd').classList.contains('on')) return $('#mUpd').classList.remove('on');
     if ($('#mExport').classList.contains('on')) return closeExport();
     if ($('#studio').classList.contains('on')) return closeStudio();
     if (cropMode) return exitBoxMode();
@@ -4164,6 +4195,120 @@ if (CAP && CAP.Plugins && CAP.Plugins.App){
   });
   document.body.classList.add('is-android');
 }
+
+/* ---------- automatic updates: Windows (electron-updater) and Android (GitHub release + system installer) ---------- */
+const updSettings = () => { try { return Object.assign({ auto:true, last:0 }, JSON.parse(localStorage.getItem('ec-upd') || '{}')); } catch (e) { return { auto:true, last:0 }; } };
+const updSave = (patch) => { const s = Object.assign(updSettings(), patch); try { localStorage.setItem('ec-upd', JSON.stringify(s)); } catch (e) {} return s; };
+const updAuto = () => upd.desk ? upd.desk.auto !== false : updSettings().auto !== false;
+function updBar(html){ const b = $('#updbar'); if (!b) return; b.innerHTML = html || ''; b.classList.toggle('on', !!html); }
+function updOpenUrl(url){
+  if (UPD_DESK && UPD_DESK.openPage) return UPD_DESK.openPage(url);
+  if (UPD_NATIVE && UPD_NATIVE.openUrl) return UPD_NATIVE.openUrl({ url }).catch(() => window.open(url, '_blank'));
+  window.open(url, '_blank');
+}
+/* Windows: the main process checks, downloads in the background and installs on quit; we only show its status. */
+function updDeskRender(st){
+  upd.desk = st || upd.desk; const s = upd.desk; if (!s) return;
+  if (s.state === 'ready' && upd.hiddenVer === s.version && !upd.manual) updBar('');
+  else if (s.state === 'ready') updBar(`<span>⬆️ <b>Update ${esc(s.version || '')} ready</b> · restart to install, or it installs when you close EasyCut</span><button class="btn sm pri" data-upd="restart">Restart now</button><button class="ib updx" data-upd="hide" title="Later">✕</button>`);
+  else if (upd.manual && s.state === 'downloading') updBar(`<span>⬇️ Downloading update ${esc(s.version || '')}… ${Math.round(s.percent || 0)}%</span><button class="ib updx" data-upd="hide" title="Hide">✕</button>`);
+  else if (upd.manual && s.state === 'checking') updBar('<span>🔄 Checking for updates…</span>');
+  else if (upd.manual && s.state === 'none'){ upd.manual = false; updBar(''); toast(`You have the latest version (${s.current})`); }
+  else if (upd.manual && s.state === 'error'){ upd.manual = false; updBar(`<span>⚠️ Could not check for updates${s.error ? ': ' + esc(String(s.error).slice(0, 120)) : ''}</span><button class="btn sm" data-upd="page">Open releases page</button><button class="ib updx" data-upd="hide" title="Hide">✕</button>`); }
+  else if (upd.manual && s.state === 'unsupported'){ upd.manual = false; updBar(''); toast('Updates install automatically in the installed app. Opening the releases page…', 3500); updOpenUrl(UPD_LIB.RELEASES_PAGE); }
+}
+/* Android: ask GitHub, show a sheet with the release notes, download the APK and hand it to the system installer. */
+async function updAndroidCheck(reason){
+  if (upd.busy) return; const manual = reason === 'manual'; const s = updSettings();
+  if (!manual && !UPD_LIB.shouldAutoCheck({ enabled:s.auto, last:s.last, reason })) return;
+  upd.busy = true; if (manual) toast('Checking for updates…', 1500);
+  try {
+    const info = await UPD_LIB.checkLatest((u, o) => fetch(u, o), upd.cur); updSave({ last:Date.now() }); upd.info = info;
+    if (manual && !info.newer) toast(`You have the latest version (${upd.cur})`);
+    else if (manual && !info.apkUrl) { toast(`Version ${info.version} is still being built. Try again in a few minutes.`, 4000); }
+    else if (manual || UPD_LIB.shouldShowAuto(info, s)) updSheet(info);
+  } catch (e) { if (manual) updSheetError(e); }
+  finally { upd.busy = false; }
+}
+function updModal(){ let m = $('#mUpd'); if (!m){ m = document.createElement('div'); m.className = 'modal'; m.id = 'mUpd'; m.innerHTML = '<div class="dlg" id="dlgUpd" style="width:460px"></div>'; document.body.appendChild(m); m.addEventListener('click', updClick); } return m; }
+function updSheet(info){
+  const m = updModal(), mb = info.apkSize ? ` · ${(info.apkSize / 1048576).toFixed(1)} MB` : '';
+  $('#dlgUpd').innerHTML = `<h2>⬆️ EasyCut ${esc(info.version)} is here</h2><div class="hint">You have ${esc(upd.cur)}${mb}</div>
+    <div class="updnotes">${UPD_LIB.notesToHtml(info.notes) || '<p>Bug fixes and improvements.</p>'}</div>
+    <div class="updprog" id="updProg"></div>
+    <div class="row"><button class="btn" data-upd="later">Later</button><button class="btn pri" data-upd="go">Update</button></div>`;
+  m.classList.add('on');
+}
+function updSheetError(e){
+  const m = updModal();
+  $('#dlgUpd').innerHTML = `<h2>Couldn't check for updates</h2><div class="hint">${esc(e && e.message || String(e))}</div>
+    <div class="row"><button class="btn" data-upd="later">Close</button><button class="btn pri" data-upd="page">Open releases page</button></div>`;
+  m.classList.add('on');
+}
+function updProg(html){ const p = $('#updProg'); if (p) p.innerHTML = html; }
+async function updAndroidInstall(){
+  const info = upd.info; if (!info) return;
+  const fallback = (why) => { updProg(`<div class="hint">${esc(why)} Opening the download in your browser instead: open the file when it finishes and tap <b>Install</b>.</div>`); setTimeout(() => updOpenUrl(info.apkUrl || info.pageUrl), 900); };
+  if (!UPD_NATIVE || !info.apkUrl) return fallback('In-app install isn\'t available.');
+  try {
+    const ni = await UPD_NATIVE.getInfo();
+    if (!ni.canInstall){
+      // First time: Android needs "Allow from this source" for EasyCut. We continue by ourselves when the user comes back.
+      upd.waitPerm = true;
+      updProg(`<div class="updperm"><b>One-time step:</b> Android needs your OK for EasyCut to install updates.<br>Tap <b>Open settings</b>, turn on <b>Allow from this source</b>, then come back here.</div>`);
+      $('#dlgUpd .row').innerHTML = `<button class="btn" data-upd="later">Later</button><button class="btn" data-upd="browser">Use browser</button><button class="btn pri" data-upd="perm">Open settings</button>`;
+      return;
+    }
+    upd.waitPerm = false;
+    $('#dlgUpd .row').innerHTML = `<button class="btn" data-upd="later">Hide</button>`;
+    updProg('<div class="updbar-in"><i style="width:0%"></i></div><div class="hint" id="updPct">Downloading…</div>');
+    const h = UPD_NATIVE.addListener ? await UPD_NATIVE.addListener('progress', (p) => { const pc = p.total ? Math.round(p.loaded / p.total * 100) : 0; const i = $('#updProg i'); if (i) i.style.width = pc + '%'; const t = $('#updPct'); if (t) t.textContent = `Downloading… ${pc}%`; }) : null;
+    let r; try { r = await UPD_NATIVE.download({ url:info.apkUrl, fileName:info.apkName || ('EasyCut-' + info.version + '.apk') }); } finally { if (h && h.remove) h.remove(); }
+    updProg('<div class="hint">Android will ask you to confirm: tap <b>Update</b> (or <b>Install</b>). Your saved projects stay.</div>');
+    $('#dlgUpd .row').innerHTML = `<button class="btn" data-upd="later">Close</button><button class="btn pri" data-upd="install">Install</button>`;
+    upd.apkPath = r.path; await UPD_NATIVE.install({ path:r.path });
+  } catch (e) { fallback('Could not install inside the app (' + (e && e.message || e) + ').'); }
+}
+function updClick(e){
+  const a = e.target.closest('[data-upd]')?.dataset.upd; if (!a) return;
+  if (a === 'later'){ $('#mUpd').classList.remove('on'); upd.waitPerm = false; if (upd.info) updSave({ snoozed:upd.info.version, snoozedAt:Date.now() }); }
+  else if (a === 'go') updAndroidInstall();
+  else if (a === 'perm'){ if (UPD_NATIVE) UPD_NATIVE.openInstallSettings().catch(() => {}); }
+  else if (a === 'browser'){ upd.waitPerm = false; updOpenUrl(upd.info.apkUrl || upd.info.pageUrl); }
+  else if (a === 'install'){ if (UPD_NATIVE && upd.apkPath) UPD_NATIVE.install({ path:upd.apkPath }).catch(() => updOpenUrl(upd.info.apkUrl)); }
+  else if (a === 'page'){ $('#mUpd') && $('#mUpd').classList.remove('on'); updBar(''); updOpenUrl((upd.info && upd.info.pageUrl) || UPD_LIB.RELEASES_PAGE); }
+  else if (a === 'restart'){ confirmLeave(() => { updBar(''); UPD_DESK.install(); }); }
+  else if (a === 'hide'){ if (upd.desk && upd.desk.state === 'ready') upd.hiddenVer = upd.desk.version; upd.manual = false; updBar(''); }
+}
+$('#updbar').addEventListener('click', updClick);
+function checkForUpdates(){
+  if (!UPD_ON){ toast('Opening the EasyCut releases page…'); return updOpenUrl((UPD_LIB && UPD_LIB.RELEASES_PAGE) || 'https://github.com/amitogpandori/easycut/releases/latest'); }
+  if (UPD_DESK){ upd.manual = true; UPD_DESK.check().then(updDeskRender).catch(e => updDeskRender({ ...(upd.desk || {}), state:'error', error:e && e.message })); return; }
+  updAndroidCheck('manual');
+}
+async function setUpdAuto(on){
+  updSave({ auto:on });
+  if (UPD_DESK){ try { updDeskRender(await UPD_DESK.setAuto(on)); } catch (e) {} }
+  toast(on ? 'Automatic update checks are on' : 'Automatic update checks are off — use “Check for updates” any time');
+}
+const updMenuHtml = () => UPD_LIB ? `<hr><button data-pm="updcheck">🔄 Check for updates</button><button data-pm="updauto">${updAuto() ? '☑️' : '⬜'} Check automatically</button><div class="hint" style="padding:4px 10px">EasyCut ${esc(upd.cur || '')}</div>` : '';
+(async () => {
+  if (!UPD_LIB) return;
+  if (UPD_DESK){
+    UPD_DESK.onStatus(updDeskRender);
+    try { const st = await UPD_DESK.state(); upd.cur = st.current; updDeskRender(st); if ($('#home').classList.contains('on')) renderHome(); } catch (e) {}
+    return;
+  }
+  if (!CAP) return;
+  try { upd.cur = (await UPD_NATIVE.getInfo()).versionName; } catch (e) { try { upd.cur = (await CAP.Plugins.App.getInfo()).version; } catch (e2) {} }
+  if (!upd.cur) return;
+  if ($('#home').classList.contains('on')) renderHome();
+  setTimeout(() => updAndroidCheck('launch'), 5000);
+  if (CAP.Plugins && CAP.Plugins.App) CAP.Plugins.App.addListener('resume', () => {
+    if (upd.waitPerm && $('#mUpd') && $('#mUpd').classList.contains('on')) return setTimeout(updAndroidInstall, 300); // back from "Allow from this source"
+    updAndroidCheck('resume');
+  });
+})();
 
 /* ---------- Pro timeline: markers, in/out range, edit points, track mute/hide, snapping, audio meter ---------- */
 let snapOn = true;
@@ -4373,7 +4518,7 @@ async function runAction(x){
     case 'trim_clip': { const c = clipsOf(x.clip)[0]; if (!c) throw new Error('no such clip'); const L = clipLen(c), a = clamp(num(x.keep_from, 0), 0, L - .1), b = clamp(num(x.keep_to, L), a + .1, L); const m = media[c.mediaId]; if (m.type === 'video'){ const ni = c.in + a * c.speed; c.out = c.in + b * c.speed; c.in = ni; } else c.out = c.in + (b - a); return `Trimmed clip ${x.clip} to ${fmt(a)}–${fmt(b)}`; }
     case 'move_clip': { const c = clipsOf(x.clip)[0]; if (!c) throw new Error('no such clip'); const to = clamp(parseInt(x.to) - 1, 0, S.clips.length - 1); S.clips.splice(S.clips.indexOf(c), 1); S.clips.splice(to, 0, c); return `Moved clip ${x.clip} to position ${to + 1}`; }
     case 'fit_length': { const target = clamp(num(x.seconds, 30), 1, 3600), cur = videoEnd(); if (cur <= target) return 'Video is already short enough'; const f = target / cur; for (const c of S.clips){ const L = clipLen(c); c.out = c.in + Math.max(.3, L * f) * c.speed; } return `Shortened the video to about ${Math.round(videoEnd())} s`; }
-    case 'speed': return many(c => { if (media[c.mediaId].type === 'video') c.speed = clamp(num(x.value, 1), .25, 4); }, `Speed ${num(x.value, 1)}×`);
+    case 'speed': return many(c => { if (media[c.mediaId].type === 'video') c.speed = clamp(num(x.value, 1), .25, 4); }, `Speed ${fmtSpeed(clamp(num(x.value, 1), .25, 4))}×`);
     case 'volume': return many(c => { c.volume = clamp(num(x.value, 1), 0, 2); }, `Volume ${Math.round(num(x.value, 1) * 100)}%`);
     case 'transition': { const tp = TRANS.some(t => t[0] === x.type) ? x.type : 'fade'; const cs = x.clip === 'all' || x.clip == null ? S.clips.slice(1) : clipsOf(x.clip); cs.forEach(c => { c.trans = tp; c.tdur = c.tdur || .5; }); return `${tp} transition on ${cs.length} cut${cs.length === 1 ? '' : 's'}`; }
     case 'look': { const L = LOOKS[x.name] ? x.name : 'cinematic'; return many(c => { c.grade = { ...GRADE_DEF, ...LOOKS[L][1] }; }, `${LOOKS[L][0]} look`); }
@@ -4540,7 +4685,7 @@ document.fonts?.ready.then(scheduleRender);
 renderRail(); applyCanvasSize(); refreshAll(); setPps(60); renderLabels();
 loadUserStuff();
 markSaved();
-window.__ec = { get S(){ return S; }, srcT, localOf, rateAt, TRANS, MOTIONS, canvasSize, renderFrame, clipStarts, get playT(){ return playT; }, set playT(v){ playT = v; }, totalDur, videoEnd, EFFECTS, REEL_FX, FX_BY_ID, reel, media, planParts, partCapacity, REEL_STYLES, TEMPLATES, FILTERS, applyTemplate, analyzeMedia, analyzeReel, suggestStyles, contentProfile, storyOrder, parseExif, exifInfo, exifLines, saveLocalProject, openLocalProject, store, buildReel, get variants(){ return variants; } };
+window.__ec = { get S(){ return S; }, renderTimeline, fmtSpeed, srcT, localOf, rateAt, TRANS, MOTIONS, canvasSize, renderFrame, clipStarts, get playT(){ return playT; }, set playT(v){ playT = v; }, totalDur, videoEnd, EFFECTS, REEL_FX, FX_BY_ID, reel, media, planParts, partCapacity, REEL_STYLES, TEMPLATES, FILTERS, applyTemplate, analyzeMedia, analyzeReel, suggestStyles, contentProfile, storyOrder, parseExif, exifInfo, exifLines, saveLocalProject, openLocalProject, store, buildReel, get variants(){ return variants; } };
 })();
 </script>
 </body>

@@ -37,7 +37,10 @@ Add it to `TRANS`, give it an emoji in `TRANS_EMOJI`, and draw it in `renderFram
 
 ### Publishing a new version
 1. Change `"version"` in `package.json` (e.g. `1.2.0` → `1.3.0`).
-2. Push to `main`. GitHub tests the app, builds `EasyCut-Setup-<version>.exe` and publishes it under **Releases**.
+2. Write what's new in `RELEASE_NOTES.md`. It goes at the top of the release, and the Android app shows it in the update sheet.
+3. Push to `main`. GitHub tests the app, builds `EasyCut-Setup-<version>.exe` (plus `latest.yml` and the `.blockmap` the Windows updater reads) and `EasyCut-<version>.apk`, and publishes them under **Releases**. Installed apps (1.16.0+) pick the new version up by themselves.
+
+Keep the version going up: the Windows updater only installs newer versions, and Android's `versionCode` is made from it (`1.16.0` → `11600`), so a lower number won't install over the old app. The update code is in `app/updates.js` (version compare, release reading), `main.js` (Windows, electron-updater) and `mobile/native` + `mobile/patch-android.js` (Android download and installer).
 
 ## Teaching the AI Editor new tricks
 The AI Editor (Windows app) sends the AI a list of the actions it may use, then runs the actions it gets back. To add one:
