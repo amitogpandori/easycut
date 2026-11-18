@@ -732,6 +732,7 @@ function build(){
     <button class="pe-ib" data-pe="close" title="Back to EasyCut">${ico('back')}</button>
     <div class="pe-ttl"><b>Photo editor</b><small id="peName"></small></div>
     <div class="pe-sp"></div>
+    <button class="pe-ib pe-help" data-pe="help" title="Mouse & touchpad gestures (?)"><b>?</b></button>
     <button class="pe-ib" data-pe="undo" title="Undo (Ctrl+Z)">${ico('undo')}</button>
     <button class="pe-ib" data-pe="redo" title="Redo (Ctrl+Y)">${ico('redo')}</button>
     <button class="pe-ib" data-pe="compare" title="Hold to see the original (or hold anywhere on the photo, or hold Space)">${ico('compare')}</button>
@@ -1063,6 +1064,7 @@ async function onClick(e){
   if (a === 'undo') return undo(); if (a === 'redo') return redo();
   if (a === 'split'){ ST.split = !ST.split; updTop(); return render(); }
   if (a === 'hist'){ ST.hist = !ST.hist; updTop(); return render(); }
+  if (a === 'help'){ const g = GX(); if (g) g.help('photo'); return; }
   if (a === 'stack') return toggleStack();
   if (a === 'fit'){ ST.zoom = 1; ST.panX = ST.panY = 0; fitStage(); return maybeResizePreview(); }
   if (a === 'exportTab'){ if (!ST.src) return $p('#peFile', root).click(); if (ST.sess) applyTool(); ST.tab = 'export'; await computeOutFull(); return renderSide(); }
@@ -1157,8 +1159,16 @@ function bindGestures(){
   view.style.touchAction = 'none';
   side.addEventListener('pointerdown', curvePointer);
   view.addEventListener('pointerdown', e => {
-    if (!ST.src || e.button > 0) return;
+    if (!ST.src || e.button > 2) return;
     if (e.target.closest('.pe-fit')) return;
+    if (e.button === 1 || (e.button === 0 && G.space && e.pointerType === 'mouse')){   // middle-drag or Space + drag: pan
+      e.preventDefault(); G.ptrs.set(e.pointerId, { x:e.clientX, y:e.clientY }); view.setPointerCapture(e.pointerId); setCompare(false); if (G.space) G.spaceUsed = true;
+      G.x0 = e.clientX; G.y0 = e.clientY; G.mode = 'pan'; G.pan0 = [ST.panX, ST.panY]; view.classList.add('pe-panning'); return; }
+    if (e.button === 2){   // right button: hold = compare, drag = Snapseed swipe (works in brush tools too)
+      e.preventDefault(); G.ptrs.set(e.pointerId, { x:e.clientX, y:e.clientY }); view.setPointerCapture(e.pointerId);
+      G.x0 = e.clientX; G.y0 = e.clientY; G.t0 = performance.now(); G.mode = 'pending'; G.right = true;
+      G.holdT = setTimeout(() => { if (G.mode === 'pending'){ G.mode = 'hold'; setCompare(true); } }, 260); return; }
+    G.right = false;
     if (e.target.closest('#peSplitL')){ e.preventDefault(); G.mode = 'splitdrag'; G.ptrs.set(e.pointerId, { x:e.clientX, y:e.clientY }); view.setPointerCapture(e.pointerId); return; }
     G.ptrs.set(e.pointerId, { x:e.clientX, y:e.clientY, x0:e.clientX, y0:e.clientY });
     if (G.ptrs.size === 2){ clearTimeout(G.holdT); setCompare(false); if (G.mode === 'paint') endPaint(true); const [a, b] = [...G.ptrs.values()]; G.mode = 'pinch'; G.pinch = { d:Math.hypot(a.x - b.x, a.y - b.y), z:ST.zoom, px:ST.panX, py:ST.panY, cx:(a.x + b.x) / 2, cy:(a.y + b.y) / 2, r:ST.sess && ST.sess.tool === 'selective' ? (paramTarget() || {}).r : null }; return; }
@@ -1193,7 +1203,7 @@ function bindGestures(){
   });
   const up = e => {
     if (G.mode === 'ov'){ ovUp(e); G.mode = ''; return; }
-    const had = G.ptrs.delete(e.pointerId); if (!had) return; clearTimeout(G.holdT);
+    const had = G.ptrs.delete(e.pointerId); if (!had) return; clearTimeout(G.holdT); view.classList.remove('pe-panning');
     if (G.mode === 'pinch'){ if (G.ptrs.size < 2){ G.mode = G.ptrs.size ? 'none' : ''; if (ST.sess) ST.sess.showR = false; maybeResizePreview(); render(); } return; }
     if (G.ptrs.size) return;
     const m = G.mode; G.mode = '';
@@ -1201,17 +1211,75 @@ function bindGestures(){
     if (m === 'paint') endPaint();
     if (m === 'pickp'){ hidePList(); renderSide(); const P = curParam(), tg = paramTarget(); if (P && tg) showHud(P.label, fmtV(P, tg[P.k]), 900, P, tg[P.k]); }
     if (m === 'adj'){ hideHud(900); syncSliders(); }
-    if (m === 'pending' && e.type === 'pointerup') tap(e);
+    if (m === 'pending' && e.type === 'pointerup' && !G.right) tap(e);
+    G.right = false;
   };
   view.addEventListener('pointerup', up); view.addEventListener('pointercancel', up);
   view.addEventListener('pointerleave', () => { const c = $p('.pe-bcur', view); if (c) c.remove(); });
-  view.addEventListener('wheel', e => {
-    if (!ST.src) return; e.preventDefault();
-    if (e.ctrlKey || e.metaKey || !ST.sess || !numericParams().length){ const r = stage.getBoundingClientRect(), z0 = ST.zoom, z = clamp(z0 * Math.exp(-e.deltaY * .0025), 1, 8), vr = view.getBoundingClientRect(), cx = e.clientX - (vr.left + vr.width / 2) - ST.panX, cy = e.clientY - (vr.top + vr.height / 2) - ST.panY;
-      ST.panX -= cx * (z / z0 - 1); ST.panY -= cy * (z / z0 - 1); ST.zoom = z; if (z === 1) ST.panX = ST.panY = 0; clampPan(); fitStage(); maybeResizePreview(); return; }
-    if (e.shiftKey){ stepParam(e.deltaY > 0 ? 1 : -1); return; }
-    const P = curParam(), tg = paramTarget(); if (!P || !tg) return; setParam(P.k, tg[P.k] + (e.deltaY < 0 ? 1 : -1) * Math.max(P.step || 1, (P.max - P.min) / 100) * (Math.abs(e.deltaY) > 60 ? 2 : 1)); showHud(P.label, fmtV(P, tg[P.k]), 900, P, tg[P.k]); syncSliders();
-  }, { passive:false });
+  view.addEventListener('wheel', onWheel, { passive:false });
+  view.addEventListener('contextmenu', e => e.preventDefault());
+  view.addEventListener('mousedown', e => { if (e.button === 1) e.preventDefault(); });
+  view.addEventListener('dblclick', onDblClick);
+  side.addEventListener('wheel', onSideWheel, { passive:false });
+}
+/* ---------- mouse wheel & touchpad (app/gestures.js tells them apart; without it every wheel counts as a mouse) ---------- */
+const GX = () => window.ECGestures || null;
+const wheelKind = e => { const g = GX(); return g ? g.wheelKind(e) : { tp:false, pinch:false, mouse:true, dx:e.deltaX, dy:e.deltaY }; };
+const W = { zoom:1, cx:0, cy:0, adj:0, pick:0, swipe:0, swiped:false, endT:0, raf:0 };
+function zoomAtView(cx, cy, z){
+  const z0 = ST.zoom; z = clamp(z, 1, 8); if (z === z0) return; const vr = view.getBoundingClientRect(), x = cx - (vr.left + vr.width / 2) - ST.panX, y = cy - (vr.top + vr.height / 2) - ST.panY;
+  ST.panX -= x * (z / z0 - 1); ST.panY -= y * (z / z0 - 1); ST.zoom = z; if (z === 1) ST.panX = ST.panY = 0; clampPan(); fitStage(); maybeResizePreview();
+}
+function wheelFlush(){
+  W.raf = 0;
+  if (W.zoom !== 1){ zoomAtView(W.cx, W.cy, ST.zoom * W.zoom); W.zoom = 1; }
+  if (W.pick){ const n = Math.trunc(W.pick / 40); if (n){ W.pick -= n * 40; stepParam(Math.sign(n)); } }
+  if (W.adj && ST.sess){ const P = curParam(), tg = paramTarget(); if (P && tg){ const unit = Math.max(P.step || 1, (P.max - P.min) / 200); const n = W.adj / 6; W.adj = 0; setParam(P.k, tg[P.k] + n * unit); showHud(P.label, fmtV(P, tg[P.k]), 900, P, tg[P.k]); syncSliders(); } else W.adj = 0; }
+}
+const wheelSoon = () => { if (!W.raf) W.raf = requestAnimationFrame(wheelFlush); };
+function onWheel(e){
+  if (!ST.src) return; e.preventDefault();
+  const k = wheelKind(e), s = ST.sess, nums = numericParams();
+  if (e.target.closest && e.target.closest('[data-ov]') && s && s.tool === 'crop' && nudgeCrop(e.target.closest('[data-ov]').dataset.ov, k, e.shiftKey)) return;
+  if (e.ctrlKey || e.metaKey){   // pinch or Ctrl + wheel: zoom toward the pointer
+    W.zoom *= Math.exp(-clamp(k.dy, -300, 300) * (k.tp ? .012 : .0025)); W.cx = e.clientX; W.cy = e.clientY; return wheelSoon(); }
+  if (k.tp){
+    clearTimeout(W.endT); W.endT = setTimeout(() => { W.swipe = 0; W.swiped = false; W.pick = 0; hideHud(300); }, 260);
+    if (s && nums.length && !(s.tool === 'selective' && !paramTarget())){   // in a tool: ↔ changes the setting, ↕ picks another (Snapseed's swipes)
+      if (Math.abs(k.dx) > Math.abs(k.dy)) W.adj += -k.dx; else W.pick += k.dy; return wheelSoon(); }
+    if (ST.zoom > 1 && !(Math.abs(k.dx) > Math.abs(k.dy) * 2 && Math.abs(k.dx) > 6 && !W.panning)){ W.panning = true; clearTimeout(W.panT); W.panT = setTimeout(() => { W.panning = false; }, 260); ST.panX -= k.dx; ST.panY -= k.dy; clampPan(); fitStage(); return; }
+    // outside a tool: a clear two-finger swipe left / right = undo / redo (once per swipe)
+    const g = GX(); if (!g || !g.prefs.swipeUndo || W.swiped || Math.abs(k.dx) < Math.abs(k.dy)) return;
+    W.swipe += k.dx; const TH = 140, back = W.swipe < 0;
+    if (Math.abs(W.swipe) > 30) showHud(back ? '↶ Undo' : '↷ Redo', Math.min(100, Math.round(Math.abs(W.swipe) / TH * 100)) + '%', 0);
+    if (Math.abs(W.swipe) >= TH){ W.swiped = true; const can = back ? ST.past.length : ST.future.length; if (can){ back ? undo() : redo(); showHud(back ? '↶ Undone' : '↷ Redone', '', 700); } else showHud(back ? 'Nothing to undo' : 'Nothing to redo', '', 700); }
+    return;
+  }
+  if (!s || !nums.length){ W.zoom *= Math.exp(-clamp(k.dy, -300, 300) * .0025); W.cx = e.clientX; W.cy = e.clientY; return wheelSoon(); }
+  if (e.shiftKey){ stepParam((k.dy || k.dx) > 0 ? 1 : -1); return; }
+  const P = curParam(), tg = paramTarget(); if (!P || !tg) return; setParam(P.k, tg[P.k] + (k.dy < 0 ? 1 : -1) * Math.max(P.step || 1, (P.max - P.min) / 100) * (Math.abs(k.dy) > 150 ? 2 : 1)); showHud(P.label, fmtV(P, tg[P.k]), 900, P, tg[P.k]); syncSliders();
+}
+// double-click: 100 % (one photo pixel per screen pixel, at least 2×) / back to fit. Tools that use taps keep them.
+function onDblClick(e){
+  if (!ST.src || e.target.closest('[data-ov]') || e.target.closest('.pe-fit')) return; const s = ST.sess;
+  if (s && (['selective','heal','brush','text','lens','vignette','double'].includes(s.tool) || s.mask || s.pick)) return;
+  if (ST.zoom > 1.01){ ST.zoom = 1; ST.panX = ST.panY = 0; clampPan(); fitStage(); maybeResizePreview(); return; }
+  const r = stage.getBoundingClientRect(), z = clamp(ST.out.w / Math.max(1, r.width / (window.devicePixelRatio || 1)), 2, 8); zoomAtView(e.clientX, e.clientY, z);
+}
+// wheel over a curve point: move it up / down a little (Shift = faster); over a crop edge: move that edge one pixel at a time
+function onSideWheel(e){
+  const c = e.target.closest && e.target.closest('#peCurve'); if (!c || !ST.sess || ST.sess.tool !== 'curves') return; e.preventDefault(); e.stopPropagation();
+  const k = wheelKind(e), r = c.getBoundingClientRect(), x = (e.clientX - r.left) / r.width, ch = ST.sess.ch || 'rgb', pts = ST.sess.item.p.pts[ch];
+  let i = -1, bd = .08; pts.forEach((p, j) => { const d = Math.abs(p[0] - x); if (d < bd){ bd = d; i = j; } });
+  if (i < 0){ const cur = curve256(pts), xx = clamp(x, 0, 1); pts.push([xx, cur[Math.round(xx * 255)]]); pts.sort((a, b) => a[0] - b[0]); i = pts.findIndex(p => p[0] === xx); }
+  const d = k.tp ? -k.dy / 600 : (k.dy < 0 ? 1 : -1) * .004; pts[i][1] = +clamp(pts[i][1] + d * (e.shiftKey ? 5 : 1), 0, 1).toFixed(4);
+  drawCurves(); render(); showHud('Curve point', Math.round(pts[i][0] * 255) + ' → ' + Math.round(pts[i][1] * 255), 900);
+}
+function nudgeCrop(h, k, fast){
+  if (!/^[nsew]{1,2}$/.test(h)) return false; const px = (k.tp ? -k.dy / 4 : (k.dy < 0 ? 1 : -1)) * (fast ? 10 : 1);   // wheel up = that edge moves outward
+  const sx = h.includes('w') ? -px : h.includes('e') ? px : 0, sy = h.includes('n') ? -px : h.includes('s') ? px : 0, r0 = stage.getBoundingClientRect();
+  ovDrag = { k:h, id:-1, x0:0, y0:0, rw:r0.width, rh:r0.height, start:deep(ST.sess.item.p), moved:true };
+  ovMove({ pointerId:-1, clientX:sx, clientY:sy }); ovDrag = null; render(); return true;
 }
 function clampPan(){ const r = view.getBoundingClientRect(), mx = r.width * (ST.zoom - 1) / 2 + 40, my = r.height * (ST.zoom - 1) / 2 + 40; ST.panX = clamp(ST.panX, -mx, mx); ST.panY = clamp(ST.panY, -my, my); }
 function stepParam(d){ const nums = numericParams(); if (!nums.length) return; const i = clamp(nums.findIndex(x => x.k === ST.sess.k) + d, 0, nums.length - 1); ST.sess.k = nums[i].k; renderSide(); const P = curParam(), tg = paramTarget(); showHud(P.label, fmtV(P, tg[P.k]), 900, P, tg[P.k]); }
@@ -1303,13 +1371,16 @@ function onKey(e){
   if (c && e.key.toLowerCase() === 'o'){ e.preventDefault(); return $p('#peFile', root).click(); }
   if (e.key === 'Escape'){ e.preventDefault(); if (stackP.classList.contains('on')) return toggleStack(false); if (ST.sess) return cancelTool(); return close(); }
   if (e.key === 'Enter' && ST.sess && tag !== 'button'){ e.preventDefault(); return applyTool(); }
-  if (e.key === ' ' && !e.repeat){ e.preventDefault(); return setCompare(true); }
+  if (e.key === '?'){ e.preventDefault(); const g = GX(); if (g) g.help('photo'); return; }
+  if (e.key === '\\' && !e.repeat){ e.preventDefault(); return setCompare(true); }
+  if (e.key === ' ' && !e.repeat){ e.preventDefault(); G.space = true; G.spaceUsed = false; return setCompare(true); }
+  if (e.key === ' '){ e.preventDefault(); return; }
   if (ST.sess && tag !== 'input'){
     if (e.key === 'ArrowUp' || e.key === 'ArrowDown'){ e.preventDefault(); return stepParam(e.key === 'ArrowUp' ? -1 : 1); }
     if (e.key === 'ArrowLeft' || e.key === 'ArrowRight'){ e.preventDefault(); const P = curParam(), tg = paramTarget(); if (!P || !tg) return; setParam(P.k, tg[P.k] + (e.key === 'ArrowRight' ? 1 : -1) * (e.shiftKey ? 10 : 1) * (P.step || 1)); syncSliders(); return showHud(P.label, fmtV(P, tg[P.k]), 900, P, tg[P.k]); }
   }
 }
-function onKeyUp(e){ if (!ST.open) return; e.stopPropagation(); if (e.key === ' ') setCompare(false); }
+function onKeyUp(e){ if (!ST.open) return; e.stopPropagation(); if (e.key === ' '){ G.space = false; setCompare(false); } if (e.key === '\\') setCompare(false); }
 
 /* ---------- export at full resolution ---------- */
 async function computeOutFull(){ if (!ST.src) return; ST.outFull = null; try { let w = ST.src.w, h = ST.src.h; for (const it of ST.stack.filter(i => i.on !== false && isGeo(i))){ if (it.tool === 'crop'){ const [Fw, Fh] = cropFrame(it.p, w, h); w = Math.max(2, Math.round(Fw * it.p.rect.w)); h = Math.max(2, Math.round(Fh * it.p.rect.h)); } else if (it.tool === 'expand'){ const p = it.p; w = Math.round(w * (1 + p.l / 100 + p.r / 100)); h = Math.round(h * (1 + p.t / 100 + p.b / 100)); } } ST.outFull = [w, h]; } catch (e) {} }
@@ -1379,6 +1450,7 @@ function open(opts = {}){
   build(); layoutMode(); ST.open = true; ST.force2d = !!opts.force2d || ST.force2d; root.classList.add('on'); document.body.classList.add('pe-open');
   if (!ST.src) renderSide(); else { ensureEngine(); if (!ST.srcTex) uploadPreview(); afterStack(); }
   requestAnimationFrame(() => { fitStage(); render(); });
+  if (!LS.get('gestHint', false) && matchMedia('(pointer:fine)').matches && GX()){ LS.set('gestHint', true); setTimeout(() => H.toast('🖱️ Tip: drag on the photo, scroll to adjust, pinch to zoom, hold right-click to compare. Press ? for all gestures', 6500), 600); }
   return true;
 }
 function close(){ if (!root) return; if (ST.sess) ST.sess = null; ST.open = false; root.classList.remove('on'); document.body.classList.remove('pe-open'); toggleStack(false); if (ST.stack.length) saveRecent(); }

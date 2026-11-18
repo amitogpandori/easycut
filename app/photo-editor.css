@@ -194,3 +194,7 @@ body.pe-open{overflow:hidden}
 .pe ::-webkit-scrollbar-thumb{background:#ffffff33;border-radius:3px}
 .pe.pe-mob .pe-lgrid{scrollbar-width:none}
 .pe.pe-mob .pe-lgrid::-webkit-scrollbar{display:none}
+/* mouse & touchpad gestures */
+.pe-help b{font-size:17px;font-weight:800;line-height:1}
+.pe.pe-mob .pe-help{display:none}
+#peView.pe-panning,#peView.pe-panning *{cursor:grabbing!important}

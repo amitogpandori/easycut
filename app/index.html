@@ -2326,7 +2326,7 @@ document.addEventListener('visibilitychange', () => {
 });
 
 /* ---------- preview interaction (text, overlays, crop & logo boxes) ---------- */
-let pdrag = null, cvWheelT = null;
+let pdrag = null;
 const cvPoint = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * cv.width / r.width, (e.clientY - r.top) * cv.height / r.height]; };
 const inBox = (px, py, b) => px >= b.x && px <= b.x + b.w && py >= b.y && py <= b.y + b.h;
 cv.addEventListener('pointerdown', e => {
@@ -2391,10 +2391,6 @@ cv.addEventListener('pointermove', e => {
 });
 cv.addEventListener('pointerup', () => { if (pdrag && pdrag.moved && (pdrag.kind === 'crop' || pdrag.kind === 'logo' || pdrag.kind === 'ovscale')) { renderProps(); renderTimeline(); } pdrag = null; });
 cv.addEventListener('dblclick', () => { if (sel && sel.type === 'text'){ const ta = $('#txtArea'); if (ta){ ta.focus(); ta.select(); } } });
-cv.addEventListener('wheel', e => {
-  if (cropMode || !sel || sel.type !== 'overlay') return; const o = getSel(); if (!o) return;
-  e.preventDefault(); checkpoint(o.id + 'scale'); o.scale = clamp(o.scale * (e.deltaY < 0 ? 1.06 : 1 / 1.06), .03, 1.5); scheduleRender(); clearTimeout(cvWheelT); cvWheelT = setTimeout(renderProps, 120);
-}, { passive:false });
 
 /* ---------- timeline ---------- */
 const tlScroll = $('#tlScroll'), tlInner = $('#tlInner'), tlRuler = $('#ruler'), trkV = $('#trkV'), trkO = $('#trkO'), trkE = $('#trkE'), trkT = $('#trkT'), trkA = $('#trkA'), playheadEl = $('#playhead'), tcEl = $('#tc');
@@ -2428,7 +2424,7 @@ function queueZoom(p, anchorT){ const first = !zoomQ; zoomQ = { p, anchorT: zoom
 $('#zoom').oninput = e => queueZoom(zoomToPps(+e.target.value));
 $('#bSnap').onclick = () => { snapOn = !snapOn; $('#bSnap').classList.toggle('on', snapOn); toast(snapOn ? 'Snapping on' : 'Snapping off'); };
 $('#zIn').onclick = () => setPps(pps * 1.4); $('#zOut').onclick = () => setPps(pps / 1.4); $('#zFit').onclick = fitZoom;
-tlScroll.addEventListener('wheel', e => { if (e.ctrlKey || e.metaKey){ e.preventDefault(); const cur = zoomQ ? zoomQ.p : pps; queueZoom(clamp(cur * (e.deltaY < 0 ? 1.15 : 1 / 1.15), 8, 400), xToTime(e.clientX)); } }, { passive:false });
+/* wheel, touchpad and mouse-button gestures for the timeline and preview: app/gestures.js */
 const xToTime = cx => Math.max(0, (cx - tlInner.getBoundingClientRect().left) / pps);
 function lanes(items){ const s = [...items].sort((a, b) => a.start - b.start), ends = [], map = {}; for (const it of s){ let l = ends.findIndex(e => e <= it.start + 1e-6); if (l < 0){ l = ends.length; ends.push(0); } ends[l] = it.start + it.dur; map[it.id] = l; } return { map, n:Math.max(1, ends.length) }; }
 function beatMarks(a, m){
@@ -4690,10 +4686,16 @@ document.fonts?.ready.then(scheduleRender);
 renderRail(); applyCanvasSize(); refreshAll(); setPps(60); renderLabels();
 loadUserStuff();
 markSaved();
-window.__ecHost = { toast, media, DESK, saveBlob, FILTERS, LOOKS, exifInfo, parseExif, heicToJpeg, progress, progressDone, importOne, addToTimeline, push, refreshAll, get S(){ return S; } };   // for photo-editor.js
+window.__ecHost = { toast, media, DESK, saveBlob, FILTERS, LOOKS, exifInfo, parseExif, heicToJpeg, progress, progressDone, importOne, addToTimeline, push, refreshAll, undo, redo, get S(){ return S; },   // for photo-editor.js and gestures.js
+  tl:{ scroll:tlScroll, inner:tlInner, cv, pv:$('#pv'), xToTime, scrubTo, totalDur, canvasSize, undo, redo, pause:() => { if (playing) pause(); }, get pps(){ return pps; },
+    zoomBy:(f, at) => { const cur = zoomQ ? zoomQ.p : pps; queueZoom(clamp(cur * f, 8, 400), at); },
+    sel:() => sel, getSel, cropMode:() => cropMode,
+    pvHit:e => { if (cropMode) return true; const [px, py] = cvPoint(e); return textBoxes.some(b => inBox(px, py, b)) || ovBoxes.some(b => inBox(px, py, b)) || !!(ovHandle && Math.abs(px - ovHandle.x - ovHandle.s / 2) < ovHandle.s); },
+    openSettings:(type, id) => { if (playing) pause(); setSel(type, id); const p = $('#props'); if (p){ p.scrollTop = 0; p.classList.remove('flash'); void p.offsetWidth; p.classList.add('flash'); } if (type === 'text'){ const ta = $('#txtArea'); if (ta){ ta.focus(); ta.select(); } } } } };
 window.__ec = { get S(){ return S; }, renderTimeline, fmtSpeed, srcT, localOf, rateAt, TRANS, MOTIONS, canvasSize, renderFrame, clipStarts, get playT(){ return playT; }, set playT(v){ playT = v; }, totalDur, videoEnd, EFFECTS, REEL_FX, FX_BY_ID, reel, media, planParts, partCapacity, REEL_STYLES, TEMPLATES, FILTERS, applyTemplate, analyzeMedia, analyzeReel, suggestStyles, contentProfile, storyOrder, parseExif, exifInfo, exifLines, saveLocalProject, openLocalProject, store, buildReel, get variants(){ return variants; } };
 })();
 </script>
+<script src="gestures.js"></script>
 <script src="photo-editor.js"></script>
 </body>
 </html>
