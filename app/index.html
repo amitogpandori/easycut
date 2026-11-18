@@ -150,8 +150,13 @@ input[type=color]{width:34px;height:28px;border:1px solid var(--line);border-rad
 .tllabels{width:86px;flex:none;border-right:1px solid var(--line);padding-top:26px;padding-bottom:40px;overflow:hidden}
 .tll{display:flex;align-items:center;gap:6px;padding:0 10px;font-size:11.5px;font-weight:700;color:var(--mut);border-bottom:1px solid #1d2130}
 .tll i{width:8px;height:8px;border-radius:2px}
-.tlscroll{flex:1;overflow:auto;position:relative}
-.tlinner{position:relative;min-height:100%}
+.tlscroll{flex:1;overflow:auto;position:relative;overscroll-behavior:contain}
+.tlinner{position:relative;min-height:100%;contain:layout style}
+/* smoother taps & drags on touch screens: no double-tap zoom delay, no grey tap flash */
+button,.tab,.btn,.item,.junc,.mcard,.preset,.ruler{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.item{touch-action:none}
+@keyframes ecSheetUp{from{transform:translateY(24px);opacity:.4}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){*{animation-duration:0s!important;transition-duration:0s!important}}
 .ruler{height:26px;position:relative;border-bottom:1px solid var(--line);cursor:ew-resize;background:var(--panel)}
 .tick{position:absolute;top:0;height:100%;border-left:1px solid #2e3446}
 .tick span{position:absolute;left:4px;top:5px;font-size:10.5px;color:var(--dim);font-variant-numeric:tabular-nums}
@@ -275,11 +280,11 @@ body.is-desk .desk{display:inline-flex!important}
 .h-l{left:0}.h-r{right:0}
 .item.sel .h{background:#fff}
 .item.sel .h::after{content:"";position:absolute;left:4px;top:35%;height:30%;width:2px;background:#000;border-radius:2px}
-.item.dragging{opacity:.75;z-index:5;cursor:grabbing}
+.item.dragging{opacity:.75;z-index:5;cursor:grabbing;will-change:transform}
 .junc{position:absolute;top:21px;width:22px;height:22px;margin-left:-11px;border-radius:6px;background:var(--panel3);border:1px solid #3a4157;color:var(--mut);font-size:12px;font-weight:800;z-index:4;display:grid;place-items:center;padding:0}
 .junc:hover,.junc.has{background:#fff;color:var(--acc)}
 .temp{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--dim);font-size:12px;pointer-events:none}
-.playhead{position:absolute;top:0;bottom:0;width:2px;background:#fff;pointer-events:none;z-index:8}
+.playhead{position:absolute;top:0;bottom:0;left:0;width:2px;background:#fff;pointer-events:none;z-index:8;will-change:transform;transform:translate3d(0,0,0)}
 .playhead::before{content:"";position:absolute;top:0;left:-7px;width:16px;height:14px;background:#fff;clip-path:polygon(0 0,100% 0,100% 55%,50% 100%,0 55%)}
 .ins{position:absolute;top:2px;width:3px;height:58px;background:var(--acc);border-radius:2px;z-index:9;pointer-events:none;box-shadow:0 0 10px var(--acc)}
 
@@ -347,6 +352,7 @@ body.is-desk .desk{display:inline-flex!important}
   .tll{font-size:0;padding:0 10px}
   .tlscroll{-webkit-overflow-scrolling:touch}
   body.mob .item:not(.sel){touch-action:pan-x}
+  body.sheet .panel,body.has-sel:not(.sheet) .props{animation:ecSheetUp .2s ease-out}
   .rail{padding:2px 6px;padding-bottom:max(2px,env(safe-area-inset-bottom));grid-row:4}
   .tab{min-width:56px;height:56px;font-size:10px}
   .toast{bottom:calc(76px + 58vh)}
@@ -1995,7 +2001,7 @@ function setVol(el, v, fx){ const n = chainFor(el); if (n){ applyFx(n, fx || 'no
 function audioEl(a){ let el = audioEls[a.id]; if (!el){ const m = media[a.mediaId]; if (!m) return null; el = document.createElement('audio'); el.preload = 'auto'; el.src = m.url; pool.appendChild(el); audioEls[a.id] = el; } return el; }
 
 /* ---------- playback ---------- */
-function play(){ if (playing) return; if (cropMode){ cropMode = null; refreshAll(); } const T = totalDur(); if (T <= 0) return toast('Import a clip to start'); ensureAudio(); if (playT >= T - .02) playT = 0; playing = true; lastNow = performance.now(); updatePlayBtn(); requestAnimationFrame(tick); }
+function play(){ if (playing) return; flushScrub(); dropPendingSeeks(); if (cropMode){ cropMode = null; refreshAll(); } const T = totalDur(); if (T <= 0) return toast('Import a clip to start'); ensureAudio(); if (playT >= T - .02) playT = 0; playing = true; lastNow = performance.now(); updatePlayBtn(); requestAnimationFrame(tick); }
 function pause(){ if (!playing) return; playing = false; clearTimeout(bufT); $('#bufpill').classList.remove('on'); stalled = false; stopAllMedia(); updatePlayBtn(); seekPreview(); }
 function togglePlay(){ playing ? pause() : play(); }
 function stopAllMedia(){ for (const m of Object.values(media)) if (m.type === 'video') for (const e2 of [m.el, m.el2]) if (e2 && !e2.paused) e2.pause(); for (const el of Object.values(audioEls)) if (!el.paused) el.pause(); for (const el of Object.values(ovEls)) if (!el.paused) el.pause(); }
@@ -2089,12 +2095,24 @@ function seekPreview(){
   if (playing) return;
   refreshKfProps();
   const ca = clipAt(playT);
-  if (ca){ const m = media[ca.c.mediaId], ce = m && m.type === 'video' ? elFor(ca.c) : null; if (ce){ const want = Math.min(ca.c.in + ca.local * ca.c.speed, m.duration - .02); if (Math.abs(ce.currentTime - want) > .01) ce.currentTime = want; }
+  if (ca){ const m = media[ca.c.mediaId], ce = m && m.type === 'video' ? elFor(ca.c) : null; if (ce){ const want = Math.min(ca.c.in + ca.local * ca.c.speed, m.duration - .02); if (Math.abs(ce.currentTime - want) > .01) seekEl(ce, want); }
     const pv = ca.i > 0 && ca.c.trans !== 'none' && ca.local < (ca.c.tdur || .5) ? S.clips[ca.i - 1] : null, pm = pv && media[pv.mediaId];
-    const pe = pm && pm.type === 'video' ? elFor(pv) : null; if (pe && pe !== ce){ const pw = Math.max(0, pv.out - .04); if (Math.abs(pe.currentTime - pw) > .05) pe.currentTime = pw; } }
-  for (const o of S.overlays){ const m = media[o.mediaId]; if (!m || m.type !== 'video' || !activeOv(o, playT)) continue; const oe = ovEl(o), want = Math.min(o.offset + playT - o.start, m.duration - .02); if (Math.abs(oe.currentTime - want) > .01) oe.currentTime = want; }
+    const pe = pm && pm.type === 'video' ? elFor(pv) : null; if (pe && pe !== ce){ const pw = Math.max(0, pv.out - .04); if (Math.abs(pe.currentTime - pw) > .05) seekEl(pe, pw); } }
+  for (const o of S.overlays){ const m = media[o.mediaId]; if (!m || m.type !== 'video' || !activeOv(o, playT)) continue; const oe = ovEl(o), want = Math.min(o.offset + playT - o.start, m.duration - .02); if (Math.abs(oe.currentTime - want) > .01) seekEl(oe, want); }
   renderFrame(); updateTimeUI();
 }
+/* while scrubbing, at most one preview update per screen frame */
+let scrubRaf = 0;
+function scrubTo(t){ playT = t; if (scrubRaf) return; scrubRaf = requestAnimationFrame(() => { scrubRaf = 0; seekPreview(); }); }
+function flushScrub(){ if (!scrubRaf) return; cancelAnimationFrame(scrubRaf); scrubRaf = 0; seekPreview(); }
+/* seek a paused video without queueing up seeks: if it is still busy, remember only the newest time */
+function seekEl(el, want){
+  if (el.seeking){ el._want = want;
+    if (!el._wantHook){ el._wantHook = true; el.addEventListener('seeked', () => { const w = el._want; el._want = null; if (w != null && !playing && !exporting && Math.abs(el.currentTime - w) > .01) el.currentTime = w; }); }
+    return; }
+  el._want = null; el.currentTime = want;
+}
+function dropPendingSeeks(){ for (const m of Object.values(media)) for (const e2 of [m.el, m.el2]) if (e2) e2._want = null; for (const el of Object.values(ovEls)) el._want = null; }
 function step(d){ if (playing) pause(); playT = clamp(playT + d, 0, totalDur()); seekPreview(); }
 $('#bPlay').onclick = togglePlay; $('#bStart').onclick = () => { pause(); playT = 0; seekPreview(); scrollToPlayhead(); };
 $('#bEnd').onclick = () => { pause(); playT = totalDur(); seekPreview(); scrollToPlayhead(); };
@@ -2109,7 +2127,7 @@ document.addEventListener('visibilitychange', () => {
 });
 
 /* ---------- preview interaction (text, overlays, crop & logo boxes) ---------- */
-let pdrag = null;
+let pdrag = null, cvWheelT = null;
 const cvPoint = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * cv.width / r.width, (e.clientY - r.top) * cv.height / r.height]; };
 const inBox = (px, py, b) => px >= b.x && px <= b.x + b.w && py >= b.y && py <= b.y + b.h;
 cv.addEventListener('pointerdown', e => {
@@ -2159,44 +2177,46 @@ cv.addEventListener('pointermove', e => {
     const du = (px - pdrag.sx) / cropView.dw, dv = (py - pdrag.sy) / cropView.dh;
     if (pdrag.kind === 'crop') c.crop = resizeBox(pdrag.orig, pdrag.mode, du, dv, cropRn(c));
     else { const nb = resizeBox(pdrag.orig, pdrag.mode, du, dv, 0); Object.assign(c.logos[pdrag.idx], nb); }
-    renderFrame(); return;
+    scheduleRender(); return;
   }
   if (pdrag.kind === 'ovscale'){
     const o = getObj('overlay', pdrag.id); if (!o) return;
     if (!pdrag.moved){ push(); pdrag.moved = true; }
-    o.scale = clamp(pdrag.s0 * Math.hypot(px - pdrag.cx, py - pdrag.cy) / pdrag.d0, .03, 1.5); renderFrame(); return;
+    o.scale = clamp(pdrag.s0 * Math.hypot(px - pdrag.cx, py - pdrag.cy) / pdrag.d0, .03, 1.5); scheduleRender(); return;
   }
   const o = getObj(pdrag.kind === 'ov' ? 'overlay' : 'text', pdrag.id); if (!o || o.cell) return;
   if (!pdrag.moved){ if (Math.hypot(px - pdrag.sx, py - pdrag.sy) < 4) return; push(); pdrag.moved = true; }
   let nx = clamp(pdrag.ox + (px - pdrag.sx) / cv.width, 0, 1), ny = clamp(pdrag.oy + (py - pdrag.sy) / cv.height, 0, 1);
   if (Math.abs(nx - .5) < .015) nx = .5; if (Math.abs(ny - .5) < .015) ny = .5;
-  o.x = nx; o.y = ny; renderFrame();
+  o.x = nx; o.y = ny; scheduleRender();
 });
 cv.addEventListener('pointerup', () => { if (pdrag && pdrag.moved && (pdrag.kind === 'crop' || pdrag.kind === 'logo' || pdrag.kind === 'ovscale')) { renderProps(); renderTimeline(); } pdrag = null; });
 cv.addEventListener('dblclick', () => { if (sel && sel.type === 'text'){ const ta = $('#txtArea'); if (ta){ ta.focus(); ta.select(); } } });
 cv.addEventListener('wheel', e => {
   if (cropMode || !sel || sel.type !== 'overlay') return; const o = getSel(); if (!o) return;
-  e.preventDefault(); checkpoint(o.id + 'scale'); o.scale = clamp(o.scale * (e.deltaY < 0 ? 1.06 : 1 / 1.06), .03, 1.5); renderFrame(); renderProps();
+  e.preventDefault(); checkpoint(o.id + 'scale'); o.scale = clamp(o.scale * (e.deltaY < 0 ? 1.06 : 1 / 1.06), .03, 1.5); scheduleRender(); clearTimeout(cvWheelT); cvWheelT = setTimeout(renderProps, 120);
 }, { passive:false });
 
 /* ---------- timeline ---------- */
-const tlScroll = $('#tlScroll'), tlInner = $('#tlInner');
-const isMob = () => window.matchMedia('(max-width:860px)').matches;
+const tlScroll = $('#tlScroll'), tlInner = $('#tlInner'), tlRuler = $('#ruler'), trkV = $('#trkV'), trkO = $('#trkO'), trkE = $('#trkE'), trkT = $('#trkT'), trkA = $('#trkA'), playheadEl = $('#playhead'), tcEl = $('#tc');
+const mobMQ = window.matchMedia('(max-width:860px)'), isMob = () => mobMQ.matches;
 let progUntil = 0;
 function syncMobPad(){ const pad = isMob() ? Math.round(tlScroll.clientWidth / 2) : 0; tlInner.style.marginLeft = pad + 'px'; tlInner.style.marginRight = pad + 'px'; document.body.classList.toggle('mob', isMob()); }
 tlScroll.addEventListener('scroll', () => {
   if (!isMob() || playing || drag || performance.now() < progUntil) return;
-  playT = clamp(tlScroll.scrollLeft / pps, 0, totalDur()); seekPreview();
+  scrubTo(clamp(tlScroll.scrollLeft / pps, 0, totalDur()));
 }, { passive:true });
 tlScroll.addEventListener('scroll', () => { $('#tlLabels').scrollTop = tlScroll.scrollTop; });
 const zoomToPps = z => 8 * Math.pow(400 / 8, z / 100);
 const ppsToZoom = p => Math.log(p / 8) / Math.log(400 / 8) * 100;
 function setPps(p, anchorT){ const old = pps; pps = clamp(p, 8, 400); $('#zoom').value = ppsToZoom(pps); const at = anchorT != null ? anchorT : playT; const offs = at * old - tlScroll.scrollLeft; renderTimeline(); tlScroll.scrollLeft = at * pps - offs; }
 function fitZoom(){ const T = Math.max(totalDur(), 1); setPps((tlScroll.clientWidth - 60) / T, 0); tlScroll.scrollLeft = 0; }
-$('#zoom').oninput = e => setPps(zoomToPps(+e.target.value));
+let zoomQ = null;
+function queueZoom(p, anchorT){ const first = !zoomQ; zoomQ = { p, anchorT: zoomQ && anchorT == null ? zoomQ.anchorT : anchorT }; if (first) requestAnimationFrame(() => { const z = zoomQ; zoomQ = null; setPps(z.p, z.anchorT); }); }
+$('#zoom').oninput = e => queueZoom(zoomToPps(+e.target.value));
 $('#bSnap').onclick = () => { snapOn = !snapOn; $('#bSnap').classList.toggle('on', snapOn); toast(snapOn ? 'Snapping on' : 'Snapping off'); };
 $('#zIn').onclick = () => setPps(pps * 1.4); $('#zOut').onclick = () => setPps(pps / 1.4); $('#zFit').onclick = fitZoom;
-tlScroll.addEventListener('wheel', e => { if (e.ctrlKey || e.metaKey){ e.preventDefault(); setPps(pps * (e.deltaY < 0 ? 1.15 : 1 / 1.15), xToTime(e.clientX)); } }, { passive:false });
+tlScroll.addEventListener('wheel', e => { if (e.ctrlKey || e.metaKey){ e.preventDefault(); const cur = zoomQ ? zoomQ.p : pps; queueZoom(clamp(cur * (e.deltaY < 0 ? 1.15 : 1 / 1.15), 8, 400), xToTime(e.clientX)); } }, { passive:false });
 const xToTime = cx => Math.max(0, (cx - tlInner.getBoundingClientRect().left) / pps);
 function lanes(items){ const s = [...items].sort((a, b) => a.start - b.start), ends = [], map = {}; for (const it of s){ let l = ends.findIndex(e => e <= it.start + 1e-6); if (l < 0){ l = ends.length; ends.push(0); } ends[l] = it.start + it.dur; map[it.id] = l; } return { map, n:Math.max(1, ends.length) }; }
 function beatMarks(a, m){
@@ -2204,13 +2224,14 @@ function beatMarks(a, m){
   const first = m.beat.offset + Math.ceil((a.offset - m.beat.offset) / p) * p, x0 = (first - a.offset) * pps;
   return `<div class="beats" style="background-size:${px}px 100%;background-position:${x0}px 0"></div>`;
 }
+const setHTML = (el, h) => { if (el._h !== h){ el._h = h; el.innerHTML = h; } };
 const kfDots = o => { const ts = kfTimes(o); return ts.map(t => `<i class="kfd" style="left:${t * pps}px"></i>`).join(''); };
 function renderTimeline(){
   const T = totalDur(), W = Math.max(tlScroll.clientWidth, (T + 10) * pps + 40);
-  tlInner.style.width = W + 'px';
+  if (tlInner._w !== W){ tlInner._w = W; tlInner.style.width = W + 'px'; }
   const stepS = [.1,.25,.5,1,2,5,10,15,30,60,120,300].find(s => s * pps >= 64) || 600;
   let h = ''; for (let i = 0, t = 0; t * pps < W; i++, t = i * stepS){ h += `<div class="tick" style="left:${t * pps}px"><span>${fmtS(+t.toFixed(2))}</span></div><div class="tick mn" style="left:${(t + stepS / 2) * pps}px"></div>`; }
-  $('#ruler').innerHTML = h + rulerExtras();
+  setHTML(tlRuler, h + rulerExtras());
   const st = clipStarts(); let vh = '';
   S.clips.forEach((c, i) => {
     const m = media[c.mediaId] || {}, w = Math.max(6, clipLen(c) * pps), on = sel && sel.id === c.id;
@@ -2218,27 +2239,28 @@ function renderTimeline(){
     if (i > 0) vh += `<button class="junc ${c.trans !== 'none' ? 'has' : ''}" data-junc="${c.id}" style="left:${st[i] * pps}px" title="Transition: ${c.trans}">${c.trans !== 'none' ? '◆' : '+'}</button>`;
   });
   if (!S.clips.length) vh = `<div class="temp">Drop videos & photos here</div>`;
-  $('#trkV').innerHTML = vh;
+  setHTML(trkV, vh);
   const lo = lanes(S.overlays), hO = lo.n * 36 + 5;
   $('#trkO').style.height = hO + 'px'; $('#lO').style.height = hO + 'px';
-  $('#trkO').innerHTML = S.overlays.map(o => { const m = media[o.mediaId] || {}; return `<div class="item oitem ${sel && sel.id === o.id ? 'sel' : ''}" data-type="overlay" data-id="${o.id}" style="left:${o.start * pps}px;width:${Math.max(6, o.dur * pps)}px;top:${5 + lo.map[o.id] * 36}px;${m.thumb ? `background-image:url('${m.thumb}')` : ''}"><div class="lbl">${o.cell ? '▦ ' : '⧉ '}${esc(m.name || '')}</div>${kfDots(o)}<div class="h h-l"></div><div class="h h-r"></div></div>`; }).join('') || `<div class="temp">Picture-in-picture, logos & layouts</div>`;
+  setHTML(trkO, S.overlays.map(o => { const m = media[o.mediaId] || {}; return `<div class="item oitem ${sel && sel.id === o.id ? 'sel' : ''}" data-type="overlay" data-id="${o.id}" style="left:${o.start * pps}px;width:${Math.max(6, o.dur * pps)}px;top:${5 + lo.map[o.id] * 36}px;${m.thumb ? `background-image:url('${m.thumb}')` : ''}"><div class="lbl">${o.cell ? '▦ ' : '⧉ '}${esc(m.name || '')}</div>${kfDots(o)}<div class="h h-l"></div><div class="h h-r"></div></div>`; }).join('') || `<div class="temp">Picture-in-picture, logos & layouts</div>`);
   const le = lanes(S.effects), hE = le.n * 30 + 5;
   $('#trkE').style.height = hE + 'px'; $('#lE').style.height = hE + 'px';
-  $('#trkE').innerHTML = S.effects.map(x => `<div class="item eitem ${sel && sel.id === x.id ? 'sel' : ''}" data-type="effect" data-id="${x.id}" style="left:${x.start * pps}px;width:${Math.max(6, x.dur * pps)}px;top:${5 + le.map[x.id] * 30}px"><div class="lbl">${esc((FX_BY_ID[x.type] || [0, 0, x.type])[2])}</div><div class="h h-l"></div><div class="h h-r"></div></div>`).join('') || `<div class="temp">Effects — shake, glitch, confetti, light leak…</div>`;
+  setHTML(trkE, S.effects.map(x => `<div class="item eitem ${sel && sel.id === x.id ? 'sel' : ''}" data-type="effect" data-id="${x.id}" style="left:${x.start * pps}px;width:${Math.max(6, x.dur * pps)}px;top:${5 + le.map[x.id] * 30}px"><div class="lbl">${esc((FX_BY_ID[x.type] || [0, 0, x.type])[2])}</div><div class="h h-l"></div><div class="h h-r"></div></div>`).join('') || `<div class="temp">Effects — shake, glitch, confetti, light leak…</div>`);
   const lt = lanes(S.texts), hT = lt.n * 30 + 5;
   $('#trkT').style.height = hT + 'px'; $('#lT').style.height = hT + 'px';
-  $('#trkT').innerHTML = S.texts.map(x => `<div class="item titem ${sel && sel.id === x.id ? 'sel' : ''}" data-type="text" data-id="${x.id}" style="left:${x.start * pps}px;width:${Math.max(6, x.dur * pps)}px;top:${5 + lt.map[x.id] * 30}px"><div class="lbl">${esc((x.text || '').replace(/\n/g, ' '))}</div>${kfDots(x)}<div class="h h-l"></div><div class="h h-r"></div></div>`).join('') || `<div class="temp">Text & stickers</div>`;
+  setHTML(trkT, S.texts.map(x => `<div class="item titem ${sel && sel.id === x.id ? 'sel' : ''}" data-type="text" data-id="${x.id}" style="left:${x.start * pps}px;width:${Math.max(6, x.dur * pps)}px;top:${5 + lt.map[x.id] * 30}px"><div class="lbl">${esc((x.text || '').replace(/\n/g, ' '))}</div>${kfDots(x)}<div class="h h-l"></div><div class="h h-r"></div></div>`).join('') || `<div class="temp">Text & stickers</div>`);
   const la = lanes(S.audios), hA = la.n * 36 + 5;
   $('#trkA').style.height = hA + 'px'; $('#lA').style.height = hA + 'px';
-  $('#trkA').innerHTML = S.audios.map(a => { const m = media[a.mediaId] || {}; return `<div class="item aitem ${sel && sel.id === a.id ? 'sel' : ''}" data-type="audio" data-id="${a.id}" style="left:${a.start * pps}px;width:${Math.max(6, a.dur * pps)}px;top:${5 + la.map[a.id] * 36}px;${m.wave ? `background-image:url('${m.wave}');background-size:${m.duration * pps}px 100%;background-position:${-a.offset * pps}px 0` : ''}">${beatMarks(a, m)}<div class="lbl">♪ ${esc(m.name || '')}${m.beat ? ` · ${m.beat.bpm} BPM` : ''}</div>${kfDots(a)}<div class="h h-l"></div><div class="h h-r"></div></div>`; }).join('') || `<div class="temp">Music & voiceover</div>`;
+  setHTML(trkA, S.audios.map(a => { const m = media[a.mediaId] || {}; return `<div class="item aitem ${sel && sel.id === a.id ? 'sel' : ''}" data-type="audio" data-id="${a.id}" style="left:${a.start * pps}px;width:${Math.max(6, a.dur * pps)}px;top:${5 + la.map[a.id] * 36}px;${m.wave ? `background-image:url('${m.wave}');background-size:${m.duration * pps}px 100%;background-position:${-a.offset * pps}px 0` : ''}">${beatMarks(a, m)}<div class="lbl">♪ ${esc(m.name || '')}${m.beat ? ` · ${m.beat.bpm} BPM` : ''}</div>${kfDots(a)}<div class="h h-l"></div><div class="h h-r"></div></div>`; }).join('') || `<div class="temp">Music & voiceover</div>`);
   tlInner.style.height = (26 + 65 + hO + hE + hT + hA) + 'px';
   updateTimeUI();
 }
+let lastPhX = null;
 function updateTimeUI(follow){
-  $('#playhead').style.left = playT * pps + 'px';
-  $('#tc').innerHTML = `<b>${fmt(playT)}</b> / ${fmt(totalDur())}`;
+  const phx = Math.round(playT * pps * 2) / 2; if (phx !== lastPhX){ lastPhX = phx; playheadEl.style.transform = `translate3d(${phx}px,0,0)`; }
+  setHTML(tcEl, `<b>${fmt(playT)}</b> / ${fmt(totalDur())}`);
   if (isMob()){ const want = Math.round(playT * pps); if (Math.abs(tlScroll.scrollLeft - want) > 1 && !(drag && drag.mode === 'scrub')){ progUntil = performance.now() + 120; tlScroll.scrollLeft = want; } return; }
-  if (follow){ const x = playT * pps; tlScroll.scrollLeft = Math.max(0, x - tlScroll.clientWidth / 2); }
+  if (follow){ const want = Math.max(0, Math.round(playT * pps - tlScroll.clientWidth / 2)); if (Math.abs(tlScroll.scrollLeft - want) >= 1) tlScroll.scrollLeft = want; }
 }
 function scrollToPlayhead(){ const x = playT * pps; if (x < tlScroll.scrollLeft || x > tlScroll.scrollLeft + tlScroll.clientWidth - 40) tlScroll.scrollLeft = Math.max(0, x - 80); }
 
@@ -2269,9 +2291,15 @@ tlInner.addEventListener('pointerdown', e => {
   }
   tlInner.setPointerCapture(e.pointerId);
 });
+let moveRaf = 0, moveEv = null;
 tlInner.addEventListener('pointermove', e => {
   if (!drag) return;
-  if (drag.mode === 'scrub'){ playT = clamp(xToTime(e.clientX), 0, totalDur()); seekPreview(); return; }
+  if (drag.mode === 'scrub'){ scrubTo(clamp(xToTime(e.clientX), 0, totalDur())); return; }
+  moveEv = { clientX:e.clientX };
+  if (!moveRaf) moveRaf = requestAnimationFrame(flushMove);
+});
+function flushMove(){ if (moveRaf){ cancelAnimationFrame(moveRaf); moveRaf = 0; } const e = moveEv; moveEv = null; if (drag && e) dragMove(e); }
+function dragMove(e){
   const dx = e.clientX - drag.x0; if (!drag.moved){ if (Math.abs(dx) < 4) return; drag.moved = true; push(); if (playing) pause(); }
   const o = getObj(drag.type, drag.id); if (!o) return; const d = dx / pps, g = drag.orig;
   if (drag.type === 'clip'){
@@ -2310,16 +2338,17 @@ tlInner.addEventListener('pointermove', e => {
     }
     renderTimeline(); renderFrame();
   }
-});
+}
 tlInner.addEventListener('pointerup', () => {
-  if (!drag) return; const dg = drag; drag = null;
+  if (!drag) return; flushMove(); if (drag.mode === 'scrub') flushScrub(); const dg = drag; drag = null;
+  if (dg.type === 'clip' && dg.mode === 'move') trkV._h = null;
   if (dg.type === 'clip' && dg.mode === 'move' && dg.moved){
     const o = getObj('clip', dg.id), i = S.clips.indexOf(o);
     if (dg.target != null && o){ S.clips.splice(i, 1); S.clips.splice(dg.target, 0, o); playT = clipStarts()[dg.target]; }
   }
   if (dg.mode !== 'scrub'){ refreshAll(); seekPreview(); }
 });
-tlInner.addEventListener('pointercancel', () => { drag = null; refreshAll(); });
+tlInner.addEventListener('pointercancel', () => { moveEv = null; if (moveRaf){ cancelAnimationFrame(moveRaf); moveRaf = 0; } flushScrub(); drag = null; trkV._h = null; refreshAll(); });
 
 /* ---------- keyboard ---------- */
 document.addEventListener('keydown', e => {
@@ -2407,7 +2436,7 @@ dlg.addEventListener('click', e => {
 });
 async function primeFrame(){
   const ca = clipAt(playT);
-  if (ca){ const m = media[ca.c.mediaId], ce = m && m.type === 'video' ? elFor(ca.c) : null; if (ce){ ce.currentTime = ca.c.in + ca.local * ca.c.speed; await once(ce, 'seeked', 3000).catch(() => {}); } }
+  if (ca){ const m = media[ca.c.mediaId], ce = m && m.type === 'video' ? elFor(ca.c) : null; if (ce){ dropPendingSeeks(); ce.currentTime = ca.c.in + ca.local * ca.c.speed; await once(ce, 'seeked', 3000).catch(() => {}); } }
   renderFrame();
 }
 async function startExport(){
@@ -3736,7 +3765,8 @@ function refreshAll(){
   renderPanel(); renderProps(); renderTimeline(); renderFrame(); updUndo();
 }
 $('#pname').addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); e.stopPropagation(); });
-window.addEventListener('resize', () => { syncMobPad(); applyCanvasSize(); renderTimeline(); });
+let resizeRaf = 0;
+window.addEventListener('resize', () => { if (resizeRaf) return; resizeRaf = requestAnimationFrame(() => { resizeRaf = 0; syncMobPad(); applyCanvasSize(); renderTimeline(); }); });
 syncMobPad();
 if (window.ResizeObserver) new ResizeObserver(() => applyCanvasSize()).observe($('#pv'));
 window.addEventListener('beforeunload', e => { if (isDirty()){ e.preventDefault(); e.returnValue = ''; } });
