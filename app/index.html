@@ -2507,9 +2507,10 @@ tlInner.addEventListener('pointerdown', e => {
 const LP_MS = 380;
 let lp = null, edgeRaf = 0, lastPX = 0;
 function lpCancel(){ if (lp){ clearTimeout(lp.timer); lp = null; } }
+tlScroll.addEventListener('scroll', () => { if (lp && Math.abs(tlScroll.scrollLeft - lp.sl) > 10) lpCancel(); }, { passive:true });
 function lpStart(e, type, id){
   lpCancel();
-  lp = { type, id, x:e.clientX, y:e.clientY, pid:e.pointerId, t0:performance.now() };
+  lp = { type, id, x:e.clientX, y:e.clientY, pid:e.pointerId, t0:performance.now(), sl:tlScroll.scrollLeft };
   lp.timer = setTimeout(() => {
     const L = lp; lp = null; if (!L) return;
     const o = getObj(L.type, L.id); if (!o) return;
@@ -2580,7 +2581,8 @@ function dragMove(e){
   }
 }
 tlInner.addEventListener('pointerup', () => {
-  if (lp){ const L = lp; lpCancel(); if (performance.now() - L.t0 < LP_MS && (!sel || sel.id !== L.id)) setSel(L.type, L.id); return; }
+  // a tap selects; if the timeline scrolled under the finger it was a swipe (some phones/Windows hand the moves to the scroller), so don't
+  if (lp){ const L = lp; lpCancel(); if (performance.now() - L.t0 < LP_MS && Math.abs(tlScroll.scrollLeft - L.sl) < 6 && (!sel || sel.id !== L.id)) setSel(L.type, L.id); return; }
   document.body.classList.remove('tl-drag'); if (edgeRaf){ cancelAnimationFrame(edgeRaf); edgeRaf = 0; }
   if (!drag) return; flushMove(); if (drag.mode === 'scrub') flushScrub(); const dg = drag; drag = null;
   if (dg.type === 'clip' && dg.mode === 'move') trkV._h = null;
