@@ -8,7 +8,7 @@
   "license": "MIT",
   "scripts": {
     "start": "electron .",
-    "test": "node tests/updates-unit.js && node tests/smoke.js && node tests/photo-reels.js && node tests/wildlife.js && node tests/mobile-smooth.js && node tests/updates.js",
+    "test": "node tests/updates-unit.js && node tests/smoke.js && node tests/photo-reels.js && node tests/wildlife.js && node tests/mobile-smooth.js && node tests/photo-editor.js && node tests/updates.js",
     "dist": "electron-builder --win --x64 --publish never"
   },
   "devDependencies": {

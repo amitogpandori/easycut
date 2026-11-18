@@ -443,6 +443,7 @@ body.is-android .updbar{left:12px;right:12px;bottom:calc(84px + env(safe-area-in
 .homever{margin-top:28px;font-size:12px;color:var(--dim);display:flex;gap:10px;align-items:center;flex-wrap:wrap}.homever button{color:var(--mut);text-decoration:underline;font-size:12px}
 .mclose{display:none;position:sticky;top:0;z-index:6;justify-content:space-between;align-items:center;background:var(--panel);padding:10px 0 8px;margin-bottom:6px;border-bottom:1px solid var(--line)}
 </style>
+<link rel="stylesheet" href="photo-editor.css">
 </head>
 <body>
 <header class="top">
@@ -1294,7 +1295,7 @@ function renderProps(){
   } else if (sel.type === 'clip'){
     const m = media[o.mediaId], vid = m.type === 'video', nl = (o.logos || []).length;
     h = `<div class="phead"><span class="dot" style="background:var(--vid)"></span><span class="t">${esc(m.name)}</span><small>${fmt(clipLen(o))}</small></div>${acts()}`
-      + `<div class="acts"><button class="btn sm" data-pa="crop">${ic('crop')}Crop</button><button class="btn sm" data-pa="logo">${ic('x')}Remove logo${nl ? ` (${nl})` : ''}</button>${vid ? `<button class="btn sm" data-pa="freeze">${ic('snow')}Freeze frame</button><button class="btn sm" data-pa="extract">${ic('wave')}Extract audio</button>` : ''}<button class="btn sm" data-pa="enhance">✨ Enhance</button>${vid ? `<button class="btn sm" data-pa="upscale">🔍 AI Upscale</button>${UPB ? `<button class="btn sm" data-pa="optimize">⚡ Optimize</button>` : ''}` : ''}</div>`
+      + `<div class="acts"><button class="btn sm" data-pa="crop">${ic('crop')}Crop</button><button class="btn sm" data-pa="logo">${ic('x')}Remove logo${nl ? ` (${nl})` : ''}</button>${vid ? `<button class="btn sm" data-pa="freeze">${ic('snow')}Freeze frame</button><button class="btn sm" data-pa="extract">${ic('wave')}Extract audio</button>` : ''}<button class="btn sm" data-pa="enhance">✨ Enhance</button>${m.type === 'image' && window.PhotoEditor ? `<button class="btn sm" data-pa="editPhoto">🖼️ Edit photo</button>` : ''}${vid ? `<button class="btn sm" data-pa="upscale">🔍 AI Upscale</button>${UPB ? `<button class="btn sm" data-pa="optimize">⚡ Optimize</button>` : ''}` : ''}</div>`
       + row('Framing', seg('fit', [['auto','Canvas default'],['fit','Fit'],['fill','Fill (no bars)']], o.fit || 'auto'))
       + (vid ? row('Speed', seg('speed', [[.25,'.25x'],[.5,'.5x'],[1,'1x'],[1.5,'1.5x'],[2,'2x'],[3,'3x'],[4,'4x']], o.speed, 'num'), 'secSpeed') + row('Speed ramp (velocity)', seg('ramp', [['none','Off'],['velocity','🌀 Velocity'],['hero','🎯 Fast → slow-mo'],['rush','⚡ Slow → fast']], o.ramp || 'none')) + `<div id="secVol">${krange(o, 'volume', 0, 2, .05, 'Volume', 1)}</div>`
              + `<div class="two">${row('Sound fade in', range('afIn', 0, 3, .1, o.afIn || 0))}${row('Sound fade out', range('afOut', 0, 3, .1, o.afOut || 0))}</div>`
@@ -1408,6 +1409,7 @@ $('#props').addEventListener('click', e => {
   if (pa === 'logoAdd'){ const c = getObj('clip', cropMode.clipId); push(); c.logos.push({ x:.05, y:.05, w:.22, h:.12, mode:'smart' }); cropMode.idx = c.logos.length - 1; renderProps(); return renderFrame(); }
   if (pa === 'logoDel'){ const c = getObj('clip', cropMode.clipId); push(); c.logos.splice(cropMode.idx, 1); cropMode.idx = Math.max(0, c.logos.length - 1); if (!c.logos.length) return exitBoxMode(); renderProps(); return renderFrame(); }
   if (pa === 'split') return split(); if (pa === 'del') return del(); if (pa === 'dup') return dup();
+  if (pa === 'editPhoto') return window.PhotoEditor && PhotoEditor.openMedia(o.mediaId, o.id);
   if (pa === 'crop') return enterBoxMode('crop', o.id);
   if (pa === 'logo') return enterBoxMode('logo', o.id);
   if (pa === 'freeze') return freezeFrame();
@@ -4066,6 +4068,7 @@ function renderHome(){
       <button class="htile" data-h="video" style="background:linear-gradient(135deg,#ff4d6d,#ff8a5c)"><span class="em">🎬</span><b>Video</b><small>Edit clips & photos</small></button>
       <button class="htile" data-h="reel" style="background:linear-gradient(135deg,#7c3aed,#ec4899)"><span class="em">✨</span><b>Reel Maker</b><small>Clips + song → a reel</small></button>
       <button class="htile" data-h="templates" style="background:linear-gradient(135deg,#0284c7,#22d3ee)"><span class="em">🧩</span><b>Templates</b><small>Intros, titles, layouts</small></button>
+      <button class="htile" data-h="photo" style="background:linear-gradient(135deg,#f59e0b,#e11d48)"><span class="em">🖼️</span><b>Photo editor</b><small>Tune, retouch & style photos</small></button>
       <button class="htile" data-h="logos" style="background:linear-gradient(135deg,#16a34a,#84cc16)"><span class="em">🏷️</span><b>Logo</b><small>Brand your videos</small></button>
       ${DESK ? `<button class="htile" data-h="ai" style="background:linear-gradient(135deg,#0f172a,#6366f1)"><span class="em">🤖</span><b>AI editor</b><small>Free AI on your PC edits for you</small></button>` : ''}
     </div>
@@ -4084,6 +4087,7 @@ $('#home').addEventListener('click', e => {
   if (h === 'video'){ if (!S.clips.length) $('#fileIn').click(); }
   else if (h === 'reel') openReel();
   else if (h === 'templates') openSheet('templates');
+  else if (h === 'photo'){ if (window.PhotoEditor) PhotoEditor.open(); }
   else if (h === 'logos') openSheet('logos');
   else if (h === 'gif') openSheet('gif');
   else if (h === 'ai') openSheet('ai');
@@ -4183,6 +4187,7 @@ async function openLocalProject(id){
 /* ---------- Android back button ---------- */
 if (CAP && CAP.Plugins && CAP.Plugins.App){
   CAP.Plugins.App.addListener('backButton', () => {
+    if (window.PhotoEditor && PhotoEditor.back()) return;
     if (exporting) return;
     if ($('#mUpd') && $('#mUpd').classList.contains('on')) return $('#mUpd').classList.remove('on');
     if ($('#mExport').classList.contains('on')) return closeExport();
@@ -4685,8 +4690,10 @@ document.fonts?.ready.then(scheduleRender);
 renderRail(); applyCanvasSize(); refreshAll(); setPps(60); renderLabels();
 loadUserStuff();
 markSaved();
+window.__ecHost = { toast, media, DESK, saveBlob, FILTERS, LOOKS, exifInfo, parseExif, heicToJpeg, progress, progressDone, importOne, addToTimeline, push, refreshAll, get S(){ return S; } };   // for photo-editor.js
 window.__ec = { get S(){ return S; }, renderTimeline, fmtSpeed, srcT, localOf, rateAt, TRANS, MOTIONS, canvasSize, renderFrame, clipStarts, get playT(){ return playT; }, set playT(v){ playT = v; }, totalDur, videoEnd, EFFECTS, REEL_FX, FX_BY_ID, reel, media, planParts, partCapacity, REEL_STYLES, TEMPLATES, FILTERS, applyTemplate, analyzeMedia, analyzeReel, suggestStyles, contentProfile, storyOrder, parseExif, exifInfo, exifLines, saveLocalProject, openLocalProject, store, buildReel, get variants(){ return variants; } };
 })();
 </script>
+<script src="photo-editor.js"></script>
 </body>
 </html>
