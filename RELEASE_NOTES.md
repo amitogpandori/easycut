@@ -1,8 +1,6 @@
-## What's new in EasyCut 1.16.0
+## What's new in EasyCut 1.17.0
 
-- **Automatic updates on Windows:** EasyCut checks for new versions when it opens and every few hours, downloads them quietly, and shows a small "Update ready" banner. Click **Restart now**, or just close EasyCut and the update installs by itself.
-- **Update alerts on Android:** when a new version is out, EasyCut shows what's new with an **Update** button. It downloads the new app and opens Android's installer. The first time, Android asks you to allow EasyCut to install apps: turn on **Allow from this source** and come back.
-- **Check for updates** and **Check automatically** (on/off) are in the 📁 Project menu on both, plus a "Check for updates" link on the home screen.
-- Speed labels on the timeline are rounded (0.61× instead of 0.6125000000000004×).
+- **Photo editor** (Snapseed-inspired) on PC and phone: open it from the home screen, or tap **Edit photo** on a picture in your project. Tune light and color, curves, healing, a selective brush, lens blur, HDR and film looks. Edits are non-destructive, and you can send a finished photo straight into a reel.
+- **Mouse and touchpad gestures on PC and laptop:** pinch to zoom the timeline or preview, two-finger swipe to scroll (or undo / redo in the photo editor), middle-click drag to pan, and the mouse back / forward buttons to undo and redo. Alt + wheel zooms the timeline; Alt-drag on the ruler scrubs the playhead. Press **?** for the full list.
 
-1.15.0 and older can't update themselves, so install 1.16.0 by hand once. After that, updates arrive in the app.
+If you already have 1.16.0, this update arrives in the app. If you're on 1.15.0 or older, install 1.17.0 by hand once; later updates will arrive automatically.

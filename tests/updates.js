@@ -78,7 +78,7 @@ const ANDROID_FAKE = () => {
     await page.click('#bProj');
     const items = await page.$$eval('#pmenu [data-pm]', (b) => b.map((x) => x.dataset.pm));
     check(items.includes('updcheck') && items.includes('updauto'), 'Project menu has "Check for updates" and "Check automatically"');
-    check(/EasyCut 1\.16\.0/.test(await page.textContent('#pmenu')), 'menu shows the app version (1.16.0)');
+    check(/EasyCut 1\.17\.0/.test(await page.textContent('#pmenu')), 'menu shows the app version (1.17.0)');
     await page.click('#pmenu [data-pm="updcheck"]');
     await page.waitForSelector('#updbar.on', { timeout: 5000 });
     check(/1\.99\.0 ready/.test(await page.textContent('#updbar')), 'manual check brings the ready banner back');
@@ -118,7 +118,7 @@ const ANDROID_FAKE = () => {
     await page.waitForTimeout(2200);
     check(!(await page.locator('#updbar.on').count()), 'no banner when there is nothing new');
     await page.click('#home [data-hupd="check"]');
-    await page.waitForFunction(() => /latest version \(1\.16\.0\)/.test(document.getElementById('toast').textContent), null, { timeout: 5000 });
+    await page.waitForFunction(() => /latest version \(1\.17\.0\)/.test(document.getElementById('toast').textContent), null, { timeout: 5000 });
     check(true, 'home screen "Check for updates" says you have the latest version');
   } catch (e) { check(false, 'up-to-date part: ' + e.message); }
 

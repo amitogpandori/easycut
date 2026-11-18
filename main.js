@@ -143,7 +143,7 @@ app.whenReady().then(() => {
 
   ipcMain.handle('save-file', async (e, { name, data }) => {
     const ext = (path.extname(name).slice(1) || 'mp4').toLowerCase();
-    const isImg = ['png', 'jpg', 'jpeg'].includes(ext);
+    const isImg = ['png', 'jpg', 'jpeg', 'webp'].includes(ext);
     let filePath = TEST_DIR ? path.join(TEST_DIR, name) : null;
     if (!filePath) {
       const r = await dialog.showSaveDialog(win, {
