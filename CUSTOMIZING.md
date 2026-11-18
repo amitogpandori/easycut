@@ -23,6 +23,11 @@ Find `TEMPLATES.push(` and add an entry:
 ### A new Auto Reel style
 Find `REEL_STYLES.push(` and copy one entry. `beats` is how many beats each cut lasts. Optional: `photoMotion:['in','diag','snap']` picks the camera moves for photos (see `KB` / `MOTIONS`), and `ramp:['velocity','hero','rush']` puts speed ramps on video cuts. Add the style's effects in `REEL_FX` (`'effect where strength'`, where is `all`, `start` or `end`).
 
+Extra style options: `pack:'wild'` lists it under the 🐾 Wildlife & nature pack, `heroEye:true` gives the best photo a zoom into the subject, `capStyle:'doc'` writes captions as documentary lower thirds, `infoCard:true` adds a camera info card from EXIF, `beforeAfter:true` adds a RAW → edit wipe, and `trans:[...]` lists the transitions (soft ones are used in quiet parts of the song, punchy ones in loud parts). To make 🪄 Auto suggest your style, add a rule in `suggestStyles()`.
+
+### A new template look or wildlife template
+In `TEMPLATES`, `look:{ filter:'goldenhr', motion:'eye' }` sets the colour and camera move of the selected clip, `lookAll:true` applies it to every clip, `fx:[['viewfinder', 0, 3, 1]]` adds effects (`type, start, length or 'all', strength`) and `freeze:true` freezes the frame on a video first. In text, `{species} {camera} {settings} {place} {date}` are filled from the clip's caption and EXIF.
+
 ### A new transition
 Add it to `TRANS`, give it an emoji in `TRANS_EMOJI`, and draw it in `renderFrame()` (`case 'mytrans':`). `p` goes from 0 to 1 during the transition, `drawPrev()` draws the clip before and `drawClipAt(c, l, {...})` the new one.
 
