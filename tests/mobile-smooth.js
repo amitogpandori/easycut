@@ -81,6 +81,22 @@ function check(cond, msg) { console.log((cond ? '  ✓ ' : '  ✗ FAILED: ') + m
     // tap selects
     await tap(cx + 20, vy);
     check(await ec(() => document.body.classList.contains('has-sel')), 'a tap on a clip selects it');
+    // the transition button between two clips: a swipe starting on it scrolls, a tap opens the transition settings
+    await desel(); await wait(250);
+    { const jr = await ec(() => { const sc = document.getElementById('tlScroll').getBoundingClientRect(); const j = [...document.querySelectorAll('#trkV .junc')].find((b) => { const r = b.getBoundingClientRect(); return r.left > sc.left + 60 && r.right < sc.right - 160; }); if (!j) return null; const r = j.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; });
+      if (jr){
+        const s0 = await ec(() => document.getElementById('tlScroll').scrollLeft);
+        await tdrag(jr.x, jr.y, jr.x - 120, jr.y, 10); await wait(300);
+        const a = await ec(() => ({ sl: document.getElementById('tlScroll').scrollLeft, sel: document.body.classList.contains('has-sel') }));
+        await desel(); await wait(250);
+        const jr2 = await ec(() => { const sc = document.getElementById('tlScroll').getBoundingClientRect(); const j = [...document.querySelectorAll('#trkV .junc')].find((b) => { const r = b.getBoundingClientRect(); return r.left > sc.left + 20 && r.right < sc.right - 20; }); const r = j.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; });
+        await tap(jr2.x, jr2.y); await wait(200);
+        const b = await ec(() => document.body.classList.contains('has-sel') && !!document.getElementById('secTrans'));
+        check(a.sl - s0 > 40 && !a.sel && b, `transition button: a swipe from it scrolls (${Math.round(a.sl - s0)} px) without opening anything${a.sel ? ' — it opened settings' : ''}; a tap opens the transition settings${b ? '' : ' — tap did nothing'}`);
+        await desel(); await ec((v) => { document.getElementById('tlScroll').scrollLeft = v; }, s0); await wait(350);
+      } else check(false, 'no transition button on screen to test');
+    }
+    await tap(cx + 20, vy); // select the clip again for the trim checks below
     const hs = await ec(() => { const it = document.querySelector('.item.sel'), h = it.querySelector('.h-r'), o = document.querySelector('.item:not(.sel) .h'); return { w: h.getBoundingClientRect().width, ih: it.getBoundingClientRect().height, pe: o ? getComputedStyle(o).pointerEvents : 'none', ta: getComputedStyle(h).touchAction }; });
     check(hs.w >= 26 && hs.ih >= 48 && hs.pe === 'none' && hs.ta === 'none', `trim handles: ${hs.w}px wide on a ${hs.ih}px tall clip, only on the selected clip (others ignore touches)`);
     // trim by touch on the selected clip's right handle

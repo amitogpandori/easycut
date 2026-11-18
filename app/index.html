@@ -2487,7 +2487,11 @@ tlInner.addEventListener('pointerdown', e => {
   if (e.button !== 0) return;
   const mk = e.target.closest('[data-mk]'); if (mk){ const t = +mk.dataset.mk; if (e.altKey){ S.markers = (S.markers || []).filter(x => x !== t); push(); renderTimeline(); return; } if (playing) pause(); playT = t; seekPreview(); return; }
   const j = e.target.closest('[data-junc]');
-  if (j){ setSel('clip', j.dataset.junc); const s = $('#secTrans'); if (s){ s.scrollIntoView({ block:'center', behavior:'smooth' }); s.classList.remove('flash'); void s.offsetWidth; s.classList.add('flash'); } return; }
+  if (j){
+    // phone: the transition button between clips opens on release, so a swipe that starts on it just scrolls
+    if (isMob() && e.pointerType !== 'mouse'){ if (playing) pause(); lpStart(e, 'clip', j.dataset.junc); clearTimeout(lp.timer); lp.junc = true; return; }
+    openJunc(j.dataset.junc); return;
+  }
   const it = e.target.closest('.item'), x = e.clientX;
   if (it){
     const type = it.dataset.type, id = it.dataset.id, o = getObj(type, id); if (!o) return;
@@ -2503,6 +2507,7 @@ tlInner.addEventListener('pointerdown', e => {
   }
   tlInner.setPointerCapture(e.pointerId);
 });
+function openJunc(id){ setSel('clip', id); const s = $('#secTrans'); if (s){ s.scrollIntoView({ block:'center', behavior:'smooth' }); s.classList.remove('flash'); void s.offsetWidth; s.classList.add('flash'); } }
 /* phone: a tap selects (on release, so a swipe that starts on a clip just scrolls); holding still for a moment lifts the clip to drag it */
 const LP_MS = 380;
 let lp = null, edgeRaf = 0, lastPX = 0;
@@ -2584,7 +2589,7 @@ function dragMove(e){
 }
 tlInner.addEventListener('pointerup', () => {
   // a tap selects; if the timeline scrolled under the finger it was a swipe (some phones/Windows hand the moves to the scroller), so don't
-  if (lp){ const L = lp; lpCancel(); if (performance.now() - L.t0 < LP_MS && Math.abs(tlScroll.scrollLeft - L.sl) < 6 && (!sel || sel.id !== L.id)) setSel(L.type, L.id); return; }
+  if (lp){ const L = lp; lpCancel(); const tap = performance.now() - L.t0 < LP_MS && Math.abs(tlScroll.scrollLeft - L.sl) < 6; if (tap && L.junc) openJunc(L.id); else if (tap && (!sel || sel.id !== L.id)) setSel(L.type, L.id); return; }
   document.body.classList.remove('tl-drag'); if (edgeRaf){ cancelAnimationFrame(edgeRaf); edgeRaf = 0; }
   if (!drag) return; flushMove(); if (drag.mode === 'scrub') flushScrub(); const dg = drag; drag = null;
   if (dg.type === 'clip' && dg.mode === 'move') trkV._h = null;
