@@ -84,6 +84,8 @@ async function bench(app, page, cdp) {
   // 3. scrub by dragging slowly (a finger held on the timeline)
   R.scrub = await frames(page, async () => { await drag(cx + 100, y, -240, 40); }, 500);
   // swipe that starts on a clip (should scroll, not open the clip settings)
+  // start from the left edge, so the earlier swipes/scrubs can't leave the timeline already scrolled to its end (that read as "0 px")
+  await page.evaluate(() => { document.getElementById('tlScroll').scrollLeft = 0; }); await page.waitForTimeout(250);
   { const vb = await page.locator('#trkV').boundingBox(), vy = Math.round(vb.y + vb.height / 2); const before = await page.evaluate(() => document.getElementById('tlScroll').scrollLeft);
     await drag(cx + 100, vy, -150, 12); await page.waitForTimeout(300);
     R.swipeOnClip = { moved: Math.round(await page.evaluate(() => document.getElementById('tlScroll').scrollLeft) - before), openedSheet: await page.evaluate(() => document.body.classList.contains('has-sel')) }; }
