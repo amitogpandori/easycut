@@ -83,6 +83,7 @@ function check(cond, msg) { console.log((cond ? '  ✓ ' : '  ✗ FAILED: ') + m
     check(await ec(() => document.body.classList.contains('has-sel')), 'a tap on a clip selects it');
     // the transition button between two clips: a swipe starting on it scrolls, a tap opens the transition settings
     await desel(); await wait(250);
+    const sBeforeJunc = await ec(() => document.getElementById('tlScroll').scrollLeft);
     await ec(() => {
       const sc = document.getElementById('tlScroll'), j = document.querySelector('#trkV .junc');
       if (!sc || !j) return;
@@ -100,7 +101,7 @@ function check(cond, msg) { console.log((cond ? '  ✓ ' : '  ✗ FAILED: ') + m
         await tap(jr2.x, jr2.y); await wait(200);
         const b = await ec(() => document.body.classList.contains('has-sel') && !!document.getElementById('secTrans'));
         check(a.sl - s0 > 40 && !a.sel && b, `transition button: a swipe from it scrolls (${Math.round(a.sl - s0)} px) without opening anything${a.sel ? ' — it opened settings' : ''}; a tap opens the transition settings${b ? '' : ' — tap did nothing'}`);
-        await desel(); await ec((v) => { document.getElementById('tlScroll').scrollLeft = v; }, s0); await wait(350);
+        await desel(); await ec((v) => { document.getElementById('tlScroll').scrollLeft = v; }, sBeforeJunc); await wait(350);
       } else check(false, 'no transition button on screen to test');
     }
     await tap(cx + 20, vy); // select the clip again for the trim checks below
