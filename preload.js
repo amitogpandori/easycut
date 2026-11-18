@@ -25,5 +25,14 @@ contextBridge.exposeInMainWorld('easycutDesktop', {
     onPullProgress: (cb) => { const f = (e, d) => cb(d); ipcRenderer.on('ai-pull-progress', f); return () => ipcRenderer.removeListener('ai-pull-progress', f); },
     getOllama: () => ipcRenderer.invoke('ai-get-ollama'),
   },
+  updates: {
+    state: () => ipcRenderer.invoke('upd-state'),
+    check: () => ipcRenderer.invoke('upd-check'),
+    setAuto: (on) => ipcRenderer.invoke('upd-set-auto', !!on),
+    install: () => ipcRenderer.invoke('upd-install'),
+    openPage: (url) => ipcRenderer.invoke('upd-open-page', url),
+    onStatus: (cb) => { const f = (e, d) => cb(d); ipcRenderer.on('upd-status', f); return () => ipcRenderer.removeListener('upd-status', f); },
+    testInstalled: () => ipcRenderer.invoke('upd-test-installed'),
+  },
   platform: process.platform,
 });

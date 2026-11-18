@@ -42,7 +42,7 @@ function createWindow() {
 
   // The editor asks before leaving when there is unsaved work; show a real dialog for it.
   win.webContents.on('will-prevent-unload', (e) => {
-    if (process.env.EASYCUT_TEST) { e.preventDefault(); return; }
+    if (process.env.EASYCUT_TEST || updInstalling) { e.preventDefault(); return; }
     const choice = dialog.showMessageBoxSync(win, {
       type: 'question',
       buttons: ['Close anyway', 'Keep editing'],
@@ -65,6 +65,69 @@ function createWindow() {
   });
 
   win.on('closed', () => { win = null; });
+}
+
+// ---------- automatic updates (Windows installer from GitHub releases, via electron-updater) ----------
+// Checks a few seconds after launch and every 4 hours, downloads in the background, then shows a small banner.
+// The update installs when EasyCut closes, or right away with "Restart now". The app isn't code-signed, so there is
+// no publisher check (no publisherName in app-update.yml, and the signature check is switched off below).
+const UPD_EVERY = 4 * 60 * 60 * 1000;
+const UPD = { state: 'idle', version: null, percent: 0, error: null, auto: true };
+let updater = null, updInstalling = false, updTimer = null;
+const updFile = () => path.join(app.getPath('userData'), 'update-settings.json');
+function updLoad() { try { UPD.auto = JSON.parse(require('fs').readFileSync(updFile(), 'utf8')).auto !== false; } catch (e) { UPD.auto = true; } }
+function updStore() { try { require('fs').mkdirSync(path.dirname(updFile()), { recursive: true }); require('fs').writeFileSync(updFile(), JSON.stringify({ auto: UPD.auto })); } catch (e) {} }
+const updState = () => ({ ...UPD, current: app.getVersion(), supported: !!updater });
+function updSend() { if (win && !win.isDestroyed()) win.webContents.send('upd-status', updState()); }
+function updSet(patch) { Object.assign(UPD, patch); updSend(); }
+
+// In tests (EASYCUT_FAKE_UPDATE=1.99.0) a pretend updater walks through checking → downloading → ready.
+function fakeUpdater(version) {
+  const EventEmitter = require('events');
+  const f = new EventEmitter();
+  f.installed = false;
+  f.checkForUpdates = async () => {
+    f.emit('checking-for-update');
+    if (version === 'none') { setTimeout(() => f.emit('update-not-available', { version: app.getVersion() }), 50); return {}; }
+    setTimeout(() => { f.emit('update-available', { version }); f.emit('download-progress', { percent: 50 }); }, 50);
+    setTimeout(() => f.emit('update-downloaded', { version }), 250);
+    return {};
+  };
+  f.quitAndInstall = () => { f.installed = true; global.__easycutFakeInstalled = true; };
+  return f;
+}
+
+function setupUpdater() {
+  updLoad();
+  const fake = process.env.EASYCUT_TEST && process.env.EASYCUT_FAKE_UPDATE;
+  if (fake) updater = fakeUpdater(fake);
+  else if (!process.env.EASYCUT_TEST && app.isPackaged && process.platform === 'win32') {
+    try { updater = require('electron-updater').autoUpdater; } catch (e) { updater = null; }
+  }
+  if (!updater) { UPD.state = 'unsupported'; return; }
+  if (!fake) {
+    updater.autoDownload = true;           // download quietly in the background
+    updater.autoInstallOnAppQuit = true;   // ...and install when EasyCut is closed
+    updater.allowPrerelease = false;
+    updater.allowDowngrade = false;
+    updater.logger = null;
+    try { updater.verifyUpdateCodeSignature = () => Promise.resolve(null); } catch (e) {} // unsigned app: nothing to verify against
+  }
+  updater.on('checking-for-update', () => { if (UPD.state !== 'ready') updSet({ state: 'checking', error: null }); });
+  updater.on('update-available', (i) => updSet({ state: 'downloading', version: i && i.version, percent: 0 }));
+  updater.on('update-not-available', () => { if (UPD.state !== 'ready') updSet({ state: 'none' }); });
+  updater.on('download-progress', (p) => { if (UPD.state !== 'ready') updSet({ state: 'downloading', percent: (p && p.percent) || 0 }); });
+  updater.on('update-downloaded', (i) => updSet({ state: 'ready', version: i && i.version, percent: 100 }));
+  updater.on('error', (e) => { if (UPD.state !== 'ready') updSet({ state: 'error', error: String((e && e.message) || e).split('\n')[0] }); });
+  const auto = () => { if (UPD.auto) updCheck().catch(() => {}); };
+  setTimeout(auto, fake ? 1500 : 8000);
+  updTimer = setInterval(auto, UPD_EVERY);
+}
+async function updCheck() {
+  if (!updater) return updState();
+  if (UPD.state === 'ready' || UPD.state === 'downloading') { updSend(); return updState(); }
+  try { await updater.checkForUpdates(); } catch (e) { updSet({ state: 'error', error: String((e && e.message) || e).split('\n')[0] }); }
+  return updState();
 }
 
 app.whenReady().then(() => {
@@ -171,6 +234,20 @@ app.whenReady().then(() => {
     return { ok: true };
   });
   ipcMain.handle('ai-get-ollama', () => shell.openExternal('https://ollama.com/download/windows'));
+
+  // automatic updates
+  ipcMain.handle('upd-state', () => updState());
+  ipcMain.handle('upd-check', () => updCheck());
+  ipcMain.handle('upd-set-auto', (e, on) => { UPD.auto = !!on; updStore(); return updState(); });
+  ipcMain.handle('upd-install', () => {
+    if (!updater || UPD.state !== 'ready') return false;
+    updInstalling = true; // the editor already asked about unsaved work
+    setImmediate(() => updater.quitAndInstall(true, true)); // silent install, then reopen EasyCut
+    return true;
+  });
+  ipcMain.handle('upd-open-page', (e, url) => { if (typeof url === 'string' && url.startsWith('https://github.com/amitogpandori/easycut/') && !process.env.EASYCUT_TEST) shell.openExternal(url); return true; });
+  ipcMain.handle('upd-test-installed', () => !!global.__easycutFakeInstalled);
+  setupUpdater();
 
   require('./upscale').register(ipcMain, () => win);
   createWindow();
