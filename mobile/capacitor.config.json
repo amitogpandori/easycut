@@ -2,7 +2,12 @@
   "appId": "com.amitoj.easycut",
   "appName": "EasyCut",
   "webDir": "www",
+  "loggingBehavior": "none",
   "android": {
-    "backgroundColor": "#0c0e13"
+    "backgroundColor": "#0c0e13",
+    "adjustMarginsForEdgeToEdge": "auto",
+    "zoomEnabled": false,
+    "allowMixedContent": false,
+    "webContentsDebuggingEnabled": false
   }
 }
