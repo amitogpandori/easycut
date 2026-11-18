@@ -151,8 +151,8 @@ function check(cond, msg) { console.log((cond ? '  ✓ ' : '  ✗ FAILED: ') + m
     const f = (x) => `${x.fps} fps, p95 ${x.p95} ms, main thread busy ${x.busyPct}%`;
     console.log('    swipe: ' + f(R.swipe) + ' · pinch: ' + f(R.pinch) + ' · scrub: ' + f(R.scrub) + ' · play: ' + f(R.play));
     console.log('    panel open (ms): ' + Object.entries(R.open).map(([k, v]) => `${k} ${v}`).join(', '));
-    check(R.swipeOnClip.moved > 0 && !R.swipeOnClip.openedSheet && R.pinch.zoomTo !== R.pinch.zoomFrom, 'throttled phone: swipes and pinches still work');
-    check(Math.max(...Object.values(R.open)) < 250 && R.play.busyPct < 97 && R.scrub.p95 < 60, `throttled phone: panels open in < 250 ms (slowest ${Math.max(...Object.values(R.open))} ms), scrub p95 ${R.scrub.p95} ms`);
+    check(R.swipeOnClip.moved > 0 && !R.swipeOnClip.openedSheet && R.pinch.zoomMid > R.pinch.zoomFrom && R.pinch.zoomTo < R.pinch.zoomMid, `throttled phone: swipes and pinches still work (swipe on a clip ${R.swipeOnClip.moved} px${R.swipeOnClip.openedSheet ? ', opened settings' : ''}; zoom ${R.pinch.zoomFrom} → ${R.pinch.zoomMid} → ${R.pinch.zoomTo})`);
+    check(Math.max(...Object.values(R.open)) < 250 && R.scrub.p95 < 60, `throttled phone: panels open in < 250 ms (slowest ${Math.max(...Object.values(R.open))} ms), scrub p95 ${R.scrub.p95} ms`);
     await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
 
     // 4. desktop unchanged

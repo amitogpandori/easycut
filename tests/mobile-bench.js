@@ -76,7 +76,9 @@ async function bench(app, page, cdp) {
     for (let i = 1; i <= steps; i++){ await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: pts(Math.round(from + (to - from) * i / steps)) }); await page.waitForTimeout(16); }
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
   };
-  R.pinch = await frames(page, async () => { await pinch(30, 120); await pinch(120, 50); }, 500);
+  let zMid = 0;
+  R.pinch = await frames(page, async () => { await pinch(30, 120); await page.waitForTimeout(100); zMid = await page.evaluate(() => +document.getElementById('zoom').value); await pinch(120, 50); }, 500);
+  R.pinch.zoomMid = +zMid.toFixed(0);
   R.pinch.zoomFrom = +z0.toFixed(0); R.pinch.zoomTo = +(await page.evaluate(() => +document.getElementById('zoom').value)).toFixed(0);
   await desel();
   // 3. scrub by dragging slowly (a finger held on the timeline)

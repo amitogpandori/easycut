@@ -2387,9 +2387,9 @@ tlScroll.addEventListener('scroll', () => {
   scrubTo(clamp(tlScroll.scrollLeft / pps, 0, totalDur()));
 }, { passive:true });
 tlScroll.addEventListener('scroll', () => { $('#tlLabels').scrollTop = tlScroll.scrollTop; snapSoon(); }, { passive:true });
-let touching = false, snapTmr = 0;
-window.addEventListener('pointerup', e => { if (e.pointerType === 'touch' && touching){ touching = false; snapSoon(); } }, { passive:true });
-window.addEventListener('pointercancel', e => { if (e.pointerType === 'touch' && touching){ touching = false; snapSoon(); } }, { passive:true });
+let touching = false, snapTmr = 0, endPinch = null;
+window.addEventListener('pointerup', e => { if (e.pointerType !== 'touch') return; if (endPinch) endPinch(); if (touching){ touching = false; snapSoon(); } }, { passive:true });
+window.addEventListener('pointercancel', e => { if (e.pointerType !== 'touch' || !touching) return; touching = false; snapSoon(); }, { passive:true });
 function snapSoon(){ if (!isMob() || playing || drag || touching) return; clearTimeout(snapTmr); snapTmr = setTimeout(scrollSnapEnd, 140); }
 function scrollSnapEnd(){
   if (!snapOn || playing || drag || touching || performance.now() < progUntil) return;
@@ -4127,12 +4127,18 @@ async function openLocalProject(id){
 {
   let pinch = null;
   const dist = ts => Math.hypot(ts[0].clientX - ts[1].clientX, ts[0].clientY - ts[1].clientY);
-  tlScroll.addEventListener('touchstart', e => { touching = true; if (e.touches.length === 2){ lpCancel(); const r = tlScroll.getBoundingClientRect(), mx = (e.touches[0].clientX + e.touches[1].clientX) / 2 - r.left; pinch = { d:dist(e.touches), pps, t:(tlScroll.scrollLeft + mx - (parseFloat(tlInner.style.marginLeft) || 0)) / pps }; } }, { passive:true });
+  /* while pinching, the timeline is only stretched on the GPU (no re-layout, and the clips under the fingers stay in place);
+     the real zoom is applied once when the fingers lift */
+  let pinchRaf = 0;
+  const pinchDraw = () => { pinchRaf = 0; if (!pinch) return; tlInner.style.transform = `scaleX(${pinch.k})`; };
+  const pinchEnd = () => { if (!pinch) return; const P = pinch; pinch = null; if (pinchRaf){ cancelAnimationFrame(pinchRaf); pinchRaf = 0; } tlInner.style.transform = ''; tlInner.style.transformOrigin = ''; tlInner.style.willChange = ''; if (Math.abs(P.k - 1) > .01) setPps(P.pps * P.k, clamp(P.t, 0, totalDur())); };
+  endPinch = pinchEnd;
+  tlScroll.addEventListener('touchstart', e => { touching = true; if (e.touches.length === 2){ lpCancel(); const r = tlScroll.getBoundingClientRect(), mx = (e.touches[0].clientX + e.touches[1].clientX) / 2 - r.left, ml = parseFloat(tlInner.style.marginLeft) || 0; pinch = { d:dist(e.touches), pps, k:1, t:(tlScroll.scrollLeft + mx - ml) / pps }; tlInner.style.transformOrigin = `${tlScroll.scrollLeft + mx - ml}px 0`; tlInner.style.willChange = 'transform'; } }, { passive:true });
   tlScroll.addEventListener('touchmove', e => {
     if (drag && drag.lp){ if (e.cancelable) e.preventDefault(); return; }
-    if (pinch && e.touches.length === 2){ if (e.cancelable) e.preventDefault(); queueZoom(pinch.pps * dist(e.touches) / Math.max(10, pinch.d), clamp(pinch.t, 0, totalDur())); }
+    if (pinch && e.touches.length === 2){ if (e.cancelable) e.preventDefault(); pinch.k = clamp(pinch.pps * dist(e.touches) / Math.max(10, pinch.d), 8, 400) / pinch.pps; if (!pinchRaf) pinchRaf = requestAnimationFrame(pinchDraw); }
   }, { passive:false });
-  const tEnd = e => { if (e.touches.length < 2) pinch = null; if (!e.touches.length){ touching = false; snapSoon(); } };
+  const tEnd = e => { if (e.touches.length < 2) pinchEnd(); if (!e.touches.length){ touching = false; snapSoon(); } };
   tlScroll.addEventListener('touchend', tEnd, { passive:true }); tlScroll.addEventListener('touchcancel', tEnd, { passive:true });
   tlInner.addEventListener('contextmenu', e => { if (isMob()) e.preventDefault(); });
   const pro = $('#tlPro');
