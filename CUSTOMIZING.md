@@ -21,7 +21,10 @@ Find `TEMPLATES.push(` and add an entry:
 - Text options: `font, size, color, bold, stroke, strokeColor, box, boxColor, boxAlpha, shadow, glow, align, anim ('none'|'fade'|'pop'|'slide'|'type'), x, y (0–1 position), start, dur`
 
 ### A new Auto Reel style
-Find `REEL_STYLES.push(` and copy one entry. `beats` is how many beats each cut lasts.
+Find `REEL_STYLES.push(` and copy one entry. `beats` is how many beats each cut lasts. Optional: `photoMotion:['in','diag','snap']` picks the camera moves for photos (see `KB` / `MOTIONS`), and `ramp:['velocity','hero','rush']` puts speed ramps on video cuts. Add the style's effects in `REEL_FX` (`'effect where strength'`, where is `all`, `start` or `end`).
+
+### A new transition
+Add it to `TRANS`, give it an emoji in `TRANS_EMOJI`, and draw it in `renderFrame()` (`case 'mytrans':`). `p` goes from 0 to 1 during the transition, `drawPrev()` draws the clip before and `drawClipAt(c, l, {...})` the new one.
 
 ### A new built-in font
 1. Add it to the Google Fonts `<link>` at the top of `app/index.html` (e.g. `&family=Lato:wght@400;700`).
