@@ -2508,6 +2508,8 @@ const LP_MS = 380;
 let lp = null, edgeRaf = 0, lastPX = 0;
 function lpCancel(){ if (lp){ clearTimeout(lp.timer); lp = null; } }
 tlScroll.addEventListener('scroll', () => { if (lp && Math.abs(tlScroll.scrollLeft - lp.sl) > 10) lpCancel(); }, { passive:true });
+// touch moves still arrive while the browser scrolls the timeline (pointer moves may not), so they also end a pending tap/long-press
+tlInner.addEventListener('touchmove', e => { const t = e.touches[0]; if (lp && t && Math.hypot(t.clientX - lp.x, t.clientY - lp.y) > 10) lpCancel(); }, { passive:true });
 function lpStart(e, type, id){
   lpCancel();
   lp = { type, id, x:e.clientX, y:e.clientY, pid:e.pointerId, t0:performance.now(), sl:tlScroll.scrollLeft };
