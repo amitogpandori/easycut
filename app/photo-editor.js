@@ -1414,10 +1414,11 @@ async function exportPhoto(how){
     H.busy(true, how === 'save' ? 'Saving your photo…' : 'Preparing your photo…', 60, 'Full resolution');
     await new Promise(r => setTimeout(r, 30));
     const out = await encode(how === 'save' ? {} : { fmt:'jpeg', q:95, size:'full' });
-    ST.lastExport = { name:out.name, w:out.w, h:out.h, size:out.blob.size, type:out.blob.type };
     await saveRecent();
-    if (how === 'save'){ H.busy(false); await H.save(out.blob, out.name); return out; }
-    H.busy(false); await sendToVideo(out, how); return out;
+    if (how === 'save'){ H.busy(false); await H.save(out.blob, out.name); }
+    else { H.busy(false); await sendToVideo(out, how); }
+    ST.lastExport = { name:out.name, w:out.w, h:out.h, size:out.blob.size, type:out.blob.type };
+    return out;
   } catch (e) { H.busy(false); console.error(e); H.toast('Couldn’t export: ' + (e.message || e), 5000); }
 }
 async function sendToVideo(out, how){

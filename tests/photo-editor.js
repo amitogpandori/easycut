@@ -49,6 +49,7 @@ function webpInfo(buf) { let i = 12, w = 0, h = 0, exif = null; while (i + 8 <= 
   const mean = (a) => a.reduce((s, v) => s + v, 0) / a.length;
   const viewBox = async () => page.locator('#peStage').boundingBox();
   const saved = (name) => { const f = path.join(testDir, name); return fs.existsSync(f) ? fs.readFileSync(f) : null; };
+  const waitSaved = async (name, ms = 10000) => { const t0 = Date.now(); while (Date.now() - t0 < ms) { const f = saved(name); if (f) return f; await wait(150); } return saved(name); };
   const clearSaved = () => { for (const f of fs.readdirSync(testDir)) if (/-edited\./.test(f)) fs.rmSync(path.join(testDir, f)); };
   try {
     await page.waitForSelector('#bExport');
@@ -194,13 +195,13 @@ function webpInfo(buf) { let i = 12, w = 0, h = 0, exif = null; while (i + 8 <= 
     const full = await X(() => { const s = PhotoEditor.__.ST; return [s.out.w * s.src.w / s.prevW, s.out.h * s.src.h / s.prevH]; });
     await page.click('#pe [data-pe="save"]');
     await page.waitForFunction(() => PhotoEditor.__.ST.lastExport, null, { timeout: 60000 }); await wait(400);
-    let f = saved('wild-bird-edited.jpg'); check(!!f, 'JPG saved');
+    let f = await waitSaved('wild-bird-edited.jpg'); check(!!f, 'JPG saved');
     if (f) { const j = jpegInfo(f); check(Math.abs(j.w - full[0]) <= 3 && Math.abs(j.h - full[1]) <= 3, `JPG is full resolution (${j.w}×${j.h})`); check(!!j.exif && tiffTag(j.exif, 0x0110) === 'Canon EOS R5', 'JPG keeps the camera EXIF'); }
     for (const [fmt, ext, rd] of [['png', 'png', pngInfo], ['webp', 'webp', webpInfo]]) {
       await X(() => { PhotoEditor.__.ST.lastExport = null; });
       await page.click(`#pe [data-ex="fmt"] [data-v="${fmt}"]`); await page.click('#pe [data-pe="save"]');
       await page.waitForFunction(() => PhotoEditor.__.ST.lastExport, null, { timeout: 60000 }); await wait(400);
-      f = saved('wild-bird-edited.' + ext); check(!!f, ext.toUpperCase() + ' saved');
+      f = await waitSaved('wild-bird-edited.' + ext); check(!!f, ext.toUpperCase() + ' saved');
       if (f) { const r = rd(f); check(Math.abs(r.w - full[0]) <= 3 && Math.abs(r.h - full[1]) <= 3, `${ext.toUpperCase()} is full resolution (${r.w}×${r.h})`); check(!!r.exif && tiffTag(r.exif, 0x010f) === 'Canon', ext.toUpperCase() + ' keeps EXIF'); }
     }
     await page.click('#pe [data-ex="fmt"] [data-v="jpeg"]');
