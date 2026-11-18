@@ -177,7 +177,7 @@ body.pe-open{overflow:hidden}
 .pe.pe-mob .pe-chips button{flex:none;padding:8px 12px;border-radius:999px;background:#1c2030;font-weight:700;font-size:12.5px;color:#cfd3e0;min-height:36px}
 .pe.pe-mob .pe-chips button.on{background:#ff4d6d;color:#fff}
 .pe.pe-mob .pe-tbody{max-height:34vh}
-.pe.pe-mob .pe-curve{max-width:250px;margin:0 auto 8px}
+.pe.pe-mob .pe-curve{max-width:min(200px,23vh);margin:0 auto 8px}
 .pe.pe-mob .pe-hint{font-size:12px;margin:2px 0 8px}
 .pe.pe-mob .pe-hello{padding:18px}
 .pe.pe-mob .pe-hello h2{font-size:22px}
@@ -187,3 +187,10 @@ body.pe-open{overflow:hidden}
 .pe.pe-mob.pe-land .pe-tbody{max-height:none}
 .pe.pe-mob.pe-land{grid-template-rows:46px minmax(0,1fr)}
 .pe.pe-mob.pe-land .pe-ib{width:36px;height:36px}
+/* slim dark scrollbars (the default light ones stood out in the panels) */
+.pe *{scrollbar-width:thin;scrollbar-color:#ffffff33 transparent}
+.pe ::-webkit-scrollbar{width:6px;height:6px}
+.pe ::-webkit-scrollbar-track{background:transparent}
+.pe ::-webkit-scrollbar-thumb{background:#ffffff33;border-radius:3px}
+.pe.pe-mob .pe-lgrid{scrollbar-width:none}
+.pe.pe-mob .pe-lgrid::-webkit-scrollbar{display:none}
