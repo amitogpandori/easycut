@@ -69,7 +69,7 @@ function check(cond, msg) {
     // Transitions, GIFs, stickers and logos
     await page.locator('.vclip').nth(1).click();
     await page.click('#props [data-seg="trans"] button[data-val="dissolve"]');
-    check(await count('#props [data-seg="trans"] button') === 16, '16 transitions available');
+    check(await count('#props [data-seg="trans"] button') === 27, '27 transitions available');
     await page.click('[data-tab="effects"]');
     await page.click('[data-fx="punch"]'); await waitCount('.eitem', 1);
     check(await count('.eitem') === 1, 'beat effect added on the Effects track');
@@ -100,6 +100,7 @@ function check(cond, msg) {
     await page.click('#bReel'); await page.waitForSelector('#studio.on');
     await page.setInputFiles('#fileReelMusic', [media('beat100.mp3')]);
     await page.waitForSelector('[data-songdel]', { timeout: 20000 });
+    await page.waitForFunction(() => /beat100/.test(document.getElementById('studio').textContent) && !document.getElementById('busy')?.classList.contains('on'), null, { timeout: 30000 });   // the new song is fully added
     if (await count('[data-st="songMode"]')) {   // the project already has another song: use only the new one
       await page.click('[data-st="songMode"] button[data-val="one"]');
       const use = page.locator('.vo', { hasText: 'beat100' }).locator('[data-song]'); if (await use.count()) await use.click();
