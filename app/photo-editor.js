@@ -670,6 +670,7 @@ const H = {
   looks:() => HX().LOOKS || {},
   exif:buf => { try { const x = hf('exifInfo'), p = hf('parseExif'); return x && p ? x(p(buf)) : null; } catch (e) { return null; } },
   heic:f => (hf('heicToJpeg') ? hf('heicToJpeg')(f) : Promise.reject(new Error('HEIC not supported'))),
+  tiff:f => (hf('tiffToJpeg') ? hf('tiffToJpeg')(f) : Promise.reject(new Error('TIFF not supported'))),
   busy:(on, title, pct, sub) => { if (on && hf('progress')) hf('progress')(title, pct, sub || ''); else if (!on && hf('progressDone')) hf('progressDone')(); },
 };
 
@@ -753,8 +754,8 @@ function build(){
     <div class="pe-side" id="peSide"></div>
   </div>
   <div class="pe-stackp" id="peStack"></div>
-  <input type="file" id="peFile" accept="image/*,.heic,.heif" hidden>
-  <input type="file" id="peFile2" accept="image/*,.heic,.heif" hidden>`;
+  <input type="file" id="peFile" accept="image/*,.heic,.heif,.avif,.tif,.tiff" hidden>
+  <input type="file" id="peFile2" accept="image/*,.heic,.heif,.avif,.tif,.tiff" hidden>`;
   document.body.appendChild(root);
   view = $p('#peView', root); stage = $p('#peStage', root); cv = $p('#peCv', root); ov = $p('#peOv', root); hud = $p('#peHud', root); plist = $p('#pePList', root); histC = $p('#peHist', root); side = $p('#peSide', root); stackP = $p('#peStack', root);
   root.addEventListener('click', onClick); root.addEventListener('input', onInput); root.addEventListener('change', onChange);
@@ -790,7 +791,11 @@ let resizeT = 0;
 function maybeResizePreview(){ clearTimeout(resizeT); resizeT = setTimeout(() => { if (!ST.src) return; const t = previewTarget(), cur = Math.max(ST.prevW, ST.prevH), full = Math.max(ST.src.w, ST.src.h); if ((t > cur * 1.25 && cur < full) || t < cur * .6){ uploadPreview(); render(); } }, 250); }
 async function decodeBlob(blob, name){
   try { return await createImageBitmap(blob, { imageOrientation:'from-image' }); }
-  catch (e) { if (/\.(heic|heif)$/i.test(name || '') || /hei[cf]/i.test(blob.type || '')){ const j = await H.heic(blob); return createImageBitmap(j, { imageOrientation:'from-image' }); } throw e; }
+  catch (e) {
+    if (/\.(heic|heif)$/i.test(name || '') || /hei[cf]/i.test(blob.type || '')){ const j = await H.heic(blob); return createImageBitmap(j, { imageOrientation:'from-image' }); }
+    if (/\.(tif|tiff)$/i.test(name || '') || /image\/tiff/i.test(blob.type || '')){ const j = await H.tiff(blob); return createImageBitmap(j, { imageOrientation:'from-image' }); }
+    throw e;
+  }
 }
 async function loadSource(blob, name, opts = {}){
   const bytes = new Uint8Array(await blob.slice(0, 6e6).arrayBuffer()), bmp = await decodeBlob(blob, name);

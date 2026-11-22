@@ -1,3 +1,13 @@
+## What's new in EasyCut 1.18.0
+
+- **More reliable photo imports:** added TIFF/TIF decoding, improved HEIF/HEIC detection across generic file types, and clearer guidance when a camera RAW format needs conversion. Photos can be combined with video in the editor, Reel Maker and photo editor.
+- **More export quality choices:** added Maximum quality and higher-resolution export options, including 4K.
+- **Templates throughout the editor:** added reusable looks in Filters and layered effect recipes in Effects, plus transition recipes and scene detection with smooth dissolves.
+- **More creative Reel Maker results:** A/B/C versions now preserve the selected direction for A and create distinct styles and shot orders for B/C, with story-first curation and more breathing room in pacing.
+- **Modern reel styles:** added Keepsake Scrapbook, Pixel Pop, Slow Burn, Bold Editorial and Wonderstruck.
+- **Punjabi typography:** added ten selectable Gurmukhi font styles.
+- **Phone and desktop:** the shared editing features are available in both app versions.
+
 ## What's new in EasyCut 1.17.0
 
 - **Photo editor** (Snapseed-inspired) on PC and phone: open it from the home screen, or tap **Edit photo** on a picture in your project. Tune light and color, curves, healing, a selective brush, lens blur, HDR and film looks. Edits are non-destructive, and you can send a finished photo straight into a reel.

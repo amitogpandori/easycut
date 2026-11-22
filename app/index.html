@@ -6,7 +6,7 @@
 <title>EasyCut — Video Editor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Poppins:wght@500;800&family=Anton&family=Bebas+Neue&family=Montserrat:wght@500;800&family=Pacifico&family=Permanent+Marker&family=Noto+Sans+Devanagari:wght@500;800&family=Noto+Sans+Gurmukhi:wght@500;800&family=Oswald:wght@500;700&family=Raleway:wght@500;800&family=Playfair+Display:wght@600;800&family=Lobster&family=Dancing+Script:wght@600;700&family=Caveat:wght@600;700&family=Righteous&family=Bangers&family=Satisfy&family=Kaushan+Script&family=Russo+One&family=Archivo+Black&family=Teko:wght@500;700&family=Rajdhani:wght@600;700&family=Abril+Fatface&family=Bungee&family=Shrikhand&family=Monoton&family=Baloo+2:wght@600;800&family=Mukta:wght@500;800&family=Yatra+One&family=Rozha+One&family=Baloo+Paaji+2:wght@600;800&family=Mukta+Mahee:wght@500;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Poppins:wght@500;800&family=Anton&family=Bebas+Neue&family=Montserrat:wght@500;800&family=Pacifico&family=Permanent+Marker&family=Noto+Sans+Devanagari:wght@500;800&family=Noto+Sans+Gurmukhi:wght@100..900&family=Oswald:wght@500;700&family=Raleway:wght@500;800&family=Playfair+Display:wght@600;800&family=Lobster&family=Dancing+Script:wght@600;700&family=Caveat:wght@600;700&family=Righteous&family=Bangers&family=Satisfy&family=Kaushan+Script&family=Russo+One&family=Archivo+Black&family=Teko:wght@500;700&family=Rajdhani:wght@600;700&family=Abril+Fatface&family=Bungee&family=Shrikhand&family=Monoton&family=Baloo+2:wght@600;800&family=Mukta:wght@500;800&family=Yatra+One&family=Rozha+One&family=Anek+Gurmukhi:wdth,wght@75..125,100..800&family=Baloo+Paaji+2:wght@400..800&family=BhuTuka+Expanded+One&family=Braah+One&family=Langar&family=Mukta+Mahee:wght@500;800&family=Noto+Serif+Gurmukhi:wght@100..900&family=Tiro+Gurmukhi:ital@0;1&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#0c0e13;--panel:#141720;--panel2:#1b1f2b;--panel3:#232838;--line:#262b3a;
@@ -531,11 +531,11 @@ body.is-android .updbar{left:12px;right:12px;bottom:calc(84px + env(safe-area-in
 <div class="home on" id="home"></div>
 <div class="toast" id="toast"></div>
 <div class="dz" id="dz">Drop to add to your video</div>
-<input type="file" id="fileIn" multiple accept="video/*,image/*,audio/*" hidden>
+<input type="file" id="fileIn" multiple accept="video/*,image/*,.avif,.tif,.tiff,audio/*" hidden>
 <input type="file" id="fileAud" multiple accept="audio/*" hidden>
-<input type="file" id="fileOv" multiple accept="video/*,image/*" hidden>
-<input type="file" id="fileLayout" multiple accept="video/*,image/*" hidden>
-<input type="file" id="fileReel" multiple accept="video/*,image/*" hidden>
+<input type="file" id="fileOv" multiple accept="video/*,image/*,.avif,.tif,.tiff" hidden>
+<input type="file" id="fileLayout" multiple accept="video/*,image/*,.avif,.tif,.tiff" hidden>
+<input type="file" id="fileReel" multiple accept="video/*,image/*,.avif,.tif,.tiff" hidden>
 <input type="file" id="fileReelMusic" accept="audio/*" multiple hidden>
 <input type="file" id="fileFont" multiple accept=".ttf,.otf,.woff,.woff2,font/ttf,font/otf,font/woff,font/woff2" hidden>
 <input type="file" id="fileTpl" accept=".json,application/json" hidden>
@@ -558,6 +558,7 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>'
 const fmt = t => { t = Math.max(0, t || 0); const m = Math.floor(t / 60), s = Math.floor(t % 60), d = Math.floor((t * 10) % 10); return `${m}:${String(s).padStart(2,'0')}.${d}`; };
 const fmtS = t => { const m = Math.floor(t / 60), s = t % 60; return m ? `${m}:${String(Math.floor(s)).padStart(2,'0')}` : (Number.isInteger(s) ? s + 's' : s.toFixed(1) + 's'); };
 const easeOut = p => 1 - Math.pow(1 - p, 3);
+const easeSmooth = p => { p = clamp(p, 0, 1); return p * p * (3 - 2 * p); };
 const easeBack = p => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(p - 1, 3) + c1 * Math.pow(p - 1, 2); };
 const hexA = (h, a) => { const n = parseInt(h.slice(1), 16); return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`; };
 
@@ -606,10 +607,12 @@ const FONT_GROUPS = [
   ['Script & handwritten', ['Pacifico','Lobster','Dancing Script','Caveat','Satisfy','Kaushan Script','Permanent Marker','Comic Sans MS']],
   ['Classic', ['Playfair Display','Georgia','Times New Roman','Courier New']],
   ['हिन्दी (Hindi)', ['Noto Sans Devanagari','Baloo 2','Mukta','Yatra One','Rozha One']],
-  ['ਪੰਜਾਬੀ (Punjabi)', ['Noto Sans Gurmukhi','Baloo Paaji 2','Mukta Mahee']],
+  ['ਪੰਜਾਬੀ (Punjabi)', ['Anek Gurmukhi','Anek Gurmukhi Condensed','Baloo Paaji 2','BhuTuka Expanded One','Braah One','Langar','Mukta Mahee','Noto Sans Gurmukhi','Noto Serif Gurmukhi','Tiro Gurmukhi']],
 ];
 const userFonts = [];
 const FONTS = FONT_GROUPS.flatMap(g => g[1]);
+const fontActual = f => f === 'Anek Gurmukhi Condensed' ? 'Anek Gurmukhi' : f;
+const fontCss = (f, weight, size) => `${f === 'Anek Gurmukhi Condensed' ? 'condensed ' : ''}${weight} ${size}px "${fontActual(f)}"`;
 const TEXT_BASE = { text:'Text', font:'Plus Jakarta Sans', size:72, bold:true, color:'#ffffff', stroke:false, strokeColor:'#000000', box:false, boxColor:'#000000', boxAlpha:.6, glow:false, shadow:false, align:'center', anim:'fade', x:.5, y:.5, dur:3 };
 const TEXT_PRESETS = [
   { name:'Title', p:{ text:'Your Title', font:'Poppins', size:100, stroke:true, shadow:true, anim:'pop', y:.45 } },
@@ -622,11 +625,14 @@ const TEXT_PRESETS = [
   { name:'Big Bold', p:{ text:'EPIC DAY', font:'Bebas Neue', size:170, shadow:true, bold:false, anim:'slide' } },
   { name:'Hindi', p:{ text:'नमस्ते दोस्तों', font:'Noto Sans Devanagari', size:84, stroke:true, anim:'pop' } },
   { name:'Punjabi', p:{ text:'ਸਤ ਸ੍ਰੀ ਅਕਾਲ', font:'Noto Sans Gurmukhi', size:84, stroke:true, anim:'pop' } },
+  { name:'Punjabi Bhangra', p:{ text:'ਬੱਲੇ ਬੱਲੇ!', font:'Braah One', size:118, color:'#ffe166', stroke:true, strokeColor:'#7c2d12', shadow:true, anim:'pop' } },
+  { name:'Punjabi Lyrics', p:{ text:'ਚੜ੍ਹਦੀ ਕਲਾ', font:'Tiro Gurmukhi', size:94, bold:false, color:'#ffe8bd', shadow:true, anim:'fade' } },
+  { name:'Punjabi Bold', p:{ text:'ਪੰਜਾਬੀ ਵਾਈਬਜ਼', font:'Baloo Paaji 2', size:94, color:'#ffffff', stroke:true, anim:'pop' } },
 ];
 const EMOJI = '😀 😂 😍 🥳 😎 🤯 😱 🥺 🔥 ❤️ 💯 👍 👏 🙏 ✨ ⭐ 🎉 🎵 📍 ✈️ 🍕 ☕ 🌅 🏔️ 🚗 📸 🎬 💪 🤔 😴 👀 ➡️ ⬇️ ✅ ❌ ⚡ 💥 🌈 🌸 🐶 🎂 🏏 🛕 🇮🇳 🎁'.split(' ');
 
 /* ---------- state ---------- */
-const S = { aspect:'16:9', res:1080, fps:30, fit:'fit', bg:'blur', bgColor:'#111111', clips:[], texts:[], audios:[], overlays:[], effects:[] };
+const S = { aspect:'16:9', res:1080, exportQuality:'max', fps:30, fit:'fit', bg:'blur', bgColor:'#111111', clips:[], texts:[], audios:[], overlays:[], effects:[] };
 const FULL = { x:0, y:0, w:1, h:1 };
 const media = {};            // id -> {id,type,name,url,duration,w,h,el,thumb,wave}
 const audioEls = {};         // audio item id -> <audio>
@@ -650,10 +656,10 @@ let textBoxes = [];
 
 /* ---------- history ---------- */
 const H = { past:[], future:[] }; let ck = { k:null, t:0 };
-const snap = () => JSON.stringify({ markers:S.markers || [], inP:S.inP ?? null, outP:S.outP ?? null, hide:S.hide || {}, mute:S.mute || {}, aspect:S.aspect, res:S.res, fps:S.fps, fit:S.fit, bg:S.bg, bgColor:S.bgColor, clips:S.clips, texts:S.texts, audios:S.audios, overlays:S.overlays, effects:S.effects });
+const snap = () => JSON.stringify({ markers:S.markers || [], inP:S.inP ?? null, outP:S.outP ?? null, hide:S.hide || {}, mute:S.mute || {}, aspect:S.aspect, res:S.res, exportQuality:S.exportQuality || 'max', fps:S.fps, fit:S.fit, bg:S.bg, bgColor:S.bgColor, clips:S.clips, texts:S.texts, audios:S.audios, overlays:S.overlays, effects:S.effects });
 function push(){ H.past.push(snap()); if (H.past.length > 120) H.past.shift(); H.future = []; ck = { k:null, t:0 }; updUndo(); }
 function checkpoint(k){ const now = Date.now(); if (ck.k !== k || now - ck.t > 1200) push(); ck = { k, t:now }; }
-function restore(s){ Object.assign(S, { overlays:[], effects:[], fps:30, fit:'fit', markers:[], inP:null, outP:null, hide:{}, mute:{} }, JSON.parse(s)); renderLabels(); if (cropMode && !getObj('clip', cropMode.clipId)) cropMode = null; if (sel && !getObj(sel.type, sel.id)) sel = null; applyCanvasSize(); playT = clamp(playT, 0, totalDur()); refreshAll(); }
+function restore(s){ Object.assign(S, { overlays:[], effects:[], exportQuality:'max', fps:30, fit:'fit', markers:[], inP:null, outP:null, hide:{}, mute:{} }, JSON.parse(s)); renderLabels(); if (cropMode && !getObj('clip', cropMode.clipId)) cropMode = null; if (sel && !getObj(sel.type, sel.id)) sel = null; applyCanvasSize(); playT = clamp(playT, 0, totalDur()); refreshAll(); }
 function undo(){ if (!H.past.length) return; H.future.push(snap()); restore(H.past.pop()); updUndo(); }
 function redo(){ if (!H.future.length) return; H.past.push(snap()); restore(H.future.pop()); updUndo(); }
 function updUndo(){ $('#bUndo').disabled = !H.past.length; $('#bRedo').disabled = !H.future.length; }
@@ -775,7 +781,7 @@ function renderPanel(){
   if (tab === 'media'){
     const vis = all.filter(m => m.type !== 'audio');
     const hv = UPB && UPB.optimize ? heavyUsed() : [];
-    h = `<h3>Media</h3>${hv.length ? `<div class="vo" style="margin-bottom:10px"><div style="flex:1"><b>⚡ ${hv.length} heavy video${hv.length === 1 ? '' : 's'}</b><div class="hint">Phone/4K videos can freeze on “Loading video…”. Optimize them for smooth playback.</div></div><button class="btn sm pri" data-act="optAll">Optimize all</button></div>` : ''}<div class="drop" data-act="import">${ic('import')}<div style="margin-top:6px"><b style="color:var(--text)">Import videos & photos</b><br>or drag files here</div></div>`
+      h = `<h3>Media</h3>${S.clips.length ? `<div class="vo" style="margin-bottom:10px"><div style="flex:1"><b>✨ Improve every clip</b><div class="hint">Auto-balance exposure, contrast and color for each photo and video. One undo restores everything.</div></div><button class="btn sm pri" data-act="autoColorAll">Auto color all</button></div>` : ''}${hv.length ? `<div class="vo" style="margin-bottom:10px"><div style="flex:1"><b>⚡ ${hv.length} heavy video${hv.length === 1 ? '' : 's'}</b><div class="hint">Phone/4K videos can freeze on “Loading video…”. Optimize them for smooth playback.</div></div><button class="btn sm pri" data-act="optAll">Optimize all</button></div>` : ''}<div class="drop" data-act="import">${ic('import')}<div style="margin-top:6px"><b style="color:var(--text)">Import videos & photos</b><br>or drag files here</div></div>`
       + `<div class="hint" style="margin-bottom:12px"><b style="color:var(--text)">Combine videos:</b> pick several files at once and they're joined in order. Drag clips on the timeline to reorder. To show videos side by side, use <a href="#" data-act="toTemplates" style="color:var(--acc)">Templates → Layouts</a>.</div>`
       + (vis.length ? `<div class="mgrid">${vis.map(mediaCard).join('')}</div><div style="margin-top:12px"><button class="btn sm full" data-act="addAll">Add all to the timeline again</button></div>` : `<div class="hint">Your clips will show up here. Click one to add it again at the playhead, or drag it onto the timeline.</div>`);
   } else if (tab === 'templates'){
@@ -796,8 +802,8 @@ function renderPanel(){
       + (vis.length ? `<div class="hint" style="margin:14px 0 0">Or use something you already imported:</div><div class="ovlist">${vis.map(m => `<div class="mcard" data-ov="${m.id}" title="Add as overlay"><div class="mthumb" style="${m.thumb ? `background-image:url('${burl(m.thumb)}')` : ''}"></div><span class="tbadge">${m.type}</span><div class="mname">${esc(m.name)}</div><div class="add">${ic('plus')}</div></div>`).join('')}</div>` : '');
   } else if (tab === 'text'){
     h = `<h3>Text styles</h3><div class="hint" style="margin-bottom:12px">Click a style to add it at the playhead. Drag the text on the preview to move it.</div><div class="pgrid">`
-      + TEXT_PRESETS.map((t, i) => { const p2 = { ...TEXT_BASE, ...t.p }; const st = `font-family:'${p2.font}';font-weight:${p2.bold ? 800 : 400};color:${p2.color};${p2.stroke ? 'text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000;' : ''}${p2.glow ? `text-shadow:0 0 8px ${p2.color};` : ''}${p2.box ? `background:${hexA(p2.boxColor, Math.max(.35, p2.boxAlpha))};` : ''}`; return `<button class="preset" data-tp="${i}" style="${st}" title="${t.name}">${esc(t.name)}</button>`; }).join('') + `</div>`;
-  h += `<h3 style="margin-top:20px">Fonts</h3><div class="hint" style="margin-bottom:10px">${FONTS.length} fonts are built in, including Hindi and Punjabi. You can add any .ttf, .otf or .woff2 font file too.${userFonts.length ? ` Your fonts: ${userFonts.map(esc).join(', ')}.` : ''}</div><button class="btn sm full" data-act="addFont">${ic('plus')}Add your own font</button><div style="margin-top:14px"><button class="btn sm full" data-act="toTemplates">More text templates →</button></div>`;
+      + TEXT_PRESETS.map((t, i) => { const p2 = { ...TEXT_BASE, ...t.p }, fam = fontActual(p2.font); const st = `font-family:'${fam}';${p2.font === 'Anek Gurmukhi Condensed' ? 'font-stretch:condensed;' : ''}font-weight:${p2.bold ? 800 : 400};color:${p2.color};${p2.stroke ? 'text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000;' : ''}${p2.glow ? `text-shadow:0 0 8px ${p2.color};` : ''}${p2.box ? `background:${hexA(p2.boxColor, Math.max(.35, p2.boxAlpha))};` : ''}`; return `<button class="preset" data-tp="${i}" style="${st}" title="${t.name}">${esc(t.name)}</button>`; }).join('') + `</div>`;
+  h += `<h3 style="margin-top:20px">Fonts</h3><div class="hint" style="margin-bottom:10px">${FONTS.length} fonts are built in, including 10 Punjabi/Gurmukhi font styles and Hindi. Gurmukhi web fonts load from Google Fonts when online; the app falls back to fonts available on your device offline. You can add any .ttf, .otf or .woff2 font file too.${userFonts.length ? ` Your fonts: ${userFonts.map(esc).join(', ')}.` : ''}</div><button class="btn sm full" data-act="addFont">${ic('plus')}Add your own font</button><div style="margin-top:14px"><button class="btn sm full" data-act="toTemplates">More text templates →</button></div>`;
   } else if (tab === 'sticker'){
     h = stickersHTML();
   } else if (tab === 'ai'){
@@ -820,7 +826,7 @@ function renderPanel(){
     if (!c) h = `<h3>Filters</h3><div class="hint">Select a video or photo clip on the timeline, then pick a filter.</div>`;
     else {
       const m = media[c.mediaId];
-      h = `<h3>Filters</h3><div class="fgrid">${Object.entries(FILTERS).map(([k, [n, css]]) => `<button class="fcard ${c.filter === k ? 'on' : ''}" data-filter="${k}"><div data-bg="${burl(m.thumb)}" style="filter:${css || 'none'}"></div><span>${n}</span></button>`).join('')}</div><div style="margin-top:14px"><button class="btn sm full" data-act="filterAll">Apply this look to all clips</button></div>`;
+      h = `<h3>Filters</h3><div class="fgrid">${Object.entries(FILTERS).map(([k, [n, css]]) => `<button class="fcard ${c.filter === k ? 'on' : ''}" data-filter="${k}"><div data-bg="${burl(m.thumb)}" style="filter:${css || 'none'}"></div><span>${n}</span></button>`).join('')}</div><h3>Color look templates</h3><div class="pgrid">${Object.entries(LOOKS).map(([k, [n]]) => `<button class="preset" data-panel-look="${k}">${esc(n)}</button>`).join('')}</div><div style="margin-top:14px"><button class="btn sm full" data-act="filterAll">Apply this look to all clips</button></div>`;
     }
   } else if (tab === 'canvas'){
     h = `<h3>Clip framing</h3><div class="sec"><div class="seg" data-gseg="fit">${[['fit','Fit (show all)'],['fill','Fill (no bars)']].map(([v, l]) => `<button data-val="${v}" class="${(S.fit || 'fit') === v ? 'on' : ''}">${l}</button>`).join('')}</div><div class="hint" style="margin-top:8px">${(S.fit || 'fit') === 'fill' ? 'Every clip fills the whole frame — no blurred or colored borders. Use <b>Crop</b> on a clip to choose which part shows.' : 'Whole clip is shown; any empty space is filled with the background below.'}</div></div><h3>Canvas size</h3><div class="acards sec">${Object.entries(ASPECTS).map(([k, [a, b, l]]) => { const s = 30 / Math.max(a, b); return `<button class="acard ${S.aspect === k ? 'on' : ''}" data-aspect="${k}"><i style="width:${a * s}px;height:${b * s}px"></i>${k}<small>${l}</small></button>`; }).join('')}</div>`
@@ -838,9 +844,11 @@ $('#panel').addEventListener('click', e => {
   if (act === 'import') return $('#fileIn').click();
   if (act === 'importAud') return $('#fileAud').click();
   if (act === 'voice') return toggleVoice();
+  if (act === 'autoColorAll') return autoColorAll();
   if (act === 'filterAll'){ const c = getSel(); if (!c) return; push(); S.clips.forEach(o => { o.filter = c.filter; o.b = c.b; o.c = c.c; o.s = c.s; }); toast('Look applied to all clips'); return refreshAll(); }
   const mc = t.closest('[data-mid]:not([data-ov])'); if (mc && !mc.classList.contains('loading')) return addToTimeline(mc.dataset.mid);
   const tp = t.closest('[data-tp]'); if (tp) return addText({ ...TEXT_PRESETS[+tp.dataset.tp].p });
+  const pl = t.closest('[data-panel-look]'); if (pl){ const c = getSel(), look = LOOKS[pl.dataset.panelLook]; if (!c || !look) return; push(); c.grade = { ...GRADE_DEF, ...look[1], lut:(c.grade && c.grade.lut) || '' }; return refreshAll(); }
   const em = t.closest('[data-emo]'); if (em) return addText({ text:em.dataset.emo, size:170, bold:false, anim:'pop', y:.3, x:.5 + (Math.random() - .5) * .3 });
   const fc = t.closest('[data-filter]'); if (fc){ const c = getSel(); if (!c) return; push(); c.filter = fc.dataset.filter; return refreshAll(); }
   const ac = t.closest('[data-aspect]'); if (ac){ push(); S.aspect = ac.dataset.aspect; applyCanvasSize(); return refreshAll(); }
@@ -861,6 +869,9 @@ $('#panel').addEventListener('click', e => {
   if (act === 'trAll'){ if (S.clips.length < 2) return toast('Add at least 2 clips'); push(); S.clips.forEach((c, i) => { if (i > 0){ c.trans = lastTrans; c.tdur = transDur; } }); toast('Transition added to every cut'); return refreshAll(); }
   if (act === 'trRandom'){ if (S.clips.length < 2) return toast('Add at least 2 clips'); push(); const ks = TRANS.map(x => x[0]).filter(x => x !== 'none'); S.clips.forEach((c, i) => { if (i > 0){ c.trans = ks[Math.floor(Math.random() * ks.length)]; c.tdur = transDur; } }); toast('Random transitions added'); return refreshAll(); }
   if (act === 'trNone'){ push(); S.clips.forEach(c => c.trans = 'none'); return refreshAll(); }
+  if (act === 'trScenes') return applySceneTransitionTemplate();
+  const trp = t.closest('[data-trpreset]'); if (trp) return applyTransitionPreset(trp.dataset.trpreset);
+  const efp = t.closest('[data-fxpreset]'); if (efp) return applyEffectTemplate(efp.dataset.fxpreset);
   const fc2 = t.closest('[data-fxcat]'); if (fc2){ fxCat = fc2.dataset.fxcat; return renderPanel(); }
   if (act === 'fxBeatAll'){ if (!S.clips.length) return toast('Add a clip first'); push(); const x = { id:uid(), type:'punch', start:0, dur:Math.max(.5, videoEnd()), k:.8 }; S.effects.push(x); sel = { type:'effect', id:x.id }; return refreshAll(); }
   const fx = t.closest('[data-fx]'); if (fx) return addEffect(fx.dataset.fx);
@@ -906,13 +917,15 @@ function once(el, ev, ms = 15000){
   });
 }
 function kindOf(f){
-  if (f.type.startsWith('video')) return 'video'; if (f.type.startsWith('image')) return 'image'; if (f.type.startsWith('audio')) return 'audio';
-  const ext = (f.name.split('.').pop() || '').toLowerCase();
+  const type = (f.type || '').toLowerCase();
+  if (type.startsWith('video')) return 'video'; if (type.startsWith('image')) return 'image'; if (type.startsWith('audio')) return 'audio';
+  const ext = ((f.name || '').split('.').pop() || '').toLowerCase();
   if (['mp4','mov','webm','mkv','m4v','avi'].includes(ext)) return 'video';
-  if (['jpg','jpeg','png','gif','webp','bmp','heic'].includes(ext)) return 'image';
+  if (['jpg','jpeg','png','gif','webp','bmp','heic','heif','avif','tif','tiff',...RAW_EXTS].includes(ext)) return 'image';
   if (['mp3','wav','m4a','aac','ogg','opus','flac'].includes(ext)) return 'audio';
   return null;
 }
+const RAW_EXTS = ['3fr','ari','arw','bay','cap','cr2','cr3','dcs','dcr','dng','drf','eip','erf','fff','gpr','iiq','k25','kdc','mdc','mef','mos','mrw','nef','nrw','obm','orf','pef','ptx','pxn','r3d','raf','raw','rwl','rw2','sr2','srf','srw','x3f'];
 async function videoThumb(url, t){
   const v = document.createElement('video'); v.muted = true; v.preload = 'auto'; v.src = url; pool.appendChild(v);
   try { await once(v, 'loadeddata'); v.currentTime = t; await once(v, 'seeked'); const w = 240, h = Math.max(1, Math.round(w * v.videoHeight / v.videoWidth)) || 135; const c = document.createElement('canvas'); c.width = w; c.height = h; c.getContext('2d').drawImage(v, 0, 0, w, h); return c.toDataURL('image/jpeg', .72); }
@@ -951,9 +964,31 @@ function heicToJpeg(file){
   if (!heicLib) heicLib = new Promise((ok, bad) => { const sc = document.createElement('script'); sc.src = 'vendor/heic2any.min.js'; sc.onload = () => window.heic2any ? ok(window.heic2any) : bad(new Error('HEIC converter missing')); sc.onerror = () => { heicLib = null; bad(new Error('HEIC converter missing')); }; document.head.appendChild(sc); });
   return heicLib.then(h => h({ blob:file, toType:'image/jpeg', quality:.95 })).then(r => Array.isArray(r) ? r[0] : r);
 }
+let tiffLib = null;
+function loadTiffLib(){
+  if (!tiffLib) tiffLib = new Promise((ok, bad) => {
+    const add = (src, done) => { const s = document.createElement('script'); s.src = src; s.onload = done; s.onerror = () => bad(new Error('TIFF decoder could not be loaded')); document.head.appendChild(s); };
+    add('vendor/pako_inflate.min.js', () => add('vendor/UTIF.js', () => window.UTIF ? ok(window.UTIF) : bad(new Error('TIFF decoder missing'))));
+  }).catch(e => { tiffLib = null; throw e; });
+  return tiffLib;
+}
+async function tiffToJpeg(file){
+  const UTIF = await loadTiffLib(), data = await file.arrayBuffer(), ifds = UTIF.decode(data), ifd = ifds[0];
+  if (!ifd) throw new Error('TIFF contains no image');
+  UTIF.decodeImage(data, ifd);
+  if (!ifd.width || !ifd.height || !ifd.data) throw new Error('TIFF image could not be decoded');
+  const c = document.createElement('canvas'); c.width = ifd.width; c.height = ifd.height;
+  c.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(UTIF.toRGBA8(ifd)), ifd.width, ifd.height), 0, 0);
+  return new Promise((ok, bad) => c.toBlob(b => b ? ok(b) : bad(new Error('TIFF could not be converted to JPEG')), 'image/jpeg', .95));
+}
 const PHOTO_MAX = 4096;
 async function loadPhoto(m, file){
   const heic = /\.(heic|heif)$/i.test(file.name || '') || /hei[cf]/i.test(file.type || '');
+  const tiff = /\.(tif|tiff)$/i.test(file.name || '') || /image\/tiff/i.test(file.type || '');
+  if (tiff){
+    const jpg = await tiffToJpeg(file); URL.revokeObjectURL(m.url); m.url = URL.createObjectURL(jpg);
+    m.converted = 'tiff';
+  }
   let img = new Image(); img.decoding = 'async';
   try { img.src = m.url; await img.decode(); }
   catch (e) {
@@ -1002,11 +1037,15 @@ function waveImg(ab){
 }
 async function importOne(f, forceId, forcePath){
   const type = kindOf(f); if (!type){ toast(`Skipped ${f.name} — not a video, photo or audio file`); return null; }
+  const ext = ((f.name || '').split('.').pop() || '').toLowerCase();
+  if (RAW_EXTS.includes(ext)){
+    toast(`RAW photo format .${ext} is not supported yet. Convert it to JPG, HEIC or TIFF first.`, 5000); return null;
+  }
   let path = forcePath || ''; if (!path && DESK && DESK.pathForFile){ try { path = DESK.pathForFile(f) || ''; } catch (e) {} }
   const m = { id:forceId || uid(), type, name:f.name, url:URL.createObjectURL(f), duration:0, w:0, h:0, el:null, thumb:'', wave:'', loading:true, path };
   media[m.id] = m; renderPanel();
   try { await loadMedia(m, f); m.loading = false; renderPanel(); if (!forceId) optCheck(m); return m; }
-  catch (e) { delete media[m.id]; URL.revokeObjectURL(m.url); renderPanel(); toast(`Couldn't open ${f.name}. Try MP4 (H.264), MOV, JPG, PNG or MP3.`, 4000); return null; }
+  catch (e) { delete media[m.id]; URL.revokeObjectURL(m.url); renderPanel(); toast(`Couldn't open ${f.name}${ext ? ` (.${ext})` : ''}: ${String(e && e.message || e).slice(0, 100)}. Try JPG, PNG, WebP, HEIC/HEIF, AVIF or TIFF.`, 6000); return null; }
 }
 async function importFiles(files, opt = {}){
   const list = [...files]; if (!list.length) return;
@@ -1106,7 +1145,7 @@ function addText(p){
   push(); const x = { ...TEXT_BASE, ...p, id:uid(), start:playT };
   const end = totalDur(); if (end > 0 && x.start >= end - .05) x.start = Math.max(0, end - x.dur);
   S.texts.push(x); sel = { type:'text', id:x.id };
-  document.fonts?.load(`${x.bold ? 800 : 500} 40px "${x.font}"`).then(scheduleRender).catch(() => {});
+  document.fonts?.load(fontCss(x.font, x.bold ? 800 : 500, 40)).then(scheduleRender).catch(() => {});
   playT = x.start + Math.min(.4, x.dur / 2);
   refreshAll(); seekPreview();
 }
@@ -1191,7 +1230,7 @@ async function applyTemplate(i){
   const tp = typeof i === 'object' ? i : TEMPLATES[i]; if (!tp) return;
   if ((tp.look || tp.fx || tp.freeze) && !S.clips.length) return toast('Add a photo or video first — this template works on your clip');
   if (tp.freeze){ const ca = clipAt(playT); if (ca && media[ca.c.mediaId].type === 'video'){ await freezeFrame(); const c2 = clipAt(playT + .01); if (c2) playT = clipStarts()[c2.i]; } }
-  for (const x of tp.texts) document.fonts?.load(`${x.bold === false ? 500 : 800} 40px "${x.font || TEXT_BASE.font}"`).catch(() => {});
+  for (const x of tp.texts) document.fonts?.load(fontCss(x.font || TEXT_BASE.font, x.bold === false ? 500 : 800, 40)).catch(() => {});
   let t0 = playT;
   if (tp.card){
     const m = await makeCard(tp.card, tp.name); if (!m) return;
@@ -1303,7 +1342,7 @@ function renderProps(){
              : row('Duration (seconds)', `<input class="inp" type="number" min="0.2" max="600" step="0.1" data-k="len" data-t="num" value="${clipLen(o).toFixed(1)}">`) + `<button class="btn sm full" data-pa="photoLenAll" style="margin:-4px 0 10px">Use this length for all photos</button>`)
       + `<details class="pro" ${proOpen.transform ? 'open' : ''} data-sec="transform"><summary>Transform & keyframes</summary>${kfBar(o)}${krange(o, 'posX', -1, 1, .005, 'Position X', 0)}${krange(o, 'posY', -1, 1, .005, 'Position Y', 0)}${krange(o, 'zoom', .1, 4, .01, 'Scale', 1)}${krange(o, 'rot', -180, 180, .5, 'Rotation', 0)}${krange(o, 'opacity', 0, 1, .01, 'Opacity', 1)}<div class="hint">Click ◆ to set a keyframe at the playhead, move the playhead, change the value — EasyCut animates between keyframes.</div></details>`
       + colorSection(o)
-      + (vid ? `<details class="pro" data-sec="smart" ${proOpen.smart ? 'open' : ''}><summary>✂️ Smart cuts</summary><div class="hint" style="margin-bottom:8px">Let EasyCut find the cuts for you.</div><div class="acts"><button class="btn sm" data-pa="silence">🔇 Remove silent parts</button><button class="btn sm" data-pa="scenes">🎞️ Cut at scene changes</button></div>${row('Shortest pause to remove', seg('minPause', [[.3,'0.3s'],[.6,'0.6s'],[1,'1s'],[2,'2s']], smartPause, 'num'))}<button class="btn sm full" data-pa="silenceAll">Remove silent parts in ALL clips</button></details>` : '')
+      + (vid ? `<details class="pro" data-sec="smart" ${proOpen.smart ? 'open' : ''}><summary>✂️ Smart cuts</summary><div class="hint" style="margin-bottom:8px">Let EasyCut find the cuts for you.</div><div class="acts"><button class="btn sm" data-pa="silence">🔇 Remove silent parts</button><button class="btn sm" data-pa="scenes">🎞️ Cut at scene changes</button></div><button class="btn sm full" data-pa="scenesSmooth" style="margin-bottom:8px">🎬 Detect scenes + smooth dissolves</button>${row('Shortest pause to remove', seg('minPause', [[.3,'0.3s'],[.6,'0.6s'],[1,'1s'],[2,'2s']], smartPause, 'num'))}<button class="btn sm full" data-pa="silenceAll">Remove silent parts in ALL clips</button></details>` : '')
       + row('Motion', seg('motion', MOTIONS, motionOf(o)))
       + row('Transition in', seg('trans', TRANS, o.trans) + (o.trans !== 'none' ? `<div style="margin-top:8px">${range('tdur', .2, 1.5, .05, o.tdur || .5)}</div>` : ''), 'secTrans')
       + row('Filter', `<select class="inp" data-k="filter" data-t="str">${Object.entries(FILTERS).map(([k, [n]]) => `<option value="${k}" ${o.filter === k ? 'selected' : ''}>${n}</option>`).join('')}</select>`)
@@ -1378,7 +1417,7 @@ $('#props').addEventListener('input', e => {
   else setProp(o, k, v);
   if (k === 'chroma' && v){ o.border = false; o.shadow = false; o.shape = 'rect'; }
   const lab = $('#props').querySelector(`[data-v="${k}"]`); if (lab) lab.textContent = fmtVal(k, v);
-  if (k === 'font') document.fonts?.load(`${o.bold ? 800 : 500} 40px "${v}"`).then(scheduleRender).catch(() => {});
+  if (k === 'font') document.fonts?.load(fontCss(v, o.bold ? 800 : 500, 40)).then(scheduleRender).catch(() => {});
   if (t === 'bool' && ['box','chroma'].includes(k)) renderProps();
   renderTimeline(); seekPreview();
 });
@@ -1396,6 +1435,7 @@ $('#props').addEventListener('click', e => {
   if (pa === 'silence') return removeSilences([o], { minPause:smartPause });
   if (pa === 'silenceAll') return removeSilences(S.clips.slice(), { minPause:smartPause });
   if (pa === 'scenes') return sceneDetectCmd(o);
+  if (pa === 'scenesSmooth') return sceneDetectCmd(o, { smooth:true });
   if (pa === 'gradeReset'){ push(); o.grade = null; return refreshAll(); }
   if (pa === 'gradeCopy'){ gradeClip = structuredClone(o.grade || null); return toast('Color copied — select another clip and Paste'); }
   if (pa === 'gradePaste'){ if (!gradeClip) return toast('Copy a clip’s color first'); push(); o.grade = structuredClone(gradeClip); return refreshAll(); }
@@ -1544,7 +1584,7 @@ async function openProject(){
     try { const buf = await DESK.readFile(mm.path); const m = await importOne(new File([buf], mm.name, { type:mimeFor(mm.name, mm.type) }), mm.id, mm.path); if (!m) missing.push(mm.name); }
     catch (e) { missing.push(mm.name); }
   }
-  Object.assign(S, { aspect:'16:9', res:1080, fps:30, fit:'fit', bg:'blur', bgColor:'#111111', clips:[], texts:[], audios:[], overlays:[], effects:[], markers:[], inP:null, outP:null, hide:{}, mute:{} }, j.state || {}); renderLabels();
+  Object.assign(S, { aspect:'16:9', res:1080, exportQuality:'max', fps:30, fit:'fit', bg:'blur', bgColor:'#111111', clips:[], texts:[], audios:[], overlays:[], effects:[], markers:[], inP:null, outP:null, hide:{}, mute:{} }, j.state || {}); renderLabels();
   const ok = o => !!media[o.mediaId];
   S.clips = S.clips.filter(ok); S.audios = S.audios.filter(ok); S.overlays = S.overlays.filter(ok);
   $('#pname').value = j.name || 'Project'; projPath = r.path; playT = 0; addRecent(j.name, r.path);
@@ -1568,7 +1608,7 @@ function clearProject(){
   for (const m of Object.values(media)){ for (const e2 of [m.el, m.el2]) if (e2 && e2.tagName === 'VIDEO'){ e2.pause(); e2.removeAttribute('src'); e2.load(); e2.remove(); } }
   for (const k in media) delete media[k];
   for (const d of [audioEls, ovEls]) for (const id in d){ d[id].pause(); d[id].remove(); delete d[id]; }
-  Object.assign(S, { aspect:'16:9', res:1080, fps:30, fit:'fit', bg:'blur', bgColor:'#111111', clips:[], texts:[], audios:[], overlays:[], effects:[], markers:[], inP:null, outP:null, hide:{}, mute:{} });
+  Object.assign(S, { aspect:'16:9', res:1080, exportQuality:'max', fps:30, fit:'fit', bg:'blur', bgColor:'#111111', clips:[], texts:[], audios:[], overlays:[], effects:[], markers:[], inP:null, outP:null, hide:{}, mute:{} });
   H.past = []; H.future = []; sel = null; cropMode = null; playT = 0; projPath = '';
   Object.assign(reel, { items:[], music:null, musicStart:0, songs:[], songMode:null, songAsked:false, selected:null });
   $('#pname').value = 'My Vlog'; renderLabels(); applyCanvasSize(); refreshAll(); seekPreview(); updUndo(); renderPanel(); markSaved();
@@ -1851,7 +1891,7 @@ const LOOKS = {
   vintage:['📼 Vintage', { fade:40, sat:-30, temp:20, con:-10 }], bw:['⚫ B&W punch', { sat:-100, con:35, sharp:20 }],
   vivid:['🌈 Vivid pop', { vib:60, sat:15, con:15, sharp:15 }], golden:['🌅 Golden hour', { temp:45, tint:8, hi:-15, sh:15, vib:20 }],
 };
-async function autoColor(c){
+async function autoColor(c, options = {}){
   const m = media[c.mediaId]; if (!m || !m.el) return;
   if (m.type === 'video' && m.el.readyState < 2) return toast('Wait for the clip to load, then try again');
   const t = document.createElement('canvas'); t.width = 96; t.height = Math.max(1, Math.round(96 * m.h / m.w)); const g = t.getContext('2d', { willReadFrequently:true });
@@ -1859,19 +1899,29 @@ async function autoColor(c){
   const d = g.getImageData(0, 0, t.width, t.height).data, L = []; let r = 0, b = 0;
   for (let i = 0; i < d.length; i += 4){ L.push(.2126 * d[i] + .7152 * d[i + 1] + .0722 * d[i + 2]); r += d[i]; b += d[i + 2]; }
   L.sort((x, y) => x - y); const n = L.length, p5 = L[Math.floor(n * .05)] / 255, p95 = L[Math.floor(n * .95)] / 255, mean = L.reduce((a, x) => a + x, 0) / n / 255;
-  push(); c.grade = { ...GRADE_DEF, ...(c.grade || {}) };
+  if (!options.noHistory) push(); c.grade = { ...GRADE_DEF, ...(c.grade || {}) };
   c.grade.exp = Math.round(clamp(Math.log2(.46 / Math.max(.05, mean)) * 50, -60, 60));
   c.grade.con = Math.round(clamp((.9 / Math.max(.2, p95 - p5) - 1) * 60, -20, 40));
   c.grade.temp = Math.round(clamp((b - r) / (n * 255) * 220, -40, 40));
   c.grade.vib = 15;
-  refreshAll(); toast('Auto color applied — fine-tune it with the sliders');
+  if (!options.noRefresh) refreshAll();
+  if (!options.quiet) toast('Auto color applied — fine-tune it with the sliders');
+}
+async function autoColorAll(){
+  const clips = S.clips.filter(c => { const m = media[c.mediaId]; return m && m.el && m.w && m.h && (m.type !== 'video' || m.el.readyState >= 2); });
+  if (!clips.length) return toast('No loaded photos or videos to auto color');
+  const skipped = S.clips.length - clips.length;
+  push();
+  for (const c of clips) await autoColor(c, { noHistory:true, noRefresh:true, quiet:true });
+  refreshAll();
+  toast(`Auto color applied to ${clips.length} clip${clips.length === 1 ? '' : 's'}${skipped ? ` · ${skipped} not loaded and skipped` : ''} — undo once to restore the edit`);
 }
 let gradeClip = null;
 
 /* draws one clip at a moment inside it; used for normal playback and for transitions (which also draw the clip before) */
 function drawClipAt(c, local, o = {}){
   const m = media[c.mediaId]; if (!m || !m.el) return false;
-  if (m.type === 'video' && m.el.readyState < 2) return false;
+  if (m.type === 'video' && (elFor(c) || m.el).readyState < 2) return false;
   const W = cv.width, Hh = cv.height;
   const s = sourceFor(c, m, srcT(c, local)), cr = c.crop || FULL;
   const sr = [cr.x * s.w, cr.y * s.h, Math.max(1, cr.w * s.w), Math.max(1, cr.h * s.h)];
@@ -1919,9 +1969,9 @@ function renderFrame(t = playT){
   ctx.fillStyle = S.bg === 'white' ? '#ffffff' : S.bg === 'color' ? S.bgColor : '#000000'; ctx.fillRect(0, 0, W, Hh);
   const ca = clipAt(t);
   if (ca){
-    const c = ca.c, l = ca.local, TD = c.tdur || .5, p = c.trans !== 'none' && l < TD ? l / TD : 1, e = easeOut(p), mn = Math.min(W, Hh);
+    const c = ca.c, l = ca.local, TD = c.tdur || .5, p = c.trans !== 'none' && l < TD ? l / TD : 1, e = easeSmooth(p), mn = Math.min(W, Hh);
     const prev = ca.i > 0 ? S.clips[ca.i - 1] : null;
-    const drawPrev = (o = {}) => { if (!prev) return false; const pm = media[prev.mediaId]; if (pm && pm === media[c.mediaId] && pm.type === 'video') return false; return drawClipAt(prev, clipLen(prev) - .001, { bg:true, ...o }); };
+    const drawPrev = (o = {}) => { if (!prev) return false; return drawClipAt(prev, clipLen(prev) - .001, { bg:true, ...o }); };
     const veil = (col, a) => { if (a <= 0) return; ctx.fillStyle = col; ctx.globalAlpha = clamp(a, 0, 1); ctx.fillRect(0, 0, W, Hh); ctx.globalAlpha = 1; };
     if (p >= 1) drawClipAt(c, l, { bg:true });
     else switch (c.trans){
@@ -2138,7 +2188,7 @@ function drawText(x, lt){
   else if (x.anim === 'zoom'){ sc = 1 + 1.4 * (1 - easeOut(inP)); alpha *= Math.min(inP, outP); }
   let tblur = x.anim === 'blur' ? (1 - easeOut(inP)) * px * .35 : 0; if (x.anim === 'blur') alpha *= Math.min(inP, outP);
   ctx.save(); if (tblur > .3) ctx.filter = `blur(${tblur.toFixed(1)}px)`;
-  ctx.font = `${x.bold ? 800 : 500} ${px}px "${x.font}", "Plus Jakarta Sans", sans-serif`;
+  ctx.font = `${fontCss(x.font, x.bold ? 800 : 500, px)}, "Plus Jakarta Sans", sans-serif`;
   ctx.textBaseline = 'middle'; ctx.textAlign = x.align;
   const full = (x.text || ' ').split('\n'), lines = txt.split('\n'), lh = px * 1.22;
   const bw = Math.max(...full.map(l => ctx.measureText(l || ' ').width)), bh = lh * full.length, pad = px * .35;
@@ -2670,15 +2720,15 @@ function openExport(){
     <div class="kv"><span>Size</span><span>${w} × ${h} (${S.res}p, ${S.aspect})</span><span>Length</span><span>${fmt(T)}</span><span>Format</span><span>${mime.startsWith('video/mp4') ? 'MP4' : 'WebM'} · ${S.fps || 30} fps</span><span>Time needed</span><span>about ${fmt(T)} (plays through once)</span></div>
     ${hasR ? `<div class="prow"><label>What to export</label><div class="seg" id="xRange"><button data-val="range" class="on">In–Out only (${fmt(rA)}–${fmt(rB)})</button><button data-val="all">Whole video</button></div></div>` : ''}
     <div class="prow"><label>Resolution</label><div class="seg" id="xRes">${[[720,'720p'],[1080,'1080p'],[1440,'2K'],[2160,'4K']].map(([v, l]) => `<button data-val="${v}" class="${S.res === v ? 'on' : ''}">${l}</button>`).join('')}</div></div>
-    <div class="prow"><label>Quality</label><div class="seg" id="xQual"><button data-val="std">Standard</button><button data-val="high" class="on">High</button><button data-val="max">Maximum</button></div></div>
-    <div class="hint">Keep this tab open and visible while it renders.</div>
+    <div class="prow"><label>Quality</label><div class="seg" id="xQual"><button data-val="std" class="${S.exportQuality === 'std' ? 'on' : ''}">Standard</button><button data-val="high" class="${S.exportQuality === 'high' ? 'on' : ''}">High</button><button data-val="max" class="${(S.exportQuality || 'max') === 'max' ? 'on' : ''}">Maximum</button></div></div>
+    <div class="hint">Maximum quality is selected by default and remembered in this project. The same export settings apply to the timeline, photos and videos, overlays, layouts and Reel Maker. Keep this tab open and visible while it renders.</div>
     <div class="row"><button class="btn" data-x="close">Cancel</button><button class="btn pri" data-x="go">${ic('export')}Start export</button></div>`;
   $('#mExport').classList.add('on');
 }
 function closeExport(){ $('#mExport').classList.remove('on'); }
 $('#bExport').onclick = openExport;
 dlg.addEventListener('click', e => {
-  const sb = e.target.closest('#xRange button, #xQual button, #xRes button'); if (sb && sb.closest('#xRes')){ S.res = +sb.dataset.val; const [w2, h2] = canvasSize(), sz = dlg.querySelector('.kv span:nth-child(2)'); if (sz) sz.textContent = `${w2} × ${h2} (${S.res >= 2160 ? '4K' : S.res >= 1440 ? '2K' : S.res + 'p'}, ${S.aspect})`; } if (sb){ sb.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === sb)); return; }
+  const sb = e.target.closest('#xRange button, #xQual button, #xRes button'); if (sb && sb.closest('#xRes')){ S.res = +sb.dataset.val; const [w2, h2] = canvasSize(), sz = dlg.querySelector('.kv span:nth-child(2)'); if (sz) sz.textContent = `${w2} × ${h2} (${S.res >= 2160 ? '4K' : S.res >= 1440 ? '2K' : S.res + 'p'}, ${S.aspect})`; } if (sb && sb.closest('#xQual')) S.exportQuality = sb.dataset.val; if (sb){ sb.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === sb)); return; }
   const x = e.target.closest('[data-x]')?.dataset.x;
   if (x === 'close') closeExport();
   else if (x === 'go') startExport();
@@ -2691,7 +2741,7 @@ async function primeFrame(){
   renderFrame();
 }
 async function startExport(){
-  const useR = !!($('#xRange') && $('#xRange .on') && $('#xRange .on').dataset.val === 'range'), q = ($('#xQual .on') || {}).dataset ? $('#xQual .on').dataset.val : 'high';
+  const useR = !!($('#xRange') && $('#xRange .on') && $('#xRange .on').dataset.val === 'range'), q = ($('#xQual .on') || {}).dataset ? $('#xQual .on').dataset.val : (S.exportQuality || 'max');
   const rStart = useR ? (S.inP || 0) : 0, rEnd = useR ? (S.outP != null ? S.outP : totalDur()) : totalDur();
   const vbr = (S.res >= 2160 ? 40e6 : S.res >= 1440 ? 20e6 : S.res >= 1080 ? 10e6 : 6e6) * (q === 'max' ? 2 : q === 'std' ? .6 : 1);
   applyCanvasSize(true);
@@ -2808,12 +2858,12 @@ function renderStudio(){
   const it = reel.selected != null ? reel.items[reel.selected] : null, sm = it && media[it.mid], mus = reel.music && media[reel.music];
   const sugs = reel.analyzed ? suggestStyles(reel.items.filter(x => media[x.mid])) : [], sug = sugs[0] && REEL_STYLES.find(s => s.id === sugs[0].id);
   const style = reel.style === 'auto' ? (sug || REEL_STYLES[0]) : (REEL_STYLES.find(s => s.id === reel.style) || REEL_STYLES[0]);
-  const nDup = reel.items.filter(x => x.dup && media[x.mid]).length, styleBtn = s => `<button class="preset" data-rsid="${s.id}" style="font-size:12px;font-weight:700;padding:10px 4px;background:linear-gradient(135deg,${s.colors[0]},${s.colors[1]});color:#fff;${reel.style === s.id ? 'box-shadow:0 0 0 3px #fff inset' : ''}">${s.emoji} ${s.name}</button>`;
+  const nDup = reel.items.filter(x => x.dup && media[x.mid]).length, styleBtn = s => `<button class="preset" data-rsid="${s.id}" title="${esc(s.desc || s.name)}" style="font-size:12px;font-weight:700;padding:10px 4px;background:linear-gradient(135deg,${s.colors[0]},${s.colors[1]});color:#fff;${reel.style === s.id ? 'box-shadow:0 0 0 3px #fff inset' : ''}">${s.emoji} ${s.name}${s.desc ? `<small style="display:block;margin-top:4px;font-size:10px;font-weight:500;line-height:1.3">${esc(s.desc)}</small>` : ''}</button>`;
   const totalManual = reel.items.reduce((a, x) => a + Math.min(x.dur, x.b - x.a), 0), nPh = reel.items.filter(x => media[x.mid] && media[x.mid].type !== 'video').length;
   studio().innerHTML = `
   <div class="st-top"><button class="btn sm" data-sa="back">${ic('back')}Back to editor</button><div class="st-title">✨ Reel Maker</div><div class="sp"></div>
     <div class="seg" data-st="mode" style="width:260px">${[['auto','⚡ Automatic'],['manual','✋ Manual']].map(([v, l]) => `<button data-val="${v}" class="${reel.mode === v ? 'on' : ''}">${l}</button>`).join('')}</div>
-    ${reel.mode === 'auto' && reel.items.length ? `<button class="btn" data-sa="remix" title="Same settings, different moments and order">🎲 New mix</button><button class="btn" data-sa="variants" title="Make 3 different versions and pick the one you like">🎞️ 3 versions</button>` : ''}<button class="btn pri" data-sa="make" ${reel.items.length ? '' : 'disabled style="opacity:.5"'}>Create reel →</button></div>
+    ${reel.mode === 'auto' && reel.items.length ? `<button class="btn" data-sa="remix" title="Same settings, different moments and order">🎲 New mix</button><button class="btn" data-sa="variants" title="Compare three distinct looks, pacing styles and story orders">🎞️ 3 creative versions</button>` : ''}<button class="btn pri" data-sa="make" ${reel.items.length ? '' : 'disabled style="opacity:.5"'}>Create reel →</button></div>
   <div class="st-body">
     <section class="st-col st-clips">
       <h3>1 · Your clips (${reel.items.length})</h3>
@@ -2840,10 +2890,14 @@ function renderStudio(){
       ${songsHTML()}
       <label class="chk"><input type="checkbox" data-rc="keepSound" ${reel.keepSound ? 'checked' : ''}>Keep the clips' own sound${mus ? ' (music goes quieter)' : ''}</label>
       ${!mus && reel.mode === 'auto' ? `<div class="hint" style="color:#fbbf24">No song picked: the clips' own sound will change at every cut, which can sound choppy or like it's looping. Add a song for a smooth reel.</div>` : ''}
-      <h3 style="margin-top:16px">3 · Style</h3>
+      <h3 style="margin-top:16px">3 · Choose a reel template</h3>
+      <div class="hint" style="margin-bottom:8px">Each template applies a complete look—color, title, motion, transitions and effects—to your reel.</div>
       <button class="preset full" data-rsid="auto" style="width:100%;font-size:13px;font-weight:800;padding:12px 6px;margin-bottom:8px;background:linear-gradient(135deg,#0ea5e9,#a855f7);color:#fff;${reel.style === 'auto' ? 'box-shadow:0 0 0 3px #fff inset' : ''}">🪄 Auto — pick the style from my clips${reel.style === 'auto' && sug ? `: ${sug.emoji} ${esc(sug.name)}` : ''}</button>
       ${sug ? `<div class="vo" style="margin-bottom:8px"><div style="flex:1"><b>🔍 ${esc(sugs[0].why[0].toUpperCase() + sugs[0].why.slice(1))}</b><div class="hint">Suggested: ${sugs.slice(0, 3).map(x => { const s2 = REEL_STYLES.find(y => y.id === x.id); return s2.emoji + ' ' + esc(s2.name); }).join(' · ')}</div></div>${reel.style !== sug.id && reel.style !== 'auto' ? `<button class="btn sm" data-rsid="${sug.id}">Use</button>` : ''}</div>` : reel.items.length && !reel.analyzed ? '<div class="hint" style="margin-bottom:8px">🔍 Looking at your clips…</div>' : ''}
-      <div class="pgrid sec">${REEL_STYLES.filter(s => s.pack !== 'wild').map(styleBtn).join('')}</div>
+      <h4 class="st-h4">✨ Fresh creator trends</h4>
+      <div class="pgrid sec">${REEL_STYLES.filter(s => s.pack === 'fresh').map(styleBtn).join('')}</div>
+      <h4 class="st-h4">More styles</h4>
+      <div class="pgrid sec">${REEL_STYLES.filter(s => s.pack !== 'wild' && s.pack !== 'fresh').map(styleBtn).join('')}</div>
       <h4 class="st-h4">🐾 Wildlife & nature pack</h4>
       <div class="pgrid sec">${REEL_STYLES.filter(s => s.pack === 'wild').map(styleBtn).join('')}</div>
       <label class="chk"><input type="checkbox" data-rc="title" ${reel.title ? 'checked' : ''}>Add the style's title (“${esc(style.title.text)}”)</label>
@@ -3219,7 +3273,7 @@ async function buildReel(opt = {}){
   if (reel.title && style.title) S.texts.push({ ...TEXT_BASE, ...style.title, id:uid(), start:0, dur:Math.min(2.5, vEnd * .3) });
   if (reel.title && style.end && vEnd > 5) S.texts.push({ ...TEXT_BASE, ...style.end, id:uid(), start:vEnd - 2.2, dur:2.2 });
   addReelFx2(style, vEnd);
-  for (const x of S.texts) document.fonts?.load(`${x.bold ? 800 : 500} 40px "${x.font}"`).then(scheduleRender).catch(() => {});
+  for (const x of S.texts) document.fonts?.load(fontCss(x.font, x.bold ? 800 : 500, 40)).then(scheduleRender).catch(() => {});
   if (opt.quiet){ if (!opt.keepBusy) progressDone(); return; }
   progress('Making your reel…', 100, 'Done'); progressDone();
   sel = null; playT = 0; closeStudio();
@@ -3395,6 +3449,10 @@ function suggestStyles(items){
   if (p.warm > .45 && !wild) add('goldenhour', 'warm golden light', .78);
   if (p.skin > .1) add(p.nVid ? 'day' : 'photodump', 'people in most shots', .76);
   if (p.mean < .3 && p.sat > .35 && !wild) add('party', 'dark, colourful night shots', .72);
+  if (!p.nVid && p.n >= 3) add('keepsake', 'photo-first memories suit a scrapbook-style story', .8);
+  if (p.nVid && p.motion > .12 && p.sat > .4) add('pixelpop', 'bright, high-motion clips suit a punchy digital cut', .77);
+  if (p.nVid && p.motion < .035 && p.spread < .35) add('slowburn', 'quiet scenes suit an unhurried film edit', .72);
+  if (p.nVid && p.sharp > .65 && p.spread > .45) add('editorial', 'crisp, high-contrast footage suits bold headlines', .71);
   add(p.nVid ? 'beat' : 'photodump', 'works with any clips', .3);
   return out.sort((a, b) => b.s - a.s);
 }
@@ -3467,16 +3525,51 @@ Object.assign(REEL_FX, {
 const DOC_CAP = { font:'Montserrat', size:60, bold:true, color:'#ffffff', shadow:true, box:false, anim:'slide', align:'left', x:.36, y:.84 };
 const INFO_CAP = { font:'Montserrat', size:34, bold:false, color:'#f5f5f4', box:true, boxColor:'#000000', boxAlpha:.45, anim:'fade', align:'left', x:.36, y:.92 };
 
-/* ---------- 3 versions to choose from ---------- */
+/* Choose contrasting visual grammars while keeping each alternative relevant to the footage. */
+function creativeStyleDistance(a, b){
+  if (!a || !b) return 1;
+  const mismatch = (x, y) => x === y ? 0 : 1;
+  const setDistance = (x = [], y = []) => {
+    const A = new Set(x), B = new Set(y), union = new Set([...A, ...B]);
+    if (!union.size) return 0;
+    let same = 0; for (const v of A) if (B.has(v)) same++;
+    return 1 - same / union.size;
+  };
+  const palette = s => (s.colors || []).join('|');
+  const voice = s => [s.title && s.title.font, s.title && s.title.anim, s.title && s.title.bold].join('|');
+  const speed = s => (s.speeds || []).map(x => Math.round(x * 100) / 100).join('|');
+  return .18 * mismatch(a.filter, b.filter) + .14 * mismatch(a.beats, b.beats)
+    + .18 * setDistance(a.trans, b.trans) + .12 * setDistance(a.motion, b.motion)
+    + .1 * mismatch(speed(a), speed(b)) + .1 * mismatch(voice(a), voice(b))
+    + .1 * mismatch(palette(a), palette(b)) + .08 * mismatch(a.pack || '', b.pack || '');
+}
+function creativeVersionPlan(items, preferred, order = 'story', seed = 1){
+  const suggestions = suggestStyles(items), fits = new Map(suggestions.map(x => [x.id, x.s]));
+  const first = REEL_STYLES.find(s => s.id === preferred) || REEL_STYLES.find(s => s.id === (suggestions[0] && suggestions[0].id)) || REEL_STYLES[0];
+  const selected = [first];
+  while (selected.length < 3){
+    const candidates = REEL_STYLES.filter(s => !selected.some(x => x.id === s.id) && (s.pack !== 'wild' || fits.has(s.id)));
+    if (!candidates.length) break;
+    candidates.sort((a, b) => {
+      const score = s => {
+        const fit = fits.has(s.id) ? fits.get(s.id) : .22;
+        const novelty = selected.reduce((sum, x) => sum + creativeStyleDistance(s, x), 0) / selected.length;
+        return fit * .55 + novelty * .45;
+      };
+      return score(b) - score(a);
+    });
+    selected.push(candidates[0]);
+  }
+  const orders = [order, ...['story','shuffle','order'].filter(x => x !== order)];
+  return selected.map((style, i) => ({ style:style.id, seed:seed + [0, 7, 13][i], order:orders[i] }));
+}
 let variants = null;
 async function makeVariants(){
   if (!reel.items.some(it => media[it.mid])) return;
   if (reel.songs.filter(id => media[id]).length > 1 && !reel.songMode){ reel.songMode = 'one'; reel.songAsked = true; }
   const base = reel.seed || 1, st0 = reel.style, ord0 = reel.order;
   progress('Making 3 versions…', 2, 'Looking at your clips'); await analyzeReel((p, n) => progress('Making 3 versions…', 2 + p * 30, 'Looking at ' + n));
-  const sug = suggestStyles(reel.items.filter(it => media[it.mid])).map(x => x.id), first = st0 === 'auto' ? (sug[0] || 'beat') : st0;
-  const second = sug.find(id => id !== first) || REEL_STYLES.find(s => s.id !== first).id;
-  const plan = [{ style:first, seed:base, order:ord0 }, { style:second, seed:base + 7, order:ord0 }, { style:first, seed:base + 13, order:ord0 === 'story' ? 'shuffle' : 'story' }];
+  const plan = creativeVersionPlan(reel.items.filter(it => media[it.mid]), st0, ord0, base);
   const out = [];
   for (let i = 0; i < plan.length; i++){
     Object.assign(reel, plan[i]); progress('Making 3 versions…', 35 + i * 20, `Version ${'ABC'[i]}`);
@@ -3486,14 +3579,14 @@ async function makeVariants(){
   }
   Object.assign(reel, { style:st0, seed:base, order:ord0 });
   variants = { list:out, cur:0 }; restore(out[0].snap); progressDone(); closeStudio(); refreshAll(); fitZoom(); playT = 0; seekPreview(); renderVariants();
-  toast('3 versions ready — tap A, B or C to compare, then Keep', 4500);
+  toast('3 creative directions ready — compare their looks and story orders, then Keep', 4500);
 }
 function renderVariants(){
   let b = $('#varBar'); if (!variants){ if (b) b.remove(); return; }
   if (!b){ b = document.createElement('div'); b.id = 'varBar'; b.className = 'varbar'; document.body.appendChild(b); b.addEventListener('click', e => { const x = e.target.closest('[data-var]'); if (!x) return; const v = x.dataset.var;
     if (v === 'keep'){ variants = null; renderVariants(); markDirtyToast(); return; }
     variants.cur = +v; restore(variants.list[+v].snap); playT = 0; fitZoom(); seekPreview(); renderVariants(); if (!playing) play(); }); }
-  b.innerHTML = `<b>Pick a version</b>${variants.list.map((x, i) => `<button class="varbtn ${i === variants.cur ? 'on' : ''}" data-var="${i}"><span class="vth" style="background-image:url('${burl(x.thumb)}')"></span><span><b>${'ABC'[i]} · ${esc(x.name)}</b><small>${x.n} clips · ${fmtLong(x.len)} · ${x.order === 'story' ? '📖 story' : x.order === 'order' ? '➡️ in order' : '🔀 shuffled'}</small></span></button>`).join('')}<button class="btn pri sm" data-var="keep">✓ Keep</button>`;
+  b.innerHTML = `<b>Pick a creative direction</b>${variants.list.map((x, i) => `<button class="varbtn ${i === variants.cur ? 'on' : ''}" data-var="${i}"><span class="vth" style="background-image:url('${burl(x.thumb)}')"></span><span><b>${'ABC'[i]} · ${esc(x.name)}</b><small>${x.n} clips · ${fmtLong(x.len)} · ${x.order === 'story' ? '📖 story arc' : x.order === 'order' ? '➡️ original order' : '🔀 shuffled'}</small></span></button>`).join('')}<button class="btn pri sm" data-var="keep">✓ Keep</button>`;
 }
 function markDirtyToast(){ toast('Kept — everything is editable'); }
 
@@ -3853,7 +3946,8 @@ function addEffect(type){
   refreshAll(); seekPreview(); toast(`${FX_BY_ID[type][2]} added — drag or stretch it on the Effects track`);
 }
 function effectsHTML(){
-  return `<div class="hint" style="margin-bottom:10px">Put the playhead where you want the effect, then tap one. It appears on the <b style="color:var(--text)">Effects</b> track — drag it to move it, drag its edges to make it longer or shorter.</div>
+  return `<div class="hint" style="margin-bottom:10px">Put the playhead where you want an effect, then tap one. Or apply a ready-made recipe to the whole edit.</div>
+  <h3>Effect templates</h3><div class="pgrid">${EFFECT_TEMPLATES.map(p => `<button class="preset fxcard" data-fxpreset="${p.id}" title="${esc(p.note)}">${esc(p.name)}</button>`).join('')}</div>
   <div class="chips">${FX_CATS.map(c => `<button class="chip ${c === fxCat ? 'on' : ''}" data-fxcat="${c}">${c}</button>`).join('')}</div>
   <div class="pgrid">${EFFECTS.filter(e => e[0] === fxCat).map(e => `<button class="preset fxcard" data-fx="${e[1]}">${esc(e[2])}</button>`).join('')}</div>
   <div class="hint" style="margin-top:12px">${EFFECTS.length} effects. Each one has a Strength slider on the right after you add it.</div>
@@ -3862,9 +3956,46 @@ function effectsHTML(){
 
 /* ---------- Transitions panel: put a transition exactly where the playhead is ---------- */
 const TRANS_EMOJI = { none:'⛔', fade:'🌫️', dissolve:'🔀', dip:'⬛', zoom:'🔍', zoomout:'🔎', slide:'➡️', slideup:'⬆️', push:'⏩', wipe:'🧹', circle:'⭕', spin:'🌀', whip:'💨', blur:'💧', flash:'⚡', glitch:'👾', zoomblur:'🎯', whipup:'⏫', swipe:'👉', lightleak:'🌅', filmburn:'🔥', chroma:'🌈', shake:'📳', clock:'🕐', diamond:'🔷', blinds:'🪟', doors:'🚪' };
-let transDur = .5;
+const EFFECT_TEMPLATES = [
+  { id:'soft-film', name:'Soft Film', note:'Subtle grain and warm light leaks', fx:[['oldfilm',.18],['leaksweep',.2]] },
+  { id:'cinematic-focus', name:'Cinematic Focus', note:'A gentle focus pull with a cool film grade', fx:[['focuspull',.35],['tealgrade',.25]] },
+  { id:'beat-pop', name:'Beat Pop', note:'A light zoom pulse and flash on the beat', fx:[['punch',.32],['beatflash',.18]] },
+  { id:'retro-tape', name:'Retro Tape', note:'Analog film texture and restrained color split', fx:[['oldfilm',.28],['chromashift',.16]] },
+];
+function applyEffectTemplate(id){
+  const p = EFFECT_TEMPLATES.find(x => x.id === id);
+  if (!p) return;
+  if (!S.clips.length) return toast('Add a photo or video first');
+  const missing = p.fx.filter(([type]) => !FX_BY_ID[type]).map(([type]) => type);
+  if (missing.length) return toast(`Effect template unavailable: ${missing.join(', ')}`, 5000);
+  const dur = Math.max(.5, videoEnd() || totalDur());
+  push();
+  for (const [type, k] of p.fx) S.effects.push({ id:uid(), type, start:0, dur, k });
+  refreshAll(); toast(`“${p.name}” effect recipe applied across the edit`);
+}
+const TRANSITION_PRESETS = [
+  { id:'soft-film', name:'Soft Film', type:'dissolve', duration:.7 },
+  { id:'gentle-fade', name:'Gentle Fade', type:'fade', duration:.8 },
+  { id:'quick-zoom', name:'Quick Zoom', type:'zoom', duration:.38 },
+  { id:'dream-blur', name:'Dream Blur', type:'blur', duration:.65 },
+  { id:'smooth-slide', name:'Smooth Slide', type:'slide', duration:.55 },
+];
+let transDur = .65;
+function applyTransitionPreset(id){
+  const p = TRANSITION_PRESETS.find(x => x.id === id);
+  if (!p) return;
+  if (S.clips.length < 2) return toast('Add at least 2 clips first');
+  push(); transDur = p.duration; lastTrans = p.type;
+  S.clips.slice(1).forEach(c => { c.trans = p.type; c.tdur = p.duration; });
+  refreshAll(); if (tab === 'transitions') renderPanel();
+  toast(`“${p.name}” transition template applied to ${S.clips.length - 1} cuts`);
+}
 function transHTML(){
-  return `<div class="hint" style="margin-bottom:10px">Put the playhead where you want a transition and tap one. If the playhead is in the middle of a clip, EasyCut cuts the clip there and adds the transition.</div>
+  return `<div class="hint" style="margin-bottom:10px">Use a smooth style across every cut, or add a transition at the playhead.</div>
+  <h3>Transition templates</h3><div class="pgrid">${TRANSITION_PRESETS.map(p => `<button class="preset fxcard" data-trpreset="${p.id}">${esc(p.name)}<small style="display:block;color:var(--mut);font-weight:500">${p.duration.toFixed(2)}s</small></button>`).join('')}</div>
+  <button class="btn sm pri full" data-act="trScenes" style="margin:10px 0">🎬 Detect scenes + apply smooth dissolves</button>
+  <div class="hint">Scans video clips for hard scene changes, splits at detected cuts and adds a subtle cross-dissolve to each edit point.</div>
+  <h3>Transitions</h3><div class="hint" style="margin-bottom:10px">If the playhead is in the middle of a clip, EasyCut cuts the clip there and adds the transition.</div>
   <div class="pgrid">${TRANS.filter(t => t[0] !== 'none').map(([v, l]) => `<button class="preset fxcard" data-tr="${v}">${TRANS_EMOJI[v] || ''} ${l}</button>`).join('')}</div>
   <div class="prow" style="margin-top:14px"><label>Length</label><div class="rng"><input type="range" data-trdur="1" min=".2" max="1.5" step=".05" value="${transDur}"><span class="rv">${transDur.toFixed(1)}s</span></div></div>
   <div class="acts"><button class="btn sm" data-act="trAll">Use the last one on every cut</button><button class="btn sm" data-act="trRandom">🎲 Random on every cut</button><button class="btn sm danger" data-act="trNone">Remove all</button></div>`;
@@ -3939,6 +4070,28 @@ REEL_STYLES.push(
   { id:'unbox', name:'Unboxing / Review', emoji:'📦', colors:['#0f172a','#38bdf8'], beats:2, trans:['zoom','slide','push'], filter:'cool', vig:.1, motion:['in','out'], speeds:[1],
     title:{ text:"WHAT'S INSIDE? 📦", font:'Archivo Black', size:110, bold:false, color:'#ffffff', box:true, boxColor:'#0ea5e9', boxAlpha:1, anim:'pop', y:.15 } },
 );
+
+/* Original reel recipes inspired by Canva's public 2027 design-trend themes:
+   https://www.canva.com/design-trends/ */
+REEL_STYLES.push(
+  { id:'keepsake', name:'Keepsake Scrapbook', pack:'fresh', emoji:'📜', desc:'Photo memories, dates and film texture', colors:['#78350f','#fbbf24'], beats:3, trans:['dissolve','slide','filmburn'], filter:'vintage', vig:.18, motion:['in','out'], photoMotion:['in','left','out','reveal'], speeds:[1],
+    title:{ text:'little moments, kept forever', font:'Caveat', size:118, bold:false, color:'#fff7ed', shadow:true, anim:'word', y:.18 } },
+  { id:'pixelpop', name:'Pixel Pop', pack:'fresh', emoji:'🟪', desc:'Glowing color, glitch cuts and digital type', colors:['#0e7490','#c026d3'], beats:1, trans:['glitch','chroma','shake','whip'], filter:'y2k', vig:.15, motion:['in','out'], photoMotion:['snap','inleft','inright','diag'], speeds:[1,1.25],
+    title:{ text:'PIXEL / REPLAY', font:'Monoton', size:105, bold:false, color:'#67e8f9', stroke:true, strokeColor:'#701a75', glow:true, anim:'type', y:.18 } },
+  { id:'slowburn', name:'Slow Burn', pack:'fresh', emoji:'🕯️', desc:'Unhurried cuts, warm film and soft fades', colors:['#7c2d12','#d6d3d1'], beats:4, trans:['dissolve','fade','lightleak'], filter:'film', vig:.2, motion:['in','left','out'], photoMotion:['in','out','left','reveal'], speeds:[.75,1],
+    title:{ text:'stay a little longer', font:'Playfair Display', size:84, bold:false, color:'#fff7ed', shadow:true, anim:'fade', y:.5 } },
+  { id:'editorial', name:'Bold Editorial', pack:'fresh', emoji:'🔠', desc:'Punchy headlines and confident hard cuts', colors:['#111827','#f43f5e'], beats:1, trans:['flash','whip','slide','none'], filter:'bleach', vig:.12, motion:['in','out'], photoMotion:['snap','in','inleft','out'], speeds:[1,1.15],
+    title:{ text:'MAKE IT MATTER', font:'Anton', size:150, bold:false, color:'#ffffff', stroke:true, anim:'zoom', y:.2 } },
+  { id:'wonder', name:'Wonderstruck', pack:'fresh', emoji:'🪄', desc:'Dreamy motion, sparkle and storybook color', colors:['#6d28d9','#ec4899'], beats:3, trans:['blur','dissolve','lightleak'], filter:'dream', vig:.08, motion:['in','out','up'], photoMotion:['in','reveal','outup','eye'], speeds:[.75,1],
+    title:{ text:'a little bit of magic', font:'Playfair Display', size:96, bold:false, color:'#fdf4ff', shadow:true, glow:true, anim:'blur', y:.48 } },
+);
+Object.assign(REEL_FX, {
+  keepsake:['datestamp all .75','grain all .3','leak start .6','fadeout end 1'],
+  pixelpop:['beatglitch all .7','chromashift all .5','scan all .35'],
+  slowburn:['grain all .25','leak start .5','fadein start 1','fadeout end 1'],
+  editorial:['punch all .6','beatflash all .25','shine start .45'],
+  wonder:['sparkle all .45','bokeh all .35','glow all .3','fadeout end 1'],
+});
 
 TEMPLATES.push(
   { cat:'Intros', name:'Photo Dump', card:['#18181b','#3f3f46'], dur:3, texts:[T('photo dump 📸', { font:'Caveat', size:160, bold:false, color:'#ffffff', anim:'word', y:.46 }), T('this month', { font:'Montserrat', size:46, color:'#d4d4d8', anim:'fade', y:.58, start:.6 })] },
@@ -4356,33 +4509,69 @@ function meterTick(){
 }
 
 /* ---------- Smart auto-edits: cut at scene changes, remove silent parts ---------- */
+function sceneCutTimes(diffs, times, clipIn, clipOut, step = .2){
+  const sorted = diffs.filter(Number.isFinite).slice().sort((a, b) => a - b);
+  if (sorted.length < 3 || times.length !== diffs.length) return [];
+  const median = sorted[Math.floor(sorted.length / 2)];
+  const deviations = sorted.map(x => Math.abs(x - median)).sort((a, b) => a - b);
+  const mad = deviations[Math.floor(deviations.length / 2)];
+  const threshold = Math.max(.16, median + Math.max(.06, 3.5 * mad));
+  const gap = Math.max(.65, step * 3), cuts = [];
+  diffs.forEach((d, i) => {
+    if (d < threshold || d < (diffs[i - 1] || 0) || d <= (diffs[i + 1] || 0)) return;
+    const t = times[i] - step / 2;
+    if (t - clipIn > .4 && clipOut - t > .4 && (!cuts.length || t - cuts[cuts.length - 1] >= gap)) cuts.push(t);
+  });
+  return cuts;
+}
 async function detectScenes(c, opts = {}){
   const m = media[c.mediaId]; if (!m || m.type !== 'video') return toast('Scene detection works on video clips');
   const v = document.createElement('video'); v.muted = true; v.preload = 'auto'; v.src = m.url; pool.appendChild(v);
-  try { await once(v, 'loadeddata'); } catch (e) { v.remove(); return toast('Could not read that clip'); }
-  const W2 = 48, H2 = Math.max(8, Math.round(48 * m.h / m.w)), cc = document.createElement('canvas'); cc.width = W2; cc.height = H2; const g = cc.getContext('2d', { willReadFrequently:true });
-  const step = opts.step || .2, times = [], diffs = []; let prev = null;
-  for (let t = c.in; t < c.out - .05; t += step){
-    v.currentTime = t; await once(v, 'seeked', 4000).catch(() => {});
-    g.drawImage(v, 0, 0, W2, H2); const d = g.getImageData(0, 0, W2, H2).data;
-    if (prev){ let s2 = 0; for (let i = 0; i < d.length; i += 4) s2 += Math.abs(d[i] - prev[i]) + Math.abs(d[i + 1] - prev[i + 1]) + Math.abs(d[i + 2] - prev[i + 2]); diffs.push(s2 / (W2 * H2 * 3 * 255)); times.push(t); }
-    prev = d; if (!opts.quiet) progress('Finding scene changes…', (t - c.in) / (c.out - c.in) * 100, fmt(t - c.in) + ' of ' + fmt(c.out - c.in));
-  }
-  v.removeAttribute('src'); v.load(); v.remove(); if (!opts.quiet) progressDone();
-  const mean = diffs.reduce((a, x) => a + x, 0) / Math.max(1, diffs.length), sd = Math.sqrt(diffs.reduce((a, x) => a + (x - mean) * (x - mean), 0) / Math.max(1, diffs.length));
-  const thr = Math.max(.1, mean + 2.5 * sd), cuts = [];
-  diffs.forEach((d, i) => { if (d > thr && (i === 0 || d >= diffs[i - 1]) && (i === diffs.length - 1 || d >= diffs[i + 1])){ const tt = times[i] - step / 2; if (tt - c.in > .4 && c.out - tt > .4 && (!cuts.length || tt - cuts[cuts.length - 1] > .5)) cuts.push(tt); } });
-  return cuts;
+  const release = () => { v.pause(); v.removeAttribute('src'); v.load(); v.remove(); if (!opts.quiet) progressDone(); };
+  try {
+    await once(v, 'loadeddata');
+    const W2 = 48, H2 = Math.max(8, Math.round(48 * m.h / m.w)), cc = document.createElement('canvas'); cc.width = W2; cc.height = H2; const g = cc.getContext('2d', { willReadFrequently:true });
+    const step = opts.step || .2, times = [], diffs = []; let prev = null;
+    for (let t = c.in; t < c.out - .05; t += step){
+      if (Math.abs(v.currentTime - t) > .01){ const seek = once(v, 'seeked', 4000); v.currentTime = t; await seek; }
+      g.drawImage(v, 0, 0, W2, H2); const d = g.getImageData(0, 0, W2, H2).data;
+      if (prev){ let s2 = 0; for (let i = 0; i < d.length; i += 4) s2 += Math.abs(d[i] - prev[i]) + Math.abs(d[i + 1] - prev[i + 1]) + Math.abs(d[i + 2] - prev[i + 2]); diffs.push(s2 / (W2 * H2 * 3 * 255)); times.push(t); }
+      prev = d; if (!opts.quiet) progress('Finding scene changes…', (t - c.in) / (c.out - c.in) * 100, fmt(t - c.in) + ' of ' + fmt(c.out - c.in));
+    }
+    return sceneCutTimes(diffs, times, c.in, c.out, step);
+  } finally { release(); }
 }
 function splitClipAtSource(c, srcTimes){
   const i = S.clips.indexOf(c); if (i < 0 || !srcTimes.length) return 0;
   const parts = []; let a = c.in; for (const t of [...srcTimes, c.out]){ if (t - a > .05){ const n = { ...structuredClone(c), id:uid(), in:a, out:t, trans:parts.length ? 'none' : c.trans }; shiftKf(n, (a - c.in) / c.speed); parts.push(n); } a = t; }
   S.clips.splice(i, 1, ...parts); return parts.length - 1;
 }
-async function sceneDetectCmd(c){
-  const cuts = await detectScenes(c); if (!cuts) return 0;
+async function sceneDetectCmd(c, opts = {}){
+  let cuts;
+  try { cuts = await detectScenes(c); } catch (e) { progressDone(); toast(`Scene detection failed: ${e && e.message || e}`, 5000); return 0; }
+  if (!cuts) return 0;
   if (!cuts.length){ toast('No scene changes found in this clip'); return 0; }
-  push(); const n = splitClipAtSource(c, cuts); refreshAll(); toast(`Cut into ${n + 1} scenes`); return n;
+  const i = S.clips.indexOf(c); push(); const n = splitClipAtSource(c, cuts);
+  if (opts.smooth) for (let j = i + 1; j <= i + n; j++){ S.clips[j].trans = 'dissolve'; S.clips[j].tdur = .65; }
+  refreshAll(); toast(`Cut into ${n + 1} scenes${opts.smooth ? ' with smooth dissolves' : ''}`); return n;
+}
+async function applySceneTransitionTemplate(){
+  const videos = S.clips.filter(c => media[c.mediaId] && media[c.mediaId].type === 'video');
+  if (!videos.length) return toast('Add a video clip first');
+  const results = [];
+  try {
+    for (let i = 0; i < videos.length; i++){
+      const c = videos[i], cuts = await detectScenes(c);
+      if (cuts && cuts.length) results.push([c, cuts]);
+    }
+  } catch (e) { progressDone(); return toast(`Scene detection failed: ${e && e.message || e}`, 5000); }
+  const count = results.reduce((n, [, cuts]) => n + cuts.length, 0);
+  if (!count && S.clips.length < 2) return toast('No scene changes found in the video clips');
+  push();
+  for (const [c, cuts] of results) if (S.clips.includes(c)) splitClipAtSource(c, cuts);
+  S.clips.slice(1).forEach(c => { c.trans = 'dissolve'; c.tdur = .65; });
+  refreshAll();
+  toast(`${count ? `Detected ${count} scene change${count === 1 ? '' : 's'}; ` : 'No new scene changes; '}smooth dissolves applied to ${Math.max(0, S.clips.length - 1)} cuts`);
 }
 async function audioLevels(m){
   if (m._rms) return m._rms;
@@ -4686,13 +4875,13 @@ document.fonts?.ready.then(scheduleRender);
 renderRail(); applyCanvasSize(); refreshAll(); setPps(60); renderLabels();
 loadUserStuff();
 markSaved();
-window.__ecHost = { toast, media, DESK, saveBlob, FILTERS, LOOKS, exifInfo, parseExif, heicToJpeg, progress, progressDone, importOne, addToTimeline, push, refreshAll, undo, redo, get S(){ return S; },   // for photo-editor.js and gestures.js
+window.__ecHost = { toast, media, DESK, saveBlob, FILTERS, LOOKS, exifInfo, parseExif, heicToJpeg, tiffToJpeg, progress, progressDone, importOne, addToTimeline, push, refreshAll, undo, redo, get S(){ return S; },   // for photo-editor.js and gestures.js
   tl:{ scroll:tlScroll, inner:tlInner, cv, pv:$('#pv'), xToTime, scrubTo, totalDur, canvasSize, undo, redo, pause:() => { if (playing) pause(); }, get pps(){ return pps; },
     zoomBy:(f, at) => { const cur = zoomQ ? zoomQ.p : pps; queueZoom(clamp(cur * f, 8, 400), at); },
     sel:() => sel, getSel, cropMode:() => cropMode,
     pvHit:e => { if (cropMode) return true; const [px, py] = cvPoint(e); return textBoxes.some(b => inBox(px, py, b)) || ovBoxes.some(b => inBox(px, py, b)) || !!(ovHandle && Math.abs(px - ovHandle.x - ovHandle.s / 2) < ovHandle.s); },
     openSettings:(type, id) => { if (playing) pause(); setSel(type, id); const p = $('#props'); if (p){ p.scrollTop = 0; p.classList.remove('flash'); void p.offsetWidth; p.classList.add('flash'); } if (type === 'text'){ const ta = $('#txtArea'); if (ta){ ta.focus(); ta.select(); } } } } };
-window.__ec = { get S(){ return S; }, renderTimeline, fmtSpeed, srcT, localOf, rateAt, TRANS, MOTIONS, canvasSize, renderFrame, clipStarts, get playT(){ return playT; }, set playT(v){ playT = v; }, totalDur, videoEnd, EFFECTS, REEL_FX, FX_BY_ID, reel, media, planParts, partCapacity, REEL_STYLES, TEMPLATES, FILTERS, applyTemplate, analyzeMedia, analyzeReel, suggestStyles, contentProfile, storyOrder, parseExif, exifInfo, exifLines, saveLocalProject, openLocalProject, store, buildReel, get variants(){ return variants; } };
+window.__ec = { get S(){ return S; }, renderTimeline, fmtSpeed, srcT, localOf, rateAt, TRANS, TRANSITION_PRESETS, EFFECT_TEMPLATES, FONT_GROUPS, fontCss, easeSmooth, sceneCutTimes, applyTransitionPreset, applyEffectTemplate, applySceneTransitionTemplate, detectScenes, MOTIONS, canvasSize, renderFrame, clipStarts, get playT(){ return playT; }, set playT(v){ playT = v; }, totalDur, videoEnd, EFFECTS, REEL_FX, FX_BY_ID, reel, media, planParts, partCapacity, REEL_STYLES, TEMPLATES, FILTERS, applyTemplate, analyzeMedia, analyzeReel, suggestStyles, contentProfile, storyOrder, creativeVersionPlan, parseExif, exifInfo, exifLines, saveLocalProject, openLocalProject, store, buildReel, get variants(){ return variants; } };
 })();
 </script>
 <script src="gestures.js"></script>
