@@ -39,6 +39,9 @@ function check(cond, msg) {
     await page.click('#home [data-h="reel"]'); await page.waitForSelector('#studio.on');
     const files = ['wild-wide.jpg', 'wild-bird.jpg', 'wild-bird-burst.jpg', 'wild-blur.jpg', 'wild-sunset.jpg', 'wild.mp4'];
     await page.setInputFiles('#fileReel', files.map(media));
+    await page.locator('[data-fxamount]').evaluate((el) => { el.value = '150'; el.dispatchEvent(new Event('input', { bubbles: true })); });
+    check(await ec(() => window.__ec.reel.fxAmount) === 150 && await page.textContent('#rFxAmount') === '150%', 'continuous effect amount control updates');
+    await page.locator('[data-fxamount]').evaluate((el) => { el.value = '100'; el.dispatchEvent(new Event('input', { bubbles: true })); });
     await page.waitForFunction((n) => window.__ec.reel.analyzed && document.querySelectorAll('[data-si]').length >= n, files.length, { timeout: 90000 });
     await page.waitForTimeout(500);
     const an = await ec(() => { const E = window.__ec; return E.reel.items.map((it) => { const m = E.media[it.mid]; return { name: m.name, exif: m.exif, score: m.an && m.an.score, sharp: m.an && m.an.f && m.an.f.sharp, dup: !!it.dup, fx: m.an && m.an.f && m.an.f.fx }; }); });
@@ -92,17 +95,39 @@ function check(cond, msg) {
 
     // 4. Every wildlife & new style builds and draws (photos + video)
     const styles = await ec(async () => {
-      const E = window.__ec, bad = [], info = {}, ids = E.REEL_STYLES.filter((s) => s.pack === 'wild' || ['cinetravel', 'polaroid'].includes(s.id)).map((s) => s.id);
+      const E = window.__ec, bad = [], info = {}, ids = E.REEL_STYLES.map((s) => s.id);
       for (const id of ids){
         E.reel.style = id; E.reel.seed = 3;
         try { await E.buildReel({ quiet: true, noPush: true }); } catch (e) { bad.push(id + ' build: ' + e.message); continue; }
         const S = E.S, T = E.totalDur();
         for (const f of [.05, .3, .55, .8, .97]) try { E.renderFrame(T * f); } catch (e) { bad.push(id + ' draw: ' + e.message); }
-        info[id] = { n: S.clips.length, fx: S.effects.map((x) => x.type), ramps: S.clips.filter((c) => c.ramp).length, texts: S.texts.length, motions: [...new Set(S.clips.map((c) => c.motion))] };
+        info[id] = { n: S.clips.length, fx: S.effects.map((x) => x.type), fxTypes: [...new Set(S.effects.map((x) => x.type))], trans: S.clips.slice(1).map((c) => c.trans), tdur: S.clips.slice(1).map((c) => c.tdur), ramps: S.clips.filter((c) => c.ramp).length, texts: S.texts.length, motions: [...new Set(S.clips.map((c) => c.motion))] };
       }
-      return { bad, info, ids };
+      const oldMode = E.reel.mode, oldStyle = E.reel.style, oldTransitions = E.reel.items.map((it) => it.trans), oldAmount = E.reel.fxAmount, oldFxMode = E.reel.fxMode, oldFx = E.reel.fx, oldFxLevel = E.reel.fxLevel;
+      E.reel.mode = 'auto'; E.reel.style = 'travel'; E.reel.fxMode = 'style'; E.reel.fx = true; E.reel.fxLevel = 'light';
+      E.reel.fxAmount = 0; await E.buildReel({ quiet: true, noPush: true });
+      const noEffectsAtZero = E.S.effects.length === 0;
+      E.reel.fxAmount = 50; await E.buildReel({ quiet: true, noPush: true });
+      const effectAt50 = E.S.effects.find((x) => x.type === 'dust').k;
+      E.reel.fxAmount = 150; await E.buildReel({ quiet: true, noPush: true });
+      const effectAt150 = E.S.effects.find((x) => x.type === 'dust').k;
+      E.reel.fxAmount = oldAmount; E.reel.fxMode = oldFxMode; E.reel.fx = oldFx; E.reel.fxLevel = oldFxLevel;
+      E.reel.mode = 'manual'; E.reel.style = 'travel'; E.reel.items.forEach((it) => { it.trans = 'style'; });
+      await E.buildReel({ quiet: true, noPush: true });
+      const manualStyleTransitions = E.S.clips.slice(1).map((c) => c.trans);
+      E.reel.items[1].trans = 'wipe'; await E.buildReel({ quiet: true, noPush: true });
+      const manualCustomTransition = E.S.clips[1].trans;
+      E.reel.mode = oldMode; E.reel.style = oldStyle;
+      E.reel.fxAmount = oldAmount; E.reel.fxMode = oldFxMode; E.reel.fx = oldFx; E.reel.fxLevel = oldFxLevel;
+      E.reel.items.forEach((it, i) => { it.trans = oldTransitions[i]; });
+      return { bad, info, ids, manualStyleTransitions, manualCustomTransition, effectAt50, effectAt150, noEffectsAtZero };
     });
     check(!styles.bad.length, `${styles.ids.length} new styles build and draw ${styles.bad.length ? styles.bad.join(' | ') : 'cleanly'}`);
+    check(styles.ids.every((id) => styles.info[id].fxTypes.length >= 2), 'every style layers multiple effect types');
+    check(styles.noEffectsAtZero, 'zero effect amount turns off the style effects cleanly');
+    check(styles.effectAt150 > styles.effectAt50, `effect amount scales recipe intensity (${styles.effectAt50.toFixed(2)} → ${styles.effectAt150.toFixed(2)})`);
+    check(styles.ids.every((id) => styles.info[id].trans.some((t) => t !== 'none') && styles.info[id].tdur.every((d) => d > 0)), 'every style applies timed transitions between cuts');
+    check(styles.manualStyleTransitions.some((t) => t !== 'none') && styles.manualCustomTransition === 'wipe', 'manual reels use the selected style transition unless a custom one is chosen');
     check(styles.info.rawedit && styles.info.rawedit.fx.filter((x) => x === 'rawwipe').length >= 3, 'RAW → Edit: a RAW-to-edit wipe on every shot');
     check(styles.info.fieldnotes && styles.info.fieldnotes.fx.includes('viewfinder') && styles.info.fieldnotes.texts >= 4, 'Field Notes: viewfinder + info cards');
     check(styles.info.birdflight && styles.info.birdflight.ramps >= 1, 'Bird in Flight: speed ramps on the video');

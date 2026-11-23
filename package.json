@@ -1,7 +1,7 @@
 {
   "name": "easycut",
   "productName": "EasyCut",
-  "version": "1.18.0",
+  "version": "1.19.0",
   "description": "EasyCut - an easy video editor for vloggers",
   "main": "main.js",
   "author": "Amitoj",

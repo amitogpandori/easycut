@@ -2,6 +2,7 @@
 // filename fallback still recognizes HEIF and imports it into the editor.
 const { _electron: electron } = require('playwright');
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 
 const root = path.join(__dirname, '..');
@@ -26,12 +27,14 @@ function tinyTiff(){
 }
 
 (async () => {
-  const app = await electron.launch({ args: [root], env: { ...process.env, EASYCUT_TEST: '1' } });
+  const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'easycut-mobile-import-'));
+  const app = await electron.launch({ args: [`--user-data-dir=${profile}`, root], env: { ...process.env, EASYCUT_TEST: '1' } });
   const page = await app.firstWindow();
   const errors = [];
   page.on('pageerror', (e) => errors.push(String(e)));
   try {
     await page.waitForSelector('#bExport');
+    await page.waitForFunction(() => !!window.__ec && !!window.PhotoEditor);
     await page.setInputFiles('#fileIn', [{
       name: 'android-photo.heif',
       mimeType: 'application/octet-stream',
@@ -99,11 +102,64 @@ function tinyTiff(){
     check(await page.locator('#xQual [data-val="max"].on').count() === 1, '4K keeps maximum quality selected');
     await page.click('#mExport [data-x="close"]');
     check(errors.length === 0, 'no script errors' + (errors.length ? ': ' + errors.join(' | ') : ''));
+
+    const nativeErrors = [];
+    const nativePhoto = fs.readFileSync(path.join(__dirname, 'media', 'wild-sunset.jpg')).toString('base64');
+    const nativeVideo = fs.readFileSync(path.join(__dirname, 'media', 'clip2.mp4')).toString('base64');
+    await app.context().addInitScript(({ image, video }) => {
+      const bytes = data => Uint8Array.from(atob(data), c => c.charCodeAt(0));
+      const mediaUrl = 'https://easycut.test/native-media/';
+      window.Capacitor = {
+        isNativePlatform:() => true,
+        convertFileSrc:path => mediaUrl + (path.endsWith('.mp4') ? 'video' : 'photo'),
+        Plugins:{
+          App:{ addListener:() => Promise.resolve({ remove(){} }) },
+          EasyCutMedia:{
+            chooseMedia:async () => {
+              window.__nativePicker.choose++;
+              return { files:[
+                { name:'native-picked.jpg', mime:'application/octet-stream', path:'/cache/native-picked.jpg' },
+                { name:'native-picked.mp4', mime:'video/mp4', path:'/cache/native-picked.mp4' },
+              ] };
+            },
+            deleteImported:async () => { window.__nativePicker.deleted++; },
+          },
+        },
+      };
+      window.__nativePicker = { choose:0, deleted:0 };
+      const fetch0 = window.fetch.bind(window);
+      window.fetch = (url, opts) => String(url) === mediaUrl + 'photo'
+        ? Promise.resolve(new Response(bytes(image), { headers:{ 'Content-Type':'image/jpeg' } }))
+        : String(url) === mediaUrl + 'video'
+          ? Promise.resolve(new Response(bytes(video), { headers:{ 'Content-Type':'video/mp4' } }))
+          : fetch0(url, opts);
+    }, { image:nativePhoto, video:nativeVideo });
+    const nativeWindow = app.waitForEvent('window');
+    await app.evaluate(({ BrowserWindow }, file) => {
+      const w = new BrowserWindow({ width:412, height:915, show:false, webPreferences:{ contextIsolation:true, sandbox:true } });
+      w.loadFile(file);
+    }, path.join(root, 'app', 'index.html'));
+    const androidPage = await nativeWindow;
+    androidPage.on('pageerror', e => nativeErrors.push(String(e)));
+    await androidPage.waitForSelector('#bExport');
+    await androidPage.waitForFunction(() => !!window.__ec && !!window.PhotoEditor);
+    await androidPage.evaluate(() => document.getElementById('fileIn').click());
+    await androidPage.waitForFunction(() => window.__ec.S.clips.length === 2, null, { timeout:30000 });
+    check(await androidPage.evaluate(() => window.__nativePicker.choose === 1 && window.__nativePicker.deleted === 2
+      && window.__ec.S.clips.map(c => window.__ec.media[c.mediaId].type).sort().join(',') === 'image,video'),
+      'Android native document picker imports a photo and video together and removes temporary copies');
+    await androidPage.evaluate(() => { PhotoEditor.open(); document.getElementById('peFile').click(); });
+    await androidPage.waitForFunction(() => PhotoEditor.__.ST.src && PhotoEditor.__.ST.src.name === 'native-picked.jpg', null, { timeout:30000 });
+    check(await androidPage.evaluate(() => window.__nativePicker.choose === 2 && window.__nativePicker.deleted === 4),
+      'photo editor opens media selected through the Android document picker');
+    check(nativeErrors.length === 0, 'native-picker flow has no script errors' + (nativeErrors.length ? ': ' + nativeErrors.join(' | ') : ''));
+    await androidPage.close();
   } catch (e) {
     failed++;
     console.error('  ✗ ' + e.message, await page.locator('#toast').textContent().catch(() => ''));
   } finally {
     await app.close();
+    fs.rmSync(profile, { recursive:true, force:true });
   }
   console.log(failed ? `\n${failed} check(s) failed.` : '\nAll mobile import tests passed.');
   process.exitCode = failed ? 1 : 0;

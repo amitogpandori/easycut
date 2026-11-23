@@ -671,6 +671,7 @@ const H = {
   exif:buf => { try { const x = hf('exifInfo'), p = hf('parseExif'); return x && p ? x(p(buf)) : null; } catch (e) { return null; } },
   heic:f => (hf('heicToJpeg') ? hf('heicToJpeg')(f) : Promise.reject(new Error('HEIC not supported'))),
   tiff:f => (hf('tiffToJpeg') ? hf('tiffToJpeg')(f) : Promise.reject(new Error('TIFF not supported'))),
+  androidPick:() => (hf('androidPickFiles') ? hf('androidPickFiles')() : Promise.resolve(null)),
   busy:(on, title, pct, sub) => { if (on && hf('progress')) hf('progress')(title, pct, sub || ''); else if (!on && hf('progressDone')) hf('progressDone')(); },
 };
 
@@ -761,6 +762,11 @@ function build(){
   root.addEventListener('click', onClick); root.addEventListener('input', onInput); root.addEventListener('change', onChange);
   $p('#peFile', root).addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; if (f) openFile(f); });
   $p('#peFile2', root).addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; if (f) addSecondImage(f); });
+  const nativePicker = hf('bindAndroidPicker');
+  if (nativePicker){
+    nativePicker('#peFile', fs => { if (fs[0]) openFile(fs[0]); });
+    nativePicker('#peFile2', fs => { if (fs[0]) addSecondImage(fs[0]); });
+  }
   const cmp = $p('[data-pe="compare"]', root), on = e => { e.preventDefault(); setCompare(true); }, off = () => setCompare(false);
   cmp.addEventListener('pointerdown', on); cmp.addEventListener('pointerup', off); cmp.addEventListener('pointerleave', off); cmp.addEventListener('pointercancel', off);
   bindGestures(); stackP.addEventListener('click', onStackClick);

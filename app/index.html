@@ -1047,6 +1047,51 @@ async function importOne(f, forceId, forcePath){
   try { await loadMedia(m, f); m.loading = false; renderPanel(); if (!forceId) optCheck(m); return m; }
   catch (e) { delete media[m.id]; URL.revokeObjectURL(m.url); renderPanel(); toast(`Couldn't open ${f.name}${ext ? ` (.${ext})` : ''}: ${String(e && e.message || e).slice(0, 100)}. Try JPG, PNG, WebP, HEIC/HEIF, AVIF or TIFF.`, 6000); return null; }
 }
+const ANDROID_MEDIA_PLUGIN = () => CAP
+  ? ((CAP.Plugins && CAP.Plugins.EasyCutMedia) || (CAP.registerPlugin ? CAP.registerPlugin('EasyCutMedia') : null))
+  : null;
+async function androidPickFiles(onFile){
+  const plugin = ANDROID_MEDIA_PLUGIN();
+  if (!plugin || !plugin.chooseMedia) return null;
+  let r;
+  try {
+    r = await plugin.chooseMedia({ multiple:true });
+  } catch (e) {
+    toast('Could not open the Android media picker: ' + (e.message || e), 5000);
+    return null;
+  }
+  const files = [], errors = r && r.errors ? r.errors : [];
+  for (const message of errors) toast(message, 5000);
+  for (const item of (r && r.files ? r.files : [])){
+    try {
+      const src = window.Capacitor && window.Capacitor.convertFileSrc
+        ? window.Capacitor.convertFileSrc(item.path) : item.path;
+      const blob = await (await fetch(src)).blob();
+      const file = new File([blob], item.name, { type:item.mime || blob.type || mimeFor(item.name, '') });
+      if (onFile) await onFile(file);
+      else files.push(file);
+    } catch (e) {
+      toast('Could not read ' + item.name + ' from Android', 5000);
+    } finally {
+      if (plugin.deleteImported) {
+        try { await plugin.deleteImported({ path:item.path }); }
+        catch (e) { toast('Could not clear the temporary copy of ' + item.name, 5000); }
+      }
+    }
+  }
+  return onFile ? [] : files;
+}
+function bindAndroidPicker(id, onFiles, stream = false){
+  const input = $(id);
+  if (!input) return;
+  input.addEventListener('click', async e => {
+    if (!ANDROID_MEDIA_PLUGIN()) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    const files = stream ? await androidPickFiles(async f => onFiles([f])) : await androidPickFiles();
+    if (files && files.length) onFiles(files);
+  }, true);
+}
 async function importFiles(files, opt = {}){
   const list = [...files]; if (!list.length) return;
   const wasEmpty = !S.clips.length;
@@ -1097,6 +1142,10 @@ $('#fileIn').addEventListener('change', e => { importFiles(e.target.files); e.ta
 $('#fileAud').addEventListener('change', e => { importFiles(e.target.files, { audioOnly:true }); e.target.value = ''; });
 $('#fileOv').addEventListener('change', async e => { const fs = [...e.target.files]; e.target.value = ''; for (const f of fs){ const m = await importOne(f); if (m && m.type !== 'audio') addOverlay(m.id); } });
 $('#fileLayout').addEventListener('change', e => { const fs = [...e.target.files]; e.target.value = ''; buildLayout(fs); });
+bindAndroidPicker('#fileIn', fs => importFiles(fs), true);
+bindAndroidPicker('#fileOv', async fs => { for (const f of fs){ const m = await importOne(f); if (m && m.type !== 'audio') addOverlay(m.id); } }, true);
+bindAndroidPicker('#fileLayout', fs => buildLayout(fs));
+bindAndroidPicker('#fileReel', fs => addReelFiles(fs));
 $('#bImportBig').onclick = () => $('#fileIn').click();
 $('#bReelBig').onclick = () => openReel();
 
@@ -2810,10 +2859,10 @@ function progressDone(){ $('#busy').classList.remove('on'); }
 const nextFrame = () => new Promise(r => setTimeout(r, 0));
 
 /* ---------- Reel Maker: its own screen ---------- */
-const reel = { items:[], music:null, musicStart:0, style:'beat', len:30, aspect:'9:16', mode:'auto', pace:1, keepSound:false, title:true, selected:null, order:'story', seed:1, fxMode:'style', fxMood:'party', fxPick:[], fxLevel:'light', clipLen:0, songs:[], songMode:null, songAsked:false, photoLen:0, photoFit:'smart', smart:true, energy:true, exifCap:false, analyzed:false };
+const reel = { items:[], music:null, musicStart:0, style:'beat', len:30, aspect:'9:16', mode:'auto', pace:1, keepSound:false, title:true, selected:null, order:'story', seed:1, fxMode:'style', fxMood:'party', fxPick:[], fxLevel:'light', fxAmount:100, clipLen:0, songs:[], songMode:null, songAsked:false, photoLen:0, photoFit:'smart', smart:true, energy:true, exifCap:false, analyzed:false };
 let planHint = {};
 const studio = () => $('#studio');
-function reelItem(mid){ const m = media[mid]; return { mid, a:0, b:m.type === 'video' ? m.duration : 60, dur:m.type === 'video' ? Math.min(3, m.duration) : 2.5, trans:'fade', caption:'' }; }
+function reelItem(mid){ const m = media[mid]; return { mid, a:0, b:m.type === 'video' ? m.duration : 60, dur:m.type === 'video' ? Math.min(3, m.duration) : 2.5, trans:'style', caption:'' }; }
 function openReel(){
   if (!reel.items.length) reel.items = Object.values(media).filter(m => m.type !== 'audio' && !m.loading).map(m => reelItem(m.id));
   reel.items = reel.items.filter(it => media[it.mid]);
@@ -2880,7 +2929,7 @@ function renderStudio(){
           <div class="acts" style="margin-top:8px"><button class="btn sm" data-sa="pvplay">▶ Preview this part</button><button class="btn sm" data-sa="fullrange">Use whole clip</button></div></div>` : ''}
         ${reel.mode === 'manual' ? `<div class="st-manual">
           ${row('Length on screen (seconds)', `<input class="inp" type="number" min="0.3" max="60" step="0.1" data-rm="dur" value="${Math.min(it.dur, it.b - it.a).toFixed(1)}">`)}
-          ${row('Transition into this clip', stSeg('trans', TRANS, it.trans))}
+          ${row('Transition into this clip', stSeg('trans', [['style','Style default'], ...TRANS], it.trans))}
           ${row('Caption on this clip', `<input class="inp" data-rm="caption" maxlength="60" placeholder="e.g. 📍 Manali  ·  leave empty for none" value="${esc(it.caption)}">`)}
           <button class="btn sm full" data-sa="applyAll">Use this length & transition for all clips</button></div>` : `<div class="hint" style="margin-top:12px">${sm.type === 'video' ? 'In Automatic mode, EasyCut picks short moments from inside this part and cuts them to the beat.' : 'Photos get a moving camera (pan & zoom) that changes from photo to photo.'}</div><div style="margin-top:10px">${row('Caption on this ' + (sm.type === 'video' ? 'clip' : 'photo'), `<input class="inp" data-rm="caption" maxlength="60" placeholder="e.g. 📍 Manali  ·  leave empty for none" value="${esc(it.caption)}">`)}</div>`}`
       : `<div class="empty" style="position:static;min-height:300px"><b>Add your clips</b><div class="hint">Pick as many videos and photos as you like.</div><button class="btn pri" data-sa="add">Add clips</button></div>`}
@@ -2906,7 +2955,7 @@ function renderStudio(){
         : `${reel.fxMode === 'mood' ? `<div class="prow">${stSeg('fxMood', Object.entries(FX_MOODS).map(([k, v]) => [k, v[0]]), reel.fxMood)}</div><div class="hint">Shuffles: ${esc(FX_MOODS[reel.fxMood][1].map(id => (FX_BY_ID[id] || [0, 0, id])[2]).join(', '))}</div>`
           : `<div class="fxpick">${FX_PICKABLE.filter(id => FX_BY_ID[id]).map(id => `<button class="chip ${reel.fxPick.includes(id) ? 'on' : ''}" data-fxpick="${id}">${esc(FX_BY_ID[id][2])}</button>`).join('')}</div><div class="hint">${reel.fxPick.length ? reel.fxPick.length + ' picked — they are shuffled across the cuts' : 'Tap the effects you want; EasyCut shuffles them across your cuts.'}</div>`}
 `}
-      ${reel.fx === false || reel.fxMode === 'none' ? '' : `<div class="prow"><label>How much</label>${stSeg('fxLevel', [['light','🙂 Light'],['medium','😃 Medium'],['strong','🤩 Strong']], reel.fxLevel || 'light')}</div>`}
+      ${reel.fx === false || reel.fxMode === 'none' ? '' : `<div class="prow"><label>Effects amount · <span id="rFxAmount">${reel.fxAmount}%</span></label><div class="rng"><input type="range" data-fxamount min="0" max="200" step="5" value="${reel.fxAmount}"><span class="rv">0–200%</span></div>${stSeg('fxLevel', [['light','🙂 Light'],['medium','😃 Medium'],['strong','🤩 Strong']], reel.fxLevel || 'light')}<div class="hint">Amount controls effect intensity; Light, Medium, and Strong control how densely the recipe layers or repeats effects.</div></div>`}
       ${reel.mode === 'auto' ? `<h3 style="margin-top:16px">✨ Smart picks</h3>
       <label class="chk"><input type="checkbox" data-rc="smart" ${reel.smart ? 'checked' : ''}>Use the best shots (sharp, well lit, clear subject) and skip near-duplicates${nDup ? ` · ${nDup} skipped` : ''}</label>
       <label class="chk"><input type="checkbox" data-rc="energy" ${reel.energy ? 'checked' : ''}>Follow the music's energy (quick cuts when it's loud, best shot on the drop)</label>` : ''}
@@ -2958,6 +3007,7 @@ studio().addEventListener('click', e => {
 });
 studio().addEventListener('input', e => {
   const el = e.target;
+  if (el.hasAttribute('data-fxamount')){ reel.fxAmount = clamp(+el.value, 0, 200); const label = $('#rFxAmount'); if (label) label.textContent = reel.fxAmount + '%'; return; }
   if (el.dataset.ri){ const it = reel.items[reel.selected], v = +el.value; if (el.dataset.ri === 'a') it.a = Math.min(v, it.b - .3); else it.b = Math.max(v, it.a + .3); $('#stA').textContent = fmt(it.a); $('#stB').textContent = fmt(it.b); const vid = $('#stVid'); if (vid) vid.currentTime = el.dataset.ri === 'a' ? it.a : it.b; return; }
   if (el.dataset.rm){ const it = reel.items[reel.selected]; if (el.dataset.rm === 'dur'){ const v = parseFloat(el.value); if (!isNaN(v)) it.dur = clamp(v, .3, 60); } else it.caption = el.value; return; }
   if (el.dataset.rs2){ reel.musicStart = +el.value; $('#stMs').textContent = fmt(reel.musicStart); return; }
@@ -3025,11 +3075,12 @@ const REEL_FX = {
 };
 function reelFxNames(id){ return (REEL_FX[id] || []).map(x => (FX_BY_ID[x.split(' ')[0]] || [0, 0, ''])[2]).filter(Boolean); }
 function addReelFx(id, end){
-  if (!(end > 0)) return 0; let n = 0;
-  const lv = reel.fxLevel || 'light', maxAll = lv === 'light' ? 1 : lv === 'medium' ? 2 : 9, mul = lv === 'light' ? .6 : lv === 'medium' ? .85 : 1; let alls = 0;
+  if (!(end > 0) || reel.fxAmount <= 0) return 0; let n = 0;
+  const lv = reel.fxLevel || 'light', maxAll = lv === 'light' ? 3 : lv === 'medium' ? 4 : 9, mul = lv === 'light' ? .55 : lv === 'medium' ? .75 : 1; let alls = 0;
   for (const x of REEL_FX[id] || []){
     let [type, where, k] = x.split(' '); if (!FX_BY_ID[type]) continue;
     if (where === 'all'){ if (++alls > maxAll) continue; k = +k * mul; }
+    k = clamp(+k * reel.fxAmount / 100, 0, 1);
     const L = where === 'all' ? end : Math.min(where === 'end' ? 1.4 : 1.2, end), st = where === 'end' ? end - L : 0;
     S.effects.push({ id:uid(), type, start:st, dur:L, k:+k }); n++;
   }
@@ -3156,11 +3207,11 @@ const FX_MOODS = {
 const FX_PICKABLE = ['punch','beatflash','beatshake','beatglitch','beatcolor','beatpulse','shake','crashzoom','kenburns','handheld','zoomblur','glitch','rgb','vhs','crt','bw','neon','cyber','dream','glow','teal','flash','leak','flare','rays','vig','confetti','sparkle','hearts','petals','balloons','fireworks','snow','bubbles','grain','oldfilm','letterbox','rec','filmstrip','heartmask'];
 function addReelFx2(style, end){
   const mode = reel.fx === false ? 'none' : (reel.fxMode || 'style');
-  if (mode === 'none') return 0;
+  if (mode === 'none' || reel.fxAmount <= 0) return 0;
   if (mode === 'style') return addReelFx(style.id, end);
   const pool = (mode === 'mood' ? (FX_MOODS[reel.fxMood] || FX_MOODS.party)[1] : reel.fxPick).filter(id => FX_BY_ID[id]);
   if (!pool.length) return 0;
-  const lv = reel.fxLevel || 'light', rnd = rngFrom((reel.seed || 1) * 7 + 3), st = clipStarts(), every = lv === 'strong' ? 1 : lv === 'medium' ? 2 : 4, kk = lv === 'strong' ? .9 : lv === 'medium' ? .75 : .6; let prev = '', n = 0;
+  const lv = reel.fxLevel || 'light', rnd = rngFrom((reel.seed || 1) * 7 + 3), st = clipStarts(), every = lv === 'strong' ? 1 : lv === 'medium' ? 2 : 4, kk = clamp((lv === 'strong' ? .9 : lv === 'medium' ? .75 : .6) * reel.fxAmount / 100, 0, 1); let prev = '', n = 0;
   S.clips.forEach((c, i) => {
     if (i % every !== (every > 1 ? 1 : 0) && !(i === 0 && every === 1)) return;
     let id = pool[Math.floor(rnd() * pool.length)]; if (id === prev && pool.length > 1) id = pool[(pool.indexOf(id) + 1) % pool.length]; prev = id;
@@ -3204,8 +3255,14 @@ async function buildReel(opt = {}){
   S.aspect = reel.aspect; S.fit = 'fill'; S.bg = 'black'; applyCanvasSize();
   const mrnd = rngFrom((reel.seed || 1) * 13 + 5), [ra, rb] = ASPECTS[reel.aspect] || [9, 16]; let lastMo = '', anyFit = false, deck = [];
   const photoFit = m => { if (reel.photoFit === 'fill' || reel.photoFit === 'fit') return reel.photoFit; return Math.abs(Math.log((m.w / Math.max(1, m.h)) / (ra / rb))) < .4 ? 'fill' : 'fit'; };
+  const styleTransition = (i, activeFirstCut = false) => {
+    let type = style.trans[(i - 1) % style.trans.length];
+    if (activeFirstCut && type === 'none') type = style.trans.find(x => x !== 'none') || 'fade';
+    return type;
+  };
+  const transitionDuration = type => PUNCHY.includes(type) ? .38 : SOFT.includes(type) ? .62 : .5;
   const looks = (c, i) => {
-    c.filter = style.filter; c.vig = style.vig; c.fit = 'auto'; const m = media[c.mediaId];
+    c.filter = style.filter; c.vig = clamp(style.vig * reel.fxAmount / 100, 0, 1); c.fit = 'auto'; const m = media[c.mediaId];
     if (m && m.type === 'image'){
       const pool = style.photoMotion || PHOTO_MOTIONS[style.beats <= 1 ? 'fast' : 'calm'];
       if (!deck.length){ deck = [...new Set(pool)]; for (let j = deck.length - 1; j > 0; j--){ const r = Math.floor(mrnd() * (j + 1)); [deck[j], deck[r]] = [deck[r], deck[j]]; } if (deck.length > 1 && deck[deck.length - 1] === lastMo) deck.unshift(deck.pop()); }
@@ -3219,7 +3276,10 @@ async function buildReel(opt = {}){
     items.forEach((it, i) => {
       const m = media[it.mid], c = newClip(m.id), len = Math.min(it.dur, it.b - it.a);
       if (m.type === 'video'){ c.in = it.a; c.out = it.a + len; c.volume = vol; } else c.out = len;
-      looks(c, i); c.trans = i === 0 ? 'none' : it.trans; S.clips.push(c);
+      looks(c, i);
+      c.trans = i === 0 ? 'none' : it.trans === 'style' ? styleTransition(i, i === 1) : it.trans;
+      if (i > 0 && c.trans !== 'none') c.tdur = transitionDuration(c.trans);
+      S.clips.push(c);
     });
     const st = clipStarts();
     items.forEach((it, i) => { if (it.caption.trim()) S.texts.push({ ...TEXT_BASE, text:it.caption.trim(), size:56, box:true, boxAlpha:.6, anim:'pop', y:.84, id:uid(), start:st[i] + (i === 0 && reel.title ? .1 : 0), dur:clipLen(S.clips[i]) }); });
@@ -3250,10 +3310,11 @@ async function buildReel(opt = {}){
     plan.forEach((p, i) => {
       const it = items[p.k], m = media[it.mid], c = newClip(m.id);
       if (m.type === 'video'){ c.in = p.a; c.out = p.b; c.speed = p.speed; c.volume = vol; } else c.out = p.len;
-      looks(c, i); c.trans = i === 0 ? 'none' : style.trans[i % style.trans.length];
+      looks(c, i); c.trans = i === 0 ? 'none' : styleTransition(i, i === 1);
       // transitions follow the energy too: punchy ones on loud parts, soft ones on quiet parts (from the style's own set)
       const sg = segs.find(x => tAt >= x.start && tAt < x.start + x.dur), e = reel.energy && sg && sg.beat.energy ? energyAt(sg, tAt) : null;
       if (i > 0 && e != null){ if (e > .75 && punchy.length) c.trans = punchy[pi++ % punchy.length]; else if (e < .3 && soft.length) c.trans = soft[si++ % soft.length]; }
+      if (i > 0 && c.trans !== 'none') c.tdur = transitionDuration(c.trans);
       if (p.hero){ c.hero = true; if (m.type === 'image' && (style.heroEye || reel.smart) && style.id !== 'rawedit') c.motion = 'eye'; else if (m.type === 'video' && style.ramp) c.ramp = 'hero'; }
       tAt += p.len; S.clips.push(c);
     });
@@ -4875,7 +4936,7 @@ document.fonts?.ready.then(scheduleRender);
 renderRail(); applyCanvasSize(); refreshAll(); setPps(60); renderLabels();
 loadUserStuff();
 markSaved();
-window.__ecHost = { toast, media, DESK, saveBlob, FILTERS, LOOKS, exifInfo, parseExif, heicToJpeg, tiffToJpeg, progress, progressDone, importOne, addToTimeline, push, refreshAll, undo, redo, get S(){ return S; },   // for photo-editor.js and gestures.js
+window.__ecHost = { toast, media, DESK, saveBlob, FILTERS, LOOKS, exifInfo, parseExif, heicToJpeg, tiffToJpeg, androidPickFiles, bindAndroidPicker, progress, progressDone, importOne, addToTimeline, push, refreshAll, undo, redo, get S(){ return S; },   // for photo-editor.js and gestures.js
   tl:{ scroll:tlScroll, inner:tlInner, cv, pv:$('#pv'), xToTime, scrubTo, totalDur, canvasSize, undo, redo, pause:() => { if (playing) pause(); }, get pps(){ return pps; },
     zoomBy:(f, at) => { const cur = zoomQ ? zoomQ.p : pps; queueZoom(clamp(cur * f, 8, 400), at); },
     sel:() => sel, getSel, cropMode:() => cropMode,

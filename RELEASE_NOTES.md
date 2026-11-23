@@ -1,3 +1,8 @@
+## What's new in EasyCut 1.19.0
+
+- **Android media import:** use Android's document picker to select multiple photos and videos for the editor, overlays, layouts, Reel Maker and photo editor. Temporary imported copies are cleaned up after use.
+- **More expressive reel styles:** all 46 styles layer multiple effects; tune effect amount from 0–200% separately from layer density, and get timed style transitions in automatic and manual reels. Custom manual transitions remain respected.
+
 ## What's new in EasyCut 1.18.0
 
 - **More reliable photo imports:** added TIFF/TIF decoding, improved HEIF/HEIC detection across generic file types, and clearer guidance when a camera RAW format needs conversion. Photos can be combined with video in the editor, Reel Maker and photo editor.
