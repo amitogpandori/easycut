@@ -119,19 +119,24 @@ function tinyTiff(){
               window.__nativePicker.choose++;
               return { files:[
                 { name:'native-picked.jpg', mime:'application/octet-stream', path:'/cache/native-picked.jpg' },
-                { name:'native-picked.mp4', mime:'video/mp4', path:'/cache/native-picked.mp4' },
+                { name:'native-picked.mp4', mime:'application/octet-stream', path:'/cache/native-picked.mp4' },
               ] };
             },
             deleteImported:async () => { window.__nativePicker.deleted++; },
           },
         },
       };
-      window.__nativePicker = { choose:0, deleted:0 };
+      window.__nativePicker = { choose:0, deleted:0, files:[] };
+      const createObjectURL = URL.createObjectURL.bind(URL);
+      URL.createObjectURL = blob => {
+        if (blob instanceof File) window.__nativePicker.files.push({ name:blob.name, type:blob.type });
+        return createObjectURL(blob);
+      };
       const fetch0 = window.fetch.bind(window);
       window.fetch = (url, opts) => String(url) === mediaUrl + 'photo'
-        ? Promise.resolve(new Response(bytes(image), { headers:{ 'Content-Type':'image/jpeg' } }))
+        ? Promise.resolve(new Response(bytes(image), { headers:{ 'Content-Type':'application/octet-stream' } }))
         : String(url) === mediaUrl + 'video'
-          ? Promise.resolve(new Response(bytes(video), { headers:{ 'Content-Type':'video/mp4' } }))
+          ? Promise.resolve(new Response(bytes(video), { headers:{ 'Content-Type':'application/octet-stream' } }))
           : fetch0(url, opts);
     }, { image:nativePhoto, video:nativeVideo });
     const nativeWindow = app.waitForEvent('window');
@@ -148,6 +153,9 @@ function tinyTiff(){
     check(await androidPage.evaluate(() => window.__nativePicker.choose === 1 && window.__nativePicker.deleted === 2
       && window.__ec.S.clips.map(c => window.__ec.media[c.mediaId].type).sort().join(',') === 'image,video'),
       'Android native document picker imports a photo and video together and removes temporary copies');
+    check(await androidPage.evaluate(() => window.__nativePicker.files.some(f => f.name === 'native-picked.jpg' && f.type === 'image/jpeg')
+      && window.__nativePicker.files.some(f => f.name === 'native-picked.mp4' && f.type === 'video/mp4')),
+      'generic Android MIME is normalized from selected JPEG and MP4 filenames');
     await androidPage.evaluate(() => { PhotoEditor.open(); document.getElementById('peFile').click(); });
     await androidPage.waitForFunction(() => PhotoEditor.__.ST.src && PhotoEditor.__.ST.src.name === 'native-picked.jpg', null, { timeout:30000 });
     check(await androidPage.evaluate(() => window.__nativePicker.choose === 2 && window.__nativePicker.deleted === 4),

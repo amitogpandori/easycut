@@ -1067,7 +1067,9 @@ async function androidPickFiles(onFile){
       const src = window.Capacitor && window.Capacitor.convertFileSrc
         ? window.Capacitor.convertFileSrc(item.path) : item.path;
       const blob = await (await fetch(src)).blob();
-      const file = new File([blob], item.name, { type:item.mime || blob.type || mimeFor(item.name, '') });
+      const genericMime = mime => !mime || mime === 'application/octet-stream' || mime === 'binary/octet-stream';
+      const fileType = !genericMime(item.mime) ? item.mime : !genericMime(blob.type) ? blob.type : mimeFor(item.name, kindOf({ name:item.name, type:'' }) || '');
+      const file = new File([blob], item.name, { type:fileType });
       if (onFile) await onFile(file);
       else files.push(file);
     } catch (e) {
@@ -1598,7 +1600,7 @@ function saveFrame(){
 const projName = () => (($('#pname').value || 'video').trim().replace(/[\\/:*?"<>|]+/g, '') || 'video');
 
 /* ---------- project save / open (desktop app) ---------- */
-const MIME_EXT = { mp4:'video/mp4', m4v:'video/mp4', mov:'video/quicktime', webm:'video/webm', mkv:'video/x-matroska', avi:'video/x-msvideo', jpg:'image/jpeg', jpeg:'image/jpeg', png:'image/png', gif:'image/gif', webp:'image/webp', bmp:'image/bmp', mp3:'audio/mpeg', wav:'audio/wav', m4a:'audio/mp4', aac:'audio/aac', ogg:'audio/ogg', opus:'audio/ogg', flac:'audio/flac' };
+const MIME_EXT = { mp4:'video/mp4', m4v:'video/mp4', mov:'video/quicktime', webm:'video/webm', mkv:'video/x-matroska', avi:'video/x-msvideo', jpg:'image/jpeg', jpeg:'image/jpeg', png:'image/png', gif:'image/gif', webp:'image/webp', bmp:'image/bmp', heic:'image/heic', heif:'image/heif', avif:'image/avif', tif:'image/tiff', tiff:'image/tiff', mp3:'audio/mpeg', wav:'audio/wav', m4a:'audio/mp4', aac:'audio/aac', ogg:'audio/ogg', opus:'audio/ogg', flac:'audio/flac' };
 function mimeFor(name, type){ const ext = (name.split('.').pop() || '').toLowerCase(); let mt = MIME_EXT[ext] || ''; if (type === 'audio' && mt.startsWith('video/')) mt = 'audio/' + mt.split('/')[1]; return mt || (type + '/unknown'); }
 async function saveProject(){
   if (localProj()) return saveLocalProject(false);

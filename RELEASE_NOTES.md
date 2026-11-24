@@ -1,3 +1,7 @@
+## What's new in EasyCut 1.19.1
+
+- **Fix Android photo/video import:** normalize generic MIME types from Android document providers using the selected file's extension, so JPEGs and videos decode correctly even when the provider reports `application/octet-stream`.
+
 ## What's new in EasyCut 1.19.0
 
 - **Android media import:** use Android's document picker to select multiple photos and videos for the editor, overlays, layouts, Reel Maker and photo editor. Temporary imported copies are cleaned up after use.
