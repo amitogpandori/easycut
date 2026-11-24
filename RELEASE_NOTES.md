@@ -1,3 +1,9 @@
+## What's new in EasyCut 1.20.0
+
+- **Fresh Easy Cut studio:** redesigned phone and desktop experience with dark glass panels, teal/emerald accents, clearer editing tools and mobile navigation.
+- **Windows update controls:** check for updates from the Project menu and install a downloaded update directly from that menu, with unsaved-project protection.
+- **Photo and video workflows:** improved home-screen shortcuts, photo editing tools, AI workflow entry points and social export presets.
+
 ## What's new in EasyCut 1.19.1
 
 - **Fix Android photo/video import:** normalize generic MIME types from Android document providers using the selected file's extension, so JPEGs and videos decode correctly even when the provider reports `application/octet-stream`.

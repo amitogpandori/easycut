@@ -9,10 +9,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Poppins:wght@500;800&family=Anton&family=Bebas+Neue&family=Montserrat:wght@500;800&family=Pacifico&family=Permanent+Marker&family=Noto+Sans+Devanagari:wght@500;800&family=Noto+Sans+Gurmukhi:wght@100..900&family=Oswald:wght@500;700&family=Raleway:wght@500;800&family=Playfair+Display:wght@600;800&family=Lobster&family=Dancing+Script:wght@600;700&family=Caveat:wght@600;700&family=Righteous&family=Bangers&family=Satisfy&family=Kaushan+Script&family=Russo+One&family=Archivo+Black&family=Teko:wght@500;700&family=Rajdhani:wght@600;700&family=Abril+Fatface&family=Bungee&family=Shrikhand&family=Monoton&family=Baloo+2:wght@600;800&family=Mukta:wght@500;800&family=Yatra+One&family=Rozha+One&family=Anek+Gurmukhi:wdth,wght@75..125,100..800&family=Baloo+Paaji+2:wght@400..800&family=BhuTuka+Expanded+One&family=Braah+One&family=Langar&family=Mukta+Mahee:wght@500;800&family=Noto+Serif+Gurmukhi:wght@100..900&family=Tiro+Gurmukhi:ital@0;1&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#0c0e13;--panel:#141720;--panel2:#1b1f2b;--panel3:#232838;--line:#262b3a;
-  --text:#eceef5;--mut:#8b91a7;--dim:#5d6378;
-  --acc:#ff4d6d;--acc2:#ff8a5c;--vid:#3b82f6;--txt:#a855f7;--aud:#10b981;
-  --r:10px;
+  --bg:#0a0a0f;--panel:rgba(15,20,30,.78);--panel2:rgba(18,25,36,.88);--panel3:rgba(25,35,47,.94);--line:rgba(0,230,184,.25);
+  --text:#f8fafc;--mut:#94a3b8;--dim:#64748b;
+  --acc:#00e6b8;--acc2:#00c896;--glow:#00ffc6;--vid:#38bdf8;--txt:#a78bfa;--aud:#00c896;
+  --r:20px;
 }
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:14px/1.4 "Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
@@ -401,6 +401,12 @@ body.pro-on .tlpro{display:flex}
   .tlpro .btn{min-height:44px;padding:8px 12px;font-size:13px;scroll-snap-align:start;border-radius:12px}
   .tlbar .btn.sm,#bPro{min-height:40px;min-width:40px}
   #bPro{white-space:nowrap}
+  @media (max-width:380px){
+    #bExport{width:40px;min-width:40px;padding:8px;font-size:0}
+    #bExport svg{width:18px;height:18px}
+    #bProj{width:40px;min-width:40px;padding:6px;font-size:0;justify-content:center}
+    #bProj::before{content:'📁';font-size:16px}
+  }
   body{grid-template-rows:auto minmax(0,1fr) clamp(196px,31vh,290px) 64px}
   body.pro-on{grid-template-rows:auto minmax(0,1fr) clamp(250px,38vh,340px) 64px}
   .tlbar{gap:2px;overflow:hidden}
@@ -442,6 +448,176 @@ body.is-android .updbar{left:12px;right:12px;bottom:calc(84px + env(safe-area-in
 .updperm{background:#2a2410;border:1px solid #6b5a16;border-radius:10px;padding:10px 12px;margin-top:10px;font-size:13px;line-height:1.5}
 .homever{margin-top:28px;font-size:12px;color:var(--dim);display:flex;gap:10px;align-items:center;flex-wrap:wrap}.homever button{color:var(--mut);text-decoration:underline;font-size:12px}
 .mclose{display:none;position:sticky;top:0;z-index:6;justify-content:space-between;align-items:center;background:var(--panel);padding:10px 0 8px;margin-bottom:6px;border-bottom:1px solid var(--line)}
+
+/* ---------- glass + emerald studio theme ---------- */
+html,body{background:var(--bg)}
+body{background:radial-gradient(ellipse at 50% -24%,#06251f 0%,var(--bg) 62%)}
+button,.btn,.ib,.tab,.preset,.chip,.upopt,.fcard,.acard,.hrc,.mcard,.st-card{transition:background-color .18s ease,border-color .18s ease,color .18s ease,box-shadow .18s ease,transform .18s ease}
+:focus-visible{outline:2px solid var(--acc)!important;outline-offset:2px}
+.top,.rail,.panel,.props,.tl,.tlbar,.st-top,.st-clips,.st-set{background:var(--panel);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+.top{border-bottom-color:var(--line);box-shadow:0 6px 24px #0008;z-index:3}
+.logo .mk,.home-logo .mk{background:linear-gradient(135deg,#00ffc6,#00c896);box-shadow:0 0 24px #00ffc650}
+.pname{border-radius:11px}
+.pname:focus,.inp:focus{border-color:var(--acc);box-shadow:0 0 0 3px #00e6b820}
+.ib{border:1px solid transparent}
+.ib:hover:not(:disabled){background:#0d2823;border-color:#087a62;color:#fff}
+.btn{border:1px solid var(--line);background:rgba(19,28,38,.85);border-radius:13px;box-shadow:0 8px 24px #0005}
+.btn:hover{filter:none;background:#142b25;border-color:#00e6b877;transform:translateY(-1px)}
+.btn.pri,#bReel,#bReelBig{background:linear-gradient(120deg,#00e6b8,#00c896)!important;color:#04130f!important;border-color:#00ffc6;box-shadow:0 0 24px #00e6b83d}
+.btn.pri:hover,#bReel:hover,#bReelBig:hover{box-shadow:0 0 30px #00ffc670;filter:brightness(1.06)}
+.tab{border:1px solid transparent}
+.tab:hover{background:#0e2420}
+.tab.on{background:linear-gradient(145deg,#07372d,#10271f);border-color:#00e6b877;box-shadow:inset 0 0 0 1px #00ffc61c,0 4px 18px #0008}
+.tab.on svg{color:var(--glow);filter:drop-shadow(0 0 7px #00ffc680)}
+.panel,.props{background:rgba(12,17,25,.86);border-color:var(--line);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+.sheet-h,.mclose{background:rgba(15,20,30,.96);border-color:var(--line)}
+.panel h3,.props h3,.st-col h3{letter-spacing:.8px;color:#b8c5d5}
+.drop{border-color:#126e5b;background:rgba(15,28,29,.82);border-radius:16px}
+.drop:hover{border-color:var(--acc);background:#10241f;box-shadow:inset 0 0 22px #00e6b812}
+.mcard,.hrc,.st-card,.upopt,.preset,.acard,.varbtn{background:rgba(15,20,30,.76);border-color:#1b3c37;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.mcard:hover,.hrc:hover,.st-card:hover,.preset:hover,.upopt:hover,.acard:hover,.varbtn:hover{border-color:#00e6b880;box-shadow:0 8px 24px #0008,0 0 18px #00e6b812}
+.mcard:hover{transform:translateY(-2px)}
+.mcard .add{background:linear-gradient(135deg,#00e6b8,#00c896);color:#04130f;box-shadow:0 0 14px #00ffc670}
+.fcard.on,.acard.on,.st-card.on{border-color:var(--glow);box-shadow:0 0 0 1px #00e6b830,0 5px 18px #003d32}
+.stage{background:radial-gradient(ellipse at 50% 42%,#10201d 0%,#0b1111 55%,#0a0a0f 100%)}
+#cv{border-radius:14px;box-shadow:0 18px 60px #000b,0 0 0 1px #00e6b81c}
+.empty{background:rgba(11,19,21,.82);border:1px dashed #126e5b;border-radius:22px;box-shadow:inset 0 0 60px #00e6b80b;backdrop-filter:blur(12px)}
+.empty .hint{color:#a7b6c8}
+.play{background:linear-gradient(135deg,#00ffc6,#00c896);color:#04130f;box-shadow:0 0 22px #00ffc655}
+.play:hover{box-shadow:0 0 30px #00ffc680}
+.seg{background:rgba(12,22,23,.9);border:1px solid var(--line)}
+.seg button.on{background:#07372d;color:#eafff8;box-shadow:inset 0 0 0 1px #00ffc68a}
+.inp,select.inp,textarea.inp{background:rgba(12,20,25,.9);border-color:#1b4b42;border-radius:12px}
+input[type=range]{background:#23433d}
+input[type=range]::-webkit-slider-thumb{border-color:var(--glow);box-shadow:0 0 0 3px #00e6b822}
+.tl{border-color:var(--line);box-shadow:0 -8px 26px #0008}
+.tlbar,.ruler{background:rgba(14,20,25,.94);border-color:var(--line)}
+.track,.tll{border-color:#18362f}
+.tick{border-color:#235046}
+.tick span,.temp{color:#94a3b8}
+.vclip{background-color:#12382f}
+.aitem{background-color:#092b22}
+.item.sel{border-color:#d5fff3;box-shadow:0 0 0 2px #00ffc699,0 0 20px #00ffc63d}
+.junc{background:#102520;border-color:#266458;color:#c2d7d0}
+.junc:hover,.junc.has{background:#dffff5;color:#09221a}
+.playhead,.playhead::before{background:var(--glow)}
+.ins{box-shadow:0 0 12px var(--acc)}
+.toast{background:#eafff8;color:#07231b;box-shadow:0 12px 36px #0008}
+.modal{backdrop-filter:blur(8px)}
+.dlg{background:rgba(15,20,30,.95);border-color:var(--line);box-shadow:0 28px 90px #000b;backdrop-filter:blur(22px)}
+.bar i,.updbar-in i{background:linear-gradient(90deg,#00e6b8,#00c896,#00ffc6)}
+.home{background:radial-gradient(ellipse at 50% -10%,#063228 0%,#101613 34%,var(--bg) 74%);backdrop-filter:blur(18px)}
+.home-in{max-width:1060px;padding:clamp(30px,7vh,76px) 24px 110px}
+.home-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:clamp(32px,7vh,76px)}
+.home-logo{font-size:clamp(28px,5vw,42px);letter-spacing:-1.4px}
+.home-notify{width:44px;height:44px;border:1px solid var(--line);border-radius:15px;background:rgba(15,20,30,.72);color:var(--acc);font-size:19px}
+.home-hero{max-width:660px;margin-bottom:38px}
+.home-eyebrow{font-size:11px;font-weight:800;letter-spacing:2px;color:var(--acc);text-transform:uppercase}
+.home-hero h1{font-size:clamp(30px,5vw,52px);line-height:1.04;letter-spacing:-2px;margin:12px 0}
+.home-hero h1 span{color:var(--acc)}
+.home-hero p{color:var(--mut);font-size:15px;margin:0 0 22px}
+.new-project{display:flex;align-items:center;gap:14px;width:min(100%,390px);padding:16px;border:1px solid #00ffc680;border-radius:22px;background:linear-gradient(110deg,#00e6b8,#00c896);color:#03150f;text-align:left;box-shadow:0 0 32px #00e6b83d,0 12px 32px #0007}
+.new-project:hover{transform:translateY(-2px);box-shadow:0 0 40px #00ffc670,0 16px 36px #0008}
+.new-project .home-plus{width:46px;height:46px;border-radius:16px;background:#ffffff36;display:grid;place-items:center;font-size:30px;font-weight:400}
+.new-project .home-cta{flex:1}
+.new-project b,.new-project small{display:block}
+.new-project b{font-size:16px}.new-project small{font-size:12px;color:#074735;margin-top:2px}
+.home-section-title{display:flex;align-items:center;justify-content:space-between;margin:0 0 14px}
+.home-section-title h2{margin:0;font-size:18px;letter-spacing:-.4px}
+.home-section-title button{color:var(--acc);font-weight:700}
+.home-projects{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.home-project{overflow:hidden;text-align:left;background:rgba(15,20,30,.78);border:1px solid var(--line);border-radius:20px;box-shadow:0 12px 28px #0005;backdrop-filter:blur(14px)}
+.home-project:hover{transform:translateY(-2px);border-color:#00e6b880;box-shadow:0 12px 30px #0008,0 0 18px #00e6b812}
+.home-thumb{height:clamp(84px,14vw,150px);display:grid;place-items:center;background:radial-gradient(circle at 72% 28%,#00e6b82c,transparent 40%),linear-gradient(135deg,#10251f,#10141b 65%,#062c25)}
+.home-thumb span{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;padding-left:2px;color:#03221a;background:#00e6b8;box-shadow:0 0 20px #00ffc680}
+.home-project-info{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px 12px}
+.home-project-info b{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:13px}
+.home-project-info small{color:var(--mut);font-size:11px}
+.home-duration{flex:none;padding:4px 7px;background:#071c18;border:1px solid #00e6b833;border-radius:8px;color:#caffef!important;font-variant-numeric:tabular-nums}
+.home-empty{grid-column:1/-1;border:1px dashed var(--line);border-radius:18px;padding:20px;color:var(--mut);text-align:center}
+.htiles{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:30px 0 18px}
+.htile{position:relative;overflow:hidden;isolation:isolate;border:1px solid var(--line);border-radius:20px;padding:18px 16px;min-height:138px;background:rgba(15,20,30,.76)!important;box-shadow:0 12px 30px #0007;backdrop-filter:blur(14px)}
+.htile::before{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(circle at 100% 0%,#00e6b820,transparent 55%)}
+.htile:nth-child(even)::before{background:radial-gradient(circle at 100% 0%,#00c89628,transparent 58%)}
+.htile:hover{transform:translateY(-3px);border-color:#00e6b880;box-shadow:0 16px 34px #0009,0 0 22px #00e6b814}
+.htile .em{filter:drop-shadow(0 5px 14px #0008)}
+.htile b{font-size:17px;letter-spacing:-.3px}
+.htile small{color:#b5c3d0}
+.hrow{margin:22px 0 30px}
+.hrc{border-radius:16px}
+.home-nav{display:none}
+.x-progress{width:128px;height:128px;margin:20px auto;border-radius:50%;display:grid;place-items:center;background:radial-gradient(closest-side,rgba(15,20,30,.98) 76%,transparent 78% 99%),conic-gradient(var(--glow) var(--pct,0%),#1c302c 0);box-shadow:0 0 28px #00e6b82b}
+.x-progress span{font-size:24px;font-weight:800;color:var(--glow);font-variant-numeric:tabular-nums}
+.home-profile{max-width:660px;margin:0 auto}
+.profile-card{padding:24px;border:1px solid var(--line);border-radius:24px;background:rgba(15,20,30,.8);backdrop-filter:blur(16px);text-align:center}
+.profile-avatar{width:76px;height:76px;border-radius:26px;margin:0 auto 14px;display:grid;place-items:center;background:linear-gradient(135deg,#00e6b8,#00c896);color:#04130f;font-size:24px;font-weight:800;box-shadow:0 0 28px #00ffc644}
+.home-nav button{color:var(--mut)}
+.home-nav button.on{color:var(--acc)}
+.ai-tools{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0 18px}
+.ai-tool{min-height:112px;padding:14px;text-align:left;border:1px solid var(--line);border-radius:18px;background:rgba(15,20,30,.78);backdrop-filter:blur(12px)}
+.ai-tool:hover{border-color:#00ffc699;box-shadow:0 0 20px #00e6b81a;transform:translateY(-2px)}
+.ai-tool .ai-ico{display:block;color:var(--acc);font-size:22px;margin-bottom:8px}
+.ai-tool b,.ai-tool small{display:block}
+.ai-tool b{font-size:13px}.ai-tool small{margin-top:4px;color:var(--mut);font-size:11px;line-height:1.35}
+.ai-tool:disabled{opacity:.42;cursor:not-allowed}
+.ai-tool:disabled:hover{transform:none;box-shadow:none}
+.studio{background:var(--bg)}
+.st-col{background:rgba(12,17,25,.9);backdrop-filter:blur(18px)}
+.st-card{border-width:1px;border-radius:13px}
+.st-pv{box-shadow:0 12px 32px #0008,0 0 0 1px #ffffff12}
+.pmenu,.varbar,.updbar{background:rgba(15,20,30,.94);border-color:var(--line);box-shadow:0 16px 44px #000a;backdrop-filter:blur(18px)}
+.pmenu button:hover{background:#102820}
+.bufpill{background:#06251fee;color:#d9fff3;border:1px solid #00e6b855;backdrop-filter:blur(10px)}
+.chip.on,.chip:hover,.fxpick .chip.on{background:#07372d;color:#eafff8;border-color:var(--acc)}
+.fcard.on{border-color:var(--acc)}
+.upopt.on,.varbtn.on{background:#07372d;border-color:var(--acc);box-shadow:0 0 0 1px #00e6b835}
+.aim.u{background:linear-gradient(135deg,#00e6b8,#00c896);color:#04130f}
+.aim.a{background:#111e1c;border-color:#1b4b42}
+.flash{animation:ecAccentFlash 1s}
+@keyframes ecAccentFlash{0%,60%{background:#00e6b818}}
+.updbar{border-radius:15px}
+.updnotes{background:#111c19}
+@media (max-width:860px), (max-height:500px) and (pointer:coarse){
+  .top{background:rgba(10,14,18,.92);backdrop-filter:blur(18px);border-bottom-color:var(--line)}
+  .panel,.props{background:rgba(12,17,20,.96);border-color:#126e5b;box-shadow:0 -18px 48px #000c}
+  .sheet-h,.mclose{background:rgba(12,17,20,.98)}
+  .sheet-h::before,.mclose::before{background:#00ffc675}
+  .rail{background:rgba(10,14,18,.94);border-top-color:var(--line);backdrop-filter:blur(14px)}
+  .tab{min-width:58px}
+  .tab.on{background:linear-gradient(145deg,#07372d,#10271f)}
+  .tl{background:rgba(10,15,17,.96)}
+  .tlbar{background:rgba(14,20,20,.96)}
+  .home-in{padding:24px 16px calc(88px + env(safe-area-inset-bottom))}
+  .home-head{margin-bottom:36px}
+  .home-hero{margin-bottom:30px}
+  .home-hero h1{letter-spacing:-1.2px}
+  .htiles{grid-template-columns:1fr 1fr;gap:10px}
+  .htile{min-height:112px;padding:14px 12px}
+  .home-thumb{height:88px}
+  .home-nav{position:fixed;left:0;right:0;bottom:0;z-index:86;display:grid;grid-template-columns:1fr 1fr 1.15fr 1fr 1fr;align-items:center;padding:8px 8px calc(8px + env(safe-area-inset-bottom));border-top:1px solid var(--line);background:rgba(10,14,18,.94);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+  .home-nav button{display:flex;flex-direction:column;align-items:center;gap:3px;min-height:48px;justify-content:center;font-size:10px;font-weight:700}
+  .home-nav .nav-ico{font-size:18px;line-height:1}
+  .home-nav .nav-create{width:54px;height:54px;min-height:54px;justify-self:center;border:1px solid #00ffc6;border-radius:20px;background:linear-gradient(135deg,#00e6b8,#00c896);color:#04130f;font-size:28px;box-shadow:0 0 22px #00ffc655}
+  .home-nav .nav-create .nav-ico{font-size:30px}
+  .home-projects{gap:9px}
+  .home-project{border-radius:16px}
+  .home-project-info{padding:9px}
+  .home-project-info b{font-size:12px}
+  .home-profile{padding-bottom:18px}
+  .ai-tools{gap:8px}
+  .ai-tool{min-height:105px;padding:12px}
+}
+@media (min-width:861px) and (min-height:501px){
+  body{grid-template-columns:76px minmax(0,1fr);grid-template-rows:54px minmax(0,1fr) 250px}
+  .top{grid-column:1 / -1;grid-row:1}
+  .ws{grid-column:2;grid-row:2}
+  .tl{grid-column:2;grid-row:3}
+  .rail{grid-column:1;grid-row:2 / 4;flex-direction:column;align-items:stretch;overflow-x:hidden;overflow-y:auto;padding:10px 6px;border-top:0;border-right:1px solid var(--line)}
+  .tab{height:auto;min-width:0;min-height:56px;padding:7px 3px;font-size:10px}
+  .tgrp{writing-mode:horizontal-tb;transform:none;text-align:center;margin:10px 0 4px}
+  .tsep{width:auto;height:1px;align-self:stretch;margin:6px 5px}
+}
+@media (prefers-reduced-motion:reduce){button,.btn,.ib,.tab,.preset,.chip,.upopt,.fcard,.acard,.hrc,.mcard,.st-card{transition:none}}
 </style>
 <link rel="stylesheet" href="photo-editor.css">
 </head>
@@ -840,6 +1016,8 @@ function renderPanel(){
 }
 $('#panel').addEventListener('click', e => {
   const t = e.target;
+  const shortcut = t.closest('[data-ai-shortcut]');
+  if (shortcut) return runAIShortcut(shortcut.dataset.aiShortcut);
   const act = t.closest('[data-act]')?.dataset.act;
   if (act === 'import') return $('#fileIn').click();
   if (act === 'importAud') return $('#fileAud').click();
@@ -1711,7 +1889,7 @@ $('#pmenu').addEventListener('click', e => {
   else if (a === 'export') openExport(); else if (a === 'info') projectInfo(); else if (a === 'unused') removeUnused();
   else if (a === 'optall'){ const hv = heavyUsed(); hv.length ? optAsk(hv, true) : toast('No heavy videos in this project'); }
   else if (a === 'close') closeProject();
-  else if (a === 'updcheck') checkForUpdates(); else if (a === 'updauto') setUpdAuto(!updAuto());
+  else if (a === 'updcheck') checkForUpdates(); else if (a === 'updinstall') updDeskInstall(); else if (a === 'updauto') setUpdAuto(!updAuto());
 });
 function busy(on, msg){ if (on) progress(msg || 'Working…', 50, ''); else progressDone(); }
 $('#bSave').onclick = () => saveProject(); $('#bReel').onclick = () => openReel(); $('#bOpen').onclick = () => openProject();
@@ -2760,17 +2938,27 @@ async function toggleVoice(){
 
 /* ---------- export ---------- */
 const MIMES = ['video/mp4;codecs=avc1.640028,mp4a.40.2','video/mp4;codecs=avc1.4d0028,mp4a.40.2','video/mp4;codecs=avc1,mp4a.40.2','video/mp4','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'];
-const pickMime = () => window.MediaRecorder ? (MIMES.find(t => MediaRecorder.isTypeSupported(t)) || '') : null;
+let exportFormat = 'mp4';
+let exportSocial = null;
+const pickMime = (preferred = exportFormat) => {
+  if (!window.MediaRecorder) return null;
+  const supported = MIMES.filter(t => MediaRecorder.isTypeSupported(t));
+  return supported.find(t => t.startsWith(`video/${preferred}`)) || supported[0] || '';
+};
 const dlg = $('#dlgExport');
 function openExport(){
   if (!S.clips.length && !S.texts.length) return toast('Add some clips before exporting');
   if (playing) pause();
   const mime = pickMime(), [w, h] = canvasSize(), T = totalDur(), hasR = S.inP != null || S.outP != null, rA = S.inP || 0, rB = S.outP != null ? S.outP : T;
+  const formats = mime === null ? [] : [...new Set(MIMES.filter(t => MediaRecorder.isTypeSupported(t)).map(t => t.startsWith('video/mp4') ? 'mp4' : 'webm'))];
+  if (!exportSocial) exportSocial = S.aspect === '16:9' ? 'youtube' : S.aspect === '9:16' ? 'instagram' : '';
   if (mime === null || !cv.captureStream){ dlg.innerHTML = `<h2>Export not supported</h2><div class="hint">This browser can't record video. Please use Chrome or Edge on your PC.</div><div class="row"><button class="btn" data-x="close">Close</button></div>`; }
   else dlg.innerHTML = `<h2>Export video</h2><div class="hint">Your video is rendered right here on your computer — nothing is uploaded.</div>
     <div class="kv"><span>Size</span><span>${w} × ${h} (${S.res}p, ${S.aspect})</span><span>Length</span><span>${fmt(T)}</span><span>Format</span><span>${mime.startsWith('video/mp4') ? 'MP4' : 'WebM'} · ${S.fps || 30} fps</span><span>Time needed</span><span>about ${fmt(T)} (plays through once)</span></div>
     ${hasR ? `<div class="prow"><label>What to export</label><div class="seg" id="xRange"><button data-val="range" class="on">In–Out only (${fmt(rA)}–${fmt(rB)})</button><button data-val="all">Whole video</button></div></div>` : ''}
     <div class="prow"><label>Resolution</label><div class="seg" id="xRes">${[[720,'720p'],[1080,'1080p'],[1440,'2K'],[2160,'4K']].map(([v, l]) => `<button data-val="${v}" class="${S.res === v ? 'on' : ''}">${l}</button>`).join('')}</div></div>
+    ${formats.length > 1 ? `<div class="prow"><label>Format</label><div class="seg" id="xFormat">${formats.map(v => `<button data-val="${v}" class="${(mime.startsWith('video/' + exportFormat) ? exportFormat : v) === v ? 'on' : ''}">${v.toUpperCase()}</button>`).join('')}</div></div>` : ''}
+    <div class="prow"><label>Social presets</label><div class="seg" id="xSocial">${[['instagram','9:16','Instagram Reels'],['tiktok','9:16','TikTok'],['youtube','16:9','YouTube']].map(([id, aspect, label]) => `<button data-val="${aspect}" data-name="${id}" class="${exportSocial === id ? 'on' : ''}">${label}</button>`).join('')}</div></div>
     <div class="prow"><label>Quality</label><div class="seg" id="xQual"><button data-val="std" class="${S.exportQuality === 'std' ? 'on' : ''}">Standard</button><button data-val="high" class="${S.exportQuality === 'high' ? 'on' : ''}">High</button><button data-val="max" class="${(S.exportQuality || 'max') === 'max' ? 'on' : ''}">Maximum</button></div></div>
     <div class="hint">Maximum quality is selected by default and remembered in this project. The same export settings apply to the timeline, photos and videos, overlays, layouts and Reel Maker. Keep this tab open and visible while it renders.</div>
     <div class="row"><button class="btn" data-x="close">Cancel</button><button class="btn pri" data-x="go">${ic('export')}Start export</button></div>`;
@@ -2779,7 +2967,24 @@ function openExport(){
 function closeExport(){ $('#mExport').classList.remove('on'); }
 $('#bExport').onclick = openExport;
 dlg.addEventListener('click', e => {
-  const sb = e.target.closest('#xRange button, #xQual button, #xRes button'); if (sb && sb.closest('#xRes')){ S.res = +sb.dataset.val; const [w2, h2] = canvasSize(), sz = dlg.querySelector('.kv span:nth-child(2)'); if (sz) sz.textContent = `${w2} × ${h2} (${S.res >= 2160 ? '4K' : S.res >= 1440 ? '2K' : S.res + 'p'}, ${S.aspect})`; } if (sb && sb.closest('#xQual')) S.exportQuality = sb.dataset.val; if (sb){ sb.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === sb)); return; }
+  const social = e.target.closest('#xSocial button');
+  if (social){
+    S.aspect = social.dataset.val;
+    exportSocial = social.dataset.name;
+    const [w2, h2] = canvasSize(), sz = dlg.querySelector('.kv span:nth-child(2)');
+    if (sz) sz.textContent = `${w2} × ${h2} (${S.res >= 2160 ? '4K' : S.res >= 1440 ? '2K' : S.res + 'p'}, ${S.aspect})`;
+    social.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.name === social.dataset.name));
+    applyCanvasSize(false); scheduleRender(); return;
+  }
+  const sb = e.target.closest('#xRange button, #xQual button, #xRes button, #xFormat button');
+  if (sb && sb.closest('#xRes')){ S.res = +sb.dataset.val; const [w2, h2] = canvasSize(), sz = dlg.querySelector('.kv span:nth-child(2)'); if (sz) sz.textContent = `${w2} × ${h2} (${S.res >= 2160 ? '4K' : S.res >= 1440 ? '2K' : S.res + 'p'}, ${S.aspect})`; }
+  if (sb && sb.closest('#xQual')) S.exportQuality = sb.dataset.val;
+  if (sb && sb.closest('#xFormat')){
+    exportFormat = sb.dataset.val;
+    const mime = pickMime(exportFormat), label = [...dlg.querySelectorAll('.kv span')].find(x => x.textContent === 'Format');
+    if (label && label.nextElementSibling) label.nextElementSibling.textContent = `${mime.startsWith('video/mp4') ? 'MP4' : 'WebM'} · ${S.fps || 30} fps`;
+  }
+  if (sb){ sb.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === sb)); return; }
   const x = e.target.closest('[data-x]')?.dataset.x;
   if (x === 'close') closeExport();
   else if (x === 'go') startExport();
@@ -2806,12 +3011,12 @@ async function startExport(){
   const prevSel = sel; sel = null;
   exporting = { rec, chunks, mime:rec.mimeType || mime, total:rEnd - rStart, start:rStart, end:rEnd, stream, prevSel, t0:performance.now() };
   if (monitor) monitor.gain.value = 0;
-  dlg.innerHTML = `<h2>Exporting…</h2><div class="hint">Rendering in real time. Keep this tab visible.</div><div class="bar"><i id="xBar"></i></div><div class="crow"><span class="hint" id="xTxt">0%</span><span class="hint" id="xWarn"></span></div><div class="row"><button class="btn" data-x="cancel">Cancel</button></div>`;
+  dlg.innerHTML = `<h2>Exporting…</h2><div class="hint">Rendering in real time. Keep this tab visible.</div><div class="x-progress" id="xProgress" style="--pct:0%"><span id="xPct">0%</span></div><div class="crow"><span class="hint" id="xTxt">About ${Math.ceil(rEnd - rStart)}s left</span><span class="hint" id="xWarn"></span></div><div class="row"><button class="btn" data-x="cancel">Cancel</button></div>`;
   playT = rStart; await primeFrame();
   rec.start(500); stalled = false;
   playing = true; lastNow = performance.now(); requestAnimationFrame(tick);
 }
-function updateExportProgress(){ const x = exporting; const p = clamp((playT - (x.start || 0)) / x.total, 0, 1); const b = $('#xBar'); if (b) b.style.width = (p * 100).toFixed(1) + '%'; const t = $('#xTxt'); if (t){ const el = (performance.now() - x.t0) / 1000, left = p > .02 ? el / p - el : x.total; t.textContent = `${Math.round(p * 100)}%  ·  about ${Math.max(0, Math.ceil(left))}s left`; } if (x.hiddenWarn){ const w = $('#xWarn'); if (w) w.textContent = 'Tab was hidden — check the result'; } }
+function updateExportProgress(){ const x = exporting; const p = clamp((playT - (x.start || 0)) / x.total, 0, 1), pct = Math.round(p * 100); const b = $('#xBar'); if (b) b.style.width = (p * 100).toFixed(1) + '%'; const circle = $('#xProgress'); if (circle) circle.style.setProperty('--pct', pct + '%'); const pctText = $('#xPct'); if (pctText) pctText.textContent = pct + '%'; const t = $('#xTxt'); if (t){ const el = (performance.now() - x.t0) / 1000, left = p > .02 ? el / p - el : x.total; t.textContent = `About ${Math.max(0, Math.ceil(left))}s left`; } if (x.hiddenWarn){ const w = $('#xWarn'); if (w) w.textContent = 'Tab was hidden — check the result'; } }
 function endExportCommon(){ applyCanvasSize(false); playing = false; stopAllMedia(); updatePlayBtn(); if (monitor) monitor.gain.value = 1; const x = exporting; x.stream.getTracks().forEach(t => t.stop()); sel = x.prevSel; exporting = null; stalled = false; return x; }
 function finishExport(){
   const x = exporting;
@@ -4270,33 +4475,69 @@ $('#fileTpl').addEventListener('change', e => { const f = e.target.files[0]; e.t
 /* ---------- home screen ---------- */
 function recentList(){ return recents().filter(r => localProj() ? String(r.path).startsWith('local:') : !String(r.path).startsWith('local:')); }
 function recents(){ try { return JSON.parse(localStorage.getItem('easycut.recent') || '[]'); } catch (e) { return []; } }
-function addRecent(name, path){ if (!path) return; try { const r = recents().filter(x => x.path !== path); r.unshift({ name:name || 'Project', path, at:Date.now() }); localStorage.setItem('easycut.recent', JSON.stringify(r.slice(0, 8))); } catch (e) {} }
+function addRecent(name, path){ if (!path) return; try { const r = recents().filter(x => x.path !== path); r.unshift({ name:name || 'Project', path, at:Date.now(), duration:S.clips.reduce((n, c) => n + clipLen(c), 0) }); localStorage.setItem('easycut.recent', JSON.stringify(r.slice(0, 8))); } catch (e) {} }
 function renderHome(){
   const has = S.clips.length || S.texts.length || S.overlays.length, rc = recentList();
   $('#home').innerHTML = `<div class="home-in">
-    <div class="home-logo"><div class="mk"><svg class="i f" viewBox="0 0 24 24" style="width:24px;height:24px"><path d="M8 5v14l11-7z"/></svg></div>EasyCut</div>
-    <div class="hint" style="font-size:14px;margin-top:6px">Make videos and reels in minutes.</div>
+    <header class="home-head">
+      <div class="home-logo"><div class="mk"><svg class="i f" viewBox="0 0 24 24" style="width:24px;height:24px"><path d="M8 5v14l11-7z"/></svg></div>Easy Cut</div>
+      <button class="home-notify" data-hupd="check" title="Check for updates" aria-label="Check for updates"><svg class="i" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg></button>
+    </header>
+    <section class="home-hero">
+      <div class="home-eyebrow">YOUR CREATIVE STUDIO</div>
+      <h1>Make it <span>unforgettable.</span></h1>
+      <p>Bring your videos and photos together. Shape every frame, then share something you love.</p>
+      <button class="new-project" data-h="video"><span class="home-plus">＋</span><span class="home-cta"><b>New Project</b><small>Start with a video or photo</small></span><span aria-hidden="true">→</span></button>
+    </section>
+    <section class="home-recent" id="homeRecent">
+      <div class="home-section-title"><h2>Recent Projects</h2><button data-h="open">Open project</button></div>
+      <div class="home-projects">${rc.length ? rc.map(x => `<button class="home-project" data-hp="${esc(x.path)}"><div class="home-thumb"><span>▶</span></div><div class="home-project-info"><span><b>${esc(x.name)}</b><small>${new Date(x.at).toLocaleDateString()}</small></span><small class="home-duration">${Number(x.duration) > 0 ? fmt(x.duration) : '—'}</small></div></button>`).join('') : `<div class="home-empty">Your recent projects will appear here.</div>`}</div>
+    </section>
     <div class="htiles">
-      <button class="htile" data-h="video" style="background:linear-gradient(135deg,#ff4d6d,#ff8a5c)"><span class="em">🎬</span><b>Video</b><small>Edit clips & photos</small></button>
-      <button class="htile" data-h="reel" style="background:linear-gradient(135deg,#7c3aed,#ec4899)"><span class="em">✨</span><b>Reel Maker</b><small>Clips + song → a reel</small></button>
-      <button class="htile" data-h="templates" style="background:linear-gradient(135deg,#0284c7,#22d3ee)"><span class="em">🧩</span><b>Templates</b><small>Intros, titles, layouts</small></button>
-      <button class="htile" data-h="photo" style="background:linear-gradient(135deg,#f59e0b,#e11d48)"><span class="em">🖼️</span><b>Photo editor</b><small>Tune, retouch & style photos</small></button>
-      <button class="htile" data-h="logos" style="background:linear-gradient(135deg,#16a34a,#84cc16)"><span class="em">🏷️</span><b>Logo</b><small>Brand your videos</small></button>
-      ${DESK ? `<button class="htile" data-h="ai" style="background:linear-gradient(135deg,#0f172a,#6366f1)"><span class="em">🤖</span><b>AI editor</b><small>Free AI on your PC edits for you</small></button>` : ''}
+      <button class="htile" data-h="reel"><span class="em">✨</span><b>Reel Maker</b><small>Turn clips + music into a reel</small></button>
+      <button class="htile" data-h="templates"><span class="em">🧩</span><b>Templates</b><small>Layouts, titles and styles</small></button>
+      <button class="htile" data-h="photo"><span class="em">🖼️</span><b>Photo Editor</b><small>Tune, retouch and style</small></button>
+      <button class="htile" data-h="ai"><span class="em">✦</span><b>AI Tools</b><small>Creative help for your edit</small></button>
+      <button class="htile" data-h="logos"><span class="em">🏷️</span><b>Brand Kit</b><small>Logos and overlays</small></button>
+      <button class="htile" data-h="open"><span class="em">▱</span><b>My Projects</b><small>Open a saved project</small></button>
     </div>
-    <div class="hrow">${has ? `<button class="btn pri" data-h="continue">▶ Continue editing</button>` : ''}<button class="btn" data-h="open">📂 Open project</button><button class="btn" data-h="gif">GIFs & stickers</button></div>
-    ${rc.length ? `<h3 style="color:var(--mut);font-size:13px;text-transform:uppercase;letter-spacing:.3px">Recent projects</h3><div class="hrecent">${rc.map(x => `<button class="hrc" data-hp="${esc(x.path)}"><b>${esc(x.name)}</b><span class="hint">${new Date(x.at).toLocaleDateString()}</span></button>`).join('')}</div>` : ''}
+    <div class="hrow">${has ? `<button class="btn pri" data-h="continue">▶ Continue editing</button>` : ''}<button class="btn" data-h="gif">GIFs & stickers</button></div>
     ${UPD_LIB ? `<div class="homever"><span>EasyCut ${esc(upd.cur || '')}</span><button data-hupd="check">Check for updates</button></div>` : ''}
-  </div>`;
+  </div>
+  <nav class="home-nav" aria-label="Main navigation">
+    <button class="on" data-h="home"><span class="nav-ico">⌂</span>Home</button>
+    <button data-h="projects"><span class="nav-ico">▣</span>Projects</button>
+    <button class="nav-create" data-h="video" aria-label="New project"><span class="nav-ico">＋</span></button>
+    <button data-h="templates"><span class="nav-ico">▦</span>Templates</button>
+    <button data-h="profile"><span class="nav-ico">◉</span>Profile</button>
+  </nav>`;
+}
+function renderHomeProfile(){
+  $('#home').innerHTML = `<div class="home-in home-profile">
+    <header class="home-head"><div class="home-logo"><div class="mk"><svg class="i f" viewBox="0 0 24 24" style="width:24px;height:24px"><path d="M8 5v14l11-7z"/></svg></div>Easy Cut</div><button class="home-notify" data-hupd="check" title="Check for updates" aria-label="Check for updates"><svg class="i" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg></button></header>
+    <div class="profile-card"><div class="profile-avatar">EC</div><div class="home-eyebrow">YOUR CREATIVE STUDIO</div><h1>Profile & app</h1><p class="hint">Your projects stay on this device. No account is needed to edit.</p><div class="vo" style="margin:22px 0;text-align:left"><div style="flex:1"><b>Easy Cut ${esc(upd.cur || '')}</b><div class="hint">Video and photo editor</div></div><button class="btn sm pri" data-hupd="check">Check for updates</button></div><button class="btn full" data-profile-back>Back to Home</button></div>
+  </div>
+  <nav class="home-nav" aria-label="Main navigation">
+    <button data-h="home"><span class="nav-ico">⌂</span>Home</button>
+    <button data-h="projects"><span class="nav-ico">▣</span>Projects</button>
+    <button class="nav-create" data-h="video" aria-label="New project"><span class="nav-ico">＋</span></button>
+    <button data-h="templates"><span class="nav-ico">▦</span>Templates</button>
+    <button class="on" data-h="profile"><span class="nav-ico">◉</span>Profile</button>
+  </nav>`;
 }
 function showHome(){ if (playing) pause(); renderHome(); $('#home').classList.add('on'); }
 function hideHome(){ $('#home').classList.remove('on'); applyCanvasSize(); }
 $('#home').addEventListener('click', e => {
   if (e.target.closest('[data-hupd]')) return checkForUpdates();
+  if (e.target.closest('[data-profile-back]')) return renderHome();
   const b = e.target.closest('[data-h],[data-hp]'); if (!b) return;
   if (b.dataset.hp){ hideHome(); return openProject(b.dataset.hp); }
-  const h = b.dataset.h; hideHome();
-  if (h === 'video'){ if (!S.clips.length) $('#fileIn').click(); }
+  const h = b.dataset.h;
+  if (h === 'home'){ renderHome(); $('#home').scrollTo({ top:0, behavior:'smooth' }); return; }
+  if (h === 'projects'){ $('#homeRecent').scrollIntoView({ behavior:'smooth', block:'start' }); return; }
+  if (h === 'profile'){ return renderHomeProfile(); }
+  hideHome();
+  if (h === 'video'){ if (S.clips.length || S.texts.length || S.overlays.length) newProject(); else $('#fileIn').click(); }
   else if (h === 'reel') openReel();
   else if (h === 'templates') openSheet('templates');
   else if (h === 'photo'){ if (window.PhotoEditor) PhotoEditor.open(); }
@@ -4463,6 +4704,10 @@ function updSheetError(e){
   m.classList.add('on');
 }
 function updProg(html){ const p = $('#updProg'); if (p) p.innerHTML = html; }
+function updDeskInstall(){
+  if (!UPD_DESK || !upd.desk || upd.desk.state !== 'ready') return toast('The update is not ready to install yet');
+  confirmLeave(() => { updBar(''); UPD_DESK.install(); });
+}
 async function updAndroidInstall(){
   const info = upd.info; if (!info) return;
   const fallback = (why) => { updProg(`<div class="hint">${esc(why)} Opening the download in your browser instead: open the file when it finishes and tap <b>Install</b>.</div>`); setTimeout(() => updOpenUrl(info.apkUrl || info.pageUrl), 900); };
@@ -4494,7 +4739,7 @@ function updClick(e){
   else if (a === 'browser'){ upd.waitPerm = false; updOpenUrl(upd.info.apkUrl || upd.info.pageUrl); }
   else if (a === 'install'){ if (UPD_NATIVE && upd.apkPath) UPD_NATIVE.install({ path:upd.apkPath }).catch(() => updOpenUrl(upd.info.apkUrl)); }
   else if (a === 'page'){ $('#mUpd') && $('#mUpd').classList.remove('on'); updBar(''); updOpenUrl((upd.info && upd.info.pageUrl) || UPD_LIB.RELEASES_PAGE); }
-  else if (a === 'restart'){ confirmLeave(() => { updBar(''); UPD_DESK.install(); }); }
+  else if (a === 'restart' || a === 'updinstall') updDeskInstall();
   else if (a === 'hide'){ if (upd.desk && upd.desk.state === 'ready') upd.hiddenVer = upd.desk.version; upd.manual = false; updBar(''); }
 }
 $('#updbar').addEventListener('click', updClick);
@@ -4508,7 +4753,7 @@ async function setUpdAuto(on){
   if (UPD_DESK){ try { updDeskRender(await UPD_DESK.setAuto(on)); } catch (e) {} }
   toast(on ? 'Automatic update checks are on' : 'Automatic update checks are off — use “Check for updates” any time');
 }
-const updMenuHtml = () => UPD_LIB ? `<hr><button data-pm="updcheck">🔄 Check for updates</button><button data-pm="updauto">${updAuto() ? '☑️' : '⬜'} Check automatically</button><div class="hint" style="padding:4px 10px">EasyCut ${esc(upd.cur || '')}</div>` : '';
+const updMenuHtml = () => UPD_LIB ? `<hr><button data-pm="updcheck">🔄 Check for updates</button>${UPD_DESK && upd.desk && upd.desk.state === 'ready' ? `<button data-pm="updinstall">⬆ Install update ${esc(upd.desk.version || '')}…</button>` : ''}<button data-pm="updauto">${updAuto() ? '☑️' : '⬜'} Check automatically</button><div class="hint" style="padding:4px 10px">EasyCut ${esc(upd.cur || '')}</div>` : '';
 (async () => {
   if (!UPD_LIB) return;
   if (UPD_DESK){
@@ -4689,25 +4934,56 @@ async function aiRefresh(){
   if (tab === 'ai' && sheetOpen()) renderPanel();
 }
 function aiHTML(){
-  if (!AIB) return `<div class="hint" style="margin-bottom:12px">The AI editor runs a free AI model on your own computer with <b style="color:var(--text)">Ollama</b>. It works in the EasyCut Windows app — not in this web preview or on Android.</div><div class="vo"><div class="hint" style="flex:1">Install the Windows app from your GitHub Releases page, then open this AI tool there.</div></div>`;
+  const tools = `<h3>AI & quick tools</h3><div class="hint" style="margin-bottom:10px">Jump into practical editing workflows. AI chat runs privately on Windows; other tools work on this device.</div><div class="ai-tools">
+    <button class="ai-tool" data-ai-shortcut="autocut"><span class="ai-ico">✂</span><b>Auto Cut</b><small>Open silence and scene-cut tools</small></button>
+    <button class="ai-tool" data-ai-shortcut="enhance"><span class="ai-ico">✧</span><b>Enhance</b><small>Sharpen and improve a selected clip</small></button>
+    <button class="ai-tool" data-ai-shortcut="background"><span class="ai-ico">◉</span><b>Remove Background</b><small>Set up green-screen keying on an overlay</small></button>
+    <button class="ai-tool" data-ai-shortcut="style"><span class="ai-ico">◈</span><b>Style Transfer</b><small>Browse color looks and filters</small></button>
+    <button class="ai-tool" data-ai-shortcut="captions"><span class="ai-ico">Aa</span><b>Smart Captions</b><small>Add animated text and title styles</small></button>
+  </div><h3>AI Editor</h3>`;
+  if (!AIB) return tools + `<div class="hint" style="margin-bottom:12px">AI chat uses a free model on your own computer with <b style="color:var(--text)">Ollama</b>. It works in the EasyCut Windows app — not in this web preview or on Android.</div><div class="vo"><div class="hint" style="flex:1">Install the Windows app from your GitHub Releases page, then open AI chat there.</div></div>`;
   const st = ai.status;
-  if (!st) return `<div class="hint">Checking for Ollama…</div>`;
+  if (!st) return tools + `<div class="hint">Checking for Ollama…</div>`;
   if (!st.running){
-    return `<div class="hint" style="margin-bottom:12px">EasyCut's AI uses <b style="color:var(--text)">Ollama</b> — free, private, and it runs on your PC (no internet needed after setup).</div>
+    return tools + `<div class="hint" style="margin-bottom:12px">EasyCut's AI uses <b style="color:var(--text)">Ollama</b> — free, private, and it runs on your PC (no internet needed after setup).</div>
       ${st.installed ? `<div class="vo" style="margin-bottom:10px"><div style="flex:1"><b>Ollama is installed but not running</b><div class="hint">Start it and EasyCut connects automatically.</div></div><button class="btn sm pri" data-act="aiStart">Start Ollama</button></div>`
       : `<ol class="hint" style="padding-left:18px;line-height:1.8;margin:0 0 12px"><li>Download Ollama for Windows (free)</li><li>Run the installer</li><li>Come back here and press <b>Check again</b></li></ol><button class="btn pri full" data-act="aiGet">${ic('export')}Get Ollama (free)</button>`}
       <button class="btn sm full" data-act="aiCheck" style="margin-top:8px">Check again</button>`;
   }
   const models = st.models || [];
   const pull = ai.pulling ? `<div class="vo" style="margin:10px 0;flex-direction:column;align-items:stretch"><b>Downloading ${esc(ai.pulling.model)}…</b><div class="bar"><i style="width:${ai.pulling.pct.toFixed(1)}%"></i></div><div class="crow"><span class="hint">${esc(ai.pulling.status || '')}</span><b>${Math.round(ai.pulling.pct)}%</b></div></div>` : '';
-  if (!models.length) return `<div class="hint" style="margin-bottom:10px">Ollama is running ✓. Now download a small AI model (one time):</div>${pull}${AI_MODELS.map(([id, n, d]) => `<div class="vo" style="margin-bottom:8px"><div style="flex:1"><b>${n}</b><div class="hint">${d}</div></div><button class="btn sm ${id === AI_MODELS[0][0] ? 'pri' : ''}" data-aipull="${id}" ${ai.pulling ? 'disabled' : ''}>Download</button></div>`).join('')}`;
+  if (!models.length) return tools + `<div class="hint" style="margin-bottom:10px">Ollama is running ✓. Now download a small AI model (one time):</div>${pull}${AI_MODELS.map(([id, n, d]) => `<div class="vo" style="margin-bottom:8px"><div style="flex:1"><b>${n}</b><div class="hint">${d}</div></div><button class="btn sm ${id === AI_MODELS[0][0] ? 'pri' : ''}" data-aipull="${id}" ${ai.pulling ? 'disabled' : ''}>Download</button></div>`).join('')}`;
   const log = ai.log.map((m, i) => m.role === 'user' ? `<div class="aim u">${esc(m.text)}</div>` : `<div class="aim a">${esc(m.text)}${m.done && m.done.length ? `<ul>${m.done.map(d => `<li>${esc(d)}</li>`).join('')}</ul>` : ''}${m.snap ? `<button class="btn sm" data-aiundo="${i}">↶ Undo these changes</button>` : ''}</div>`).join('');
-  return `<div class="crow" style="margin-bottom:10px"><select class="inp" id="aiModel" style="flex:1">${models.map(m => `<option ${m.name === ai.model ? 'selected' : ''}>${esc(m.name)}</option>`).join('')}</select><button class="btn sm" data-act="aiMore" title="Download another model">+ Model</button></div>
+  return tools + `<div class="crow" style="margin-bottom:10px"><select class="inp" id="aiModel" style="flex:1">${models.map(m => `<option ${m.name === ai.model ? 'selected' : ''}>${esc(m.name)}</option>`).join('')}</select><button class="btn sm" data-act="aiMore" title="Download another model">+ Model</button></div>
     ${ai.more ? `<div style="margin-bottom:10px">${AI_MODELS.filter(x => !models.some(m => m.name.startsWith(x[0]))).map(([id, n, d]) => `<div class="vo" style="margin-bottom:6px"><div style="flex:1"><b>${n}</b><div class="hint">${d}</div></div><button class="btn sm" data-aipull="${id}" ${ai.pulling ? 'disabled' : ''}>Download</button></div>`).join('') || '<div class="hint">All suggested models are installed.</div>'}</div>` : ''}${pull}
     <div class="ailog" id="aiLog">${log || `<div class="hint">Tell the AI what to do with your video, in plain words. It edits the timeline for you — and every change can be undone.</div>`}</div>
     <div class="aichips">${AI_CHIPS.map((c, i) => `<button class="chip" data-aichip="${i}" title="${esc(c)}">${esc(AI_CHIP_LABELS[i])}</button>`).join('')}</div>
     <div style="display:flex;gap:6px;margin-top:6px"><textarea class="inp" id="aiIn" rows="2" placeholder="e.g. cut the first 3 seconds, add a title and make it brighter" ${ai.busy ? 'disabled' : ''}></textarea><button class="btn pri" data-act="aiSend" ${ai.busy ? 'disabled' : ''}>${ai.busy ? '…' : 'Send'}</button></div>
     ${ai.busy ? `<div class="hint" style="margin-top:6px">🤖 Thinking… small models on a laptop can take 10–60 seconds.</div>` : ''}`;
+}
+function runAIShortcut(action){
+  if (action === 'autocut'){
+    const c = S.clips.find(x => media[x.mediaId] && media[x.mediaId].type === 'video');
+    if (!c){ openSheet('media'); return toast('Add a video clip to use Auto Cut'); }
+    setSel('clip', c.id);
+    const smart = $('#props [data-sec="smart"]');
+    if (smart){ smart.open = true; smart.scrollIntoView({ behavior:'smooth', block:'center' }); }
+    return toast('Choose Remove silent parts or Detect scenes in Smart cuts');
+  }
+  if (action === 'enhance'){
+    const c = sel && sel.type === 'clip' ? getSel() : S.clips[0];
+    if (!c){ openSheet('media'); return toast('Add a clip before enhancing'); }
+    setSel('clip', c.id);
+    const button = $('#props [data-pa="enhance"]');
+    if (button) return button.click();
+    return toast('Select a video or photo clip to enhance');
+  }
+  if (action === 'background'){ openSheet('overlay'); return toast('Add a green-screen overlay, then enable Remove green screen in its clip settings'); }
+  if (action === 'style'){
+    if (S.clips[0]) setSel('clip', S.clips[0].id);
+    return openSheet('filter');
+  }
+  if (action === 'captions') return openSheet('text');
 }
 function aiContext(){
   const st = clipStarts();

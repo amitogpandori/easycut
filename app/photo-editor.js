@@ -872,7 +872,7 @@ function renderSide(){
   if (!ST.src){ root.classList.remove('has-photo'); empty.innerHTML = emptyHTML(); side.innerHTML = `<div class="pe-sideempty"><div class="pe-hint">Open a photo to start. Everything you do stays editable in the stack.</div></div>`; loadRecents(); return; }
   empty.innerHTML = '';
   if (ST.sess) { side.innerHTML = toolPanel(); afterToolPanel(); return; }
-  const tabs = `<div class="pe-tabs">${[['looks','Looks'],['tools','Tools'],['export','Export']].map(([k, l]) => `<button data-tab="${k}" class="${ST.tab === k ? 'on' : ''}">${l}</button>`).join('')}</div>`;
+  const tabs = `<div class="pe-tabs">${[['looks','Filters'],['quickTune','AI Enhance'],['quickCrop','Crop'],['tools','Adjust'],['export','Export']].map(([k, l]) => `<button data-tab="${k}" class="${ST.tab === k ? 'on' : ''}">${l}</button>`).join('')}</div>`;
   let body = '';
   if (ST.tab === 'looks') body = looksHTML();
   else if (ST.tab === 'export') body = exportHTML();
@@ -1050,6 +1050,8 @@ async function onClick(e){
   if (d.fav){ e.stopPropagation(); const id = d.fav; FAVES = FAVES.includes(id) ? FAVES.filter(x => x !== id) : [...FAVES, id].slice(-6); LS.set('faves', FAVES); return renderSide(); }
   if (d.tool) return openTool(d.tool);
   if (d.look) return applyLook(d.look);
+  if (d.tab === 'quickTune') return openTool('tune');
+  if (d.tab === 'quickCrop') return openTool('crop');
   if (d.tab){ ST.tab = d.tab; return renderSide(); }
   if (d.pmedia) return openMedia(d.pmedia);
   if (d.recent) return openRecent(d.recent);

@@ -3,6 +3,7 @@
 An easy, InShot-style video editor for Windows, made for vloggers and reel makers.
 
 ## Features
+- **Fresh Easy Cut studio UI (Windows + phone)**: deep-black glass panels, teal/emerald accents, a redesigned mobile home with recent projects and bottom navigation, a vertical desktop tool rail, focused photo and AI tool cards, and social-ready export presets
 - **Project menu** (📁 Project): New project (Ctrl+N), Open (Ctrl+O), recent projects, Save (Ctrl+S), Save as (Ctrl+Shift+S), Rename, Export (Ctrl+E), Project info, Remove unused media, Optimize heavy videos, Close project (Ctrl+W). Asks to save unsaved changes before closing or starting a new project
 - **Reel Maker songs**: add several songs at once; EasyCut counts them, shows the total music time and asks whether to use **all songs one after another** (cuts follow each song's own beat, video matches the songs) or **only one**. Reorder or remove songs. Length option "Match the songs"
 - **How long each clip should be**: follow the beat, 1 / 2 / 3 / 5 / 8 s or type any length (kept on the beat when there's a song)
@@ -71,7 +72,7 @@ Windows may show "Windows protected your PC" because the app isn't code-signed y
 click **More info → Run anyway**.
 
 ### Updates (1.16.0 and newer)
-- **Windows:** EasyCut checks GitHub Releases when it opens and every 4 hours, downloads a new version in the background and shows a small banner: **Restart now**, or just close EasyCut and it installs itself.
+- **Windows:** EasyCut checks GitHub Releases when it opens and every 4 hours, downloads a new version in the background and shows a small banner: **Restart now**, or use 📁 Project → **Install update** (after download), or just close EasyCut and it installs itself.
 - **Android:** EasyCut asks GitHub for the latest release when it opens (at most once an hour) and when you come back to it (at most every 6 hours). If there's a newer version it shows what's new with an **Update** button, downloads the APK and opens Android's installer, where you tap **Update**. The first time, Android asks you to let EasyCut install apps (**Allow from this source**). If that can't work, it opens the download in your browser.
 - Both: 📁 Project → **Check for updates** any time, and **Check automatically** to switch the automatic checks off or on. 1.15.0 and older can't update themselves: install 1.16.0 by hand once.
 

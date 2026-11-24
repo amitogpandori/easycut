@@ -72,6 +72,11 @@ function webpInfo(buf) { let i = 12, w = 0, h = 0, exif = null; while (i + 8 <= 
     check(await X(() => { const c = document.getElementById('peHist'), d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 0) n++; return n > 500; }), 'histogram is drawn');
     await page.screenshot({ path: path.join(out, 'photo-1-open.png') });
 
+    check(await page.locator('#pe .pe-tabs [data-tab="quickTune"]').textContent() === 'AI Enhance', 'photo tool panel exposes AI Enhance');
+    await page.click('#pe .pe-tabs [data-tab="quickTune"]');
+    check((await ST()).sess === 'tune', 'AI Enhance shortcut opens the editable auto-tune tool');
+    await page.click('#pe [data-pe="cancel"]');
+
     // ---- Tune with the swipe gestures ----
     await page.click('#pe [data-tool="tune"]');
     s = await ST(); check(s.sess === 'tune' && s.k === 'bright', 'Tune opens on Brightness');

@@ -29,6 +29,7 @@ function check(cond, msg) {
     check(await page.title() === 'EasyCut — Video Editor', 'app window opens');
     check(await page.evaluate(() => !!window.easycutDesktop && document.body.classList.contains('is-desk')), 'desktop features are switched on');
     check(await count('#home.on') === 1, 'home screen shows at start');
+    check(await page.locator('#home .new-project').isVisible(), 'home screen shows the New Project card');
     await page.click('#home [data-h="templates"]'); await page.click('[data-act="closeSheet"]');
     check(await count('#home.on') === 0, 'home → editor');
 
@@ -124,6 +125,7 @@ function check(cond, msg) {
     await page.click('[data-tab="ai"]');
     await page.waitForFunction(() => /Ollama|aiIn/.test(document.getElementById('panel').innerHTML), null, { timeout: 10000 });
     check(true, 'AI Editor panel opens');
+    check(await count('#panel .ai-tool') === 5, 'AI tools screen shows its five glass-card workflows');
     if (st.running && st.models.length) {
       const r = await page.evaluate((m) => window.easycutDesktop.ai.chat(m, [{ role: 'user', content: 'Reply with {"reply":"hi","actions":[]}' }]), st.models[0].name).catch((e) => 'ERR ' + e.message);
       check(/reply/.test(r), 'real AI reply: ' + String(r).slice(0, 60));
@@ -141,7 +143,15 @@ function check(cond, msg) {
     check(!(await page.textContent('#tc')).startsWith('0:00.0'), 'playback');
     await page.click('#bExport');
     console.log('    export settings: ' + (await page.textContent('#dlgExport .kv')).replace(/\s+/g, ' ').trim());
+    await page.click('#xSocial button[data-name="tiktok"]');
+    check(await page.locator('#xSocial button[data-name="tiktok"]').evaluate((b) => b.classList.contains('on')) && (await page.textContent('#dlgExport .kv')).includes('9:16'), 'TikTok export preset selects vertical video');
+    if (await count('#xFormat button[data-val="webm"]')) {
+      await page.click('#xFormat button[data-val="webm"]');
+      check((await page.textContent('#dlgExport .kv')).includes('WebM'), 'export format can be changed to WebM');
+    }
     await page.click('[data-x="go"]');
+    await page.waitForSelector('#xProgress');
+    check(await count('#xPct') === 1, 'export displays the circular progress indicator');
     await page.waitForSelector('#dlgExport video', { timeout: 180000 });
     await page.screenshot({ path: path.join(out, 'export.png') });
     await page.click('[data-x="save"]');

@@ -82,7 +82,7 @@ const fakeFetch = (status, json) => async (url, opts) => { fakeFetch.last = { ur
   console.log('Versions line up');
   const pkg = require('../package.json');
   const [MA, MI, PA] = pkg.version.split('.').map(Number);
-  check(pkg.version === '1.19.1', 'app version is 1.19.1');
+  check(pkg.version === '1.20.0', 'app version is 1.20.0');
   check(MA * 10000 + MI * 100 + PA > 11600, 'Android versionCode ' + (MA * 10000 + MI * 100 + PA) + ' is above 1.16.0 (11600), so it installs over the old app');
   check(pkg.dependencies && pkg.dependencies['electron-updater'], 'electron-updater ships with the Windows app');
   const pub = (pkg.build.publish || [])[0] || {};
