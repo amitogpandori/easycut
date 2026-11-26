@@ -21,9 +21,9 @@ const ANDROID_FAKE = () => {
   const L = (window.__capL = {}), P = (window.__updL = {});
   window.__upd = { canInstall: true, openedSettings: 0, installed: [], downloads: 0, failDownload: false, opened: [] };
   const DL = 'https://github.com/amitogpandori/easycut/releases/download/';
-  window.__release = { tag_name: 'v1.17.0', draft: false, prerelease: false, html_url: 'https://github.com/amitogpandori/easycut/releases/tag/v1.17.0',
+  window.__release = { tag_name: 'v1.20.0', draft: false, prerelease: false, html_url: 'https://github.com/amitogpandori/easycut/releases/tag/v1.20.0',
     body: "## What's new\n- **Faster** exports\n- <img src=x onerror=window.__xss=1>",
-    assets: [{ name: 'EasyCut-1.17.0.apk', size: 3500000, browser_download_url: DL + 'v1.17.0/EasyCut-1.17.0.apk' }] };
+    assets: [{ name: 'EasyCut-1.20.0.apk', size: 3500000, browser_download_url: DL + 'v1.20.0/EasyCut-1.20.0.apk' }] };
   window.__apiCalls = 0;
   const realFetch = window.fetch.bind(window);
   window.fetch = (u, o) => {
@@ -45,7 +45,7 @@ const ANDROID_FAKE = () => {
           window.__upd.downloads++; window.__upd.lastUrl = url;
           if (window.__upd.failDownload) throw new Error('network down');
           for (const n of [1, 2, 3, 4]) { await new Promise((r) => setTimeout(r, 60)); (P.progress || []).forEach((f) => f({ loaded: n * 875000, total: 3500000 })); }
-          return { path: '/data/cache/updates/' + fileName, versionName: '1.17.0', versionCode: 11700 };
+          return { path: '/data/cache/updates/' + fileName, versionName: '1.20.0', versionCode: 12000 };
         },
         install: async ({ path }) => { window.__upd.installed.push(path); return { canInstall: true }; },
         openUrl: async ({ url }) => { window.__upd.opened.push(url); },
@@ -78,7 +78,8 @@ const ANDROID_FAKE = () => {
     await page.click('#bProj');
     const items = await page.$$eval('#pmenu [data-pm]', (b) => b.map((x) => x.dataset.pm));
     check(items.includes('updcheck') && items.includes('updauto'), 'Project menu has "Check for updates" and "Check automatically"');
-    check(/EasyCut 1\.17\.0/.test(await page.textContent('#pmenu')), 'menu shows the app version (1.17.0)');
+    check(items.includes('updinstall'), 'Project menu offers "Install update" when a download is ready');
+    check(/EasyCut 1\.20\.0/.test(await page.textContent('#pmenu')), 'menu shows the app version (1.20.0)');
     await page.click('#pmenu [data-pm="updcheck"]');
     await page.waitForSelector('#updbar.on', { timeout: 5000 });
     check(/1\.99\.0 ready/.test(await page.textContent('#updbar')), 'manual check brings the ready banner back');
@@ -100,12 +101,12 @@ const ANDROID_FAKE = () => {
     check(await page.evaluate(() => document.querySelector('.vclip .lbl b').textContent) === '1.5x', '1.5 stays "1.5x"');
     await page.evaluate(() => { const E = window.__ec; E.S.clips[0].speed = 1; E.renderTimeline(); });
     // restart now
-    await page.click('#updbar [data-upd="restart"]').catch(() => {});
+    await page.click('#bProj'); await page.click('#pmenu [data-pm="updinstall"]');
     await page.waitForTimeout(400);
     const dlg = await page.locator('#mUp.on [data-cl="discard"]').count();
     if (dlg) await page.click('#mUp.on [data-cl="discard"]'); // unsaved project: "Don't save"
     await page.waitForTimeout(400);
-    check(await page.evaluate(() => window.easycutDesktop.updates.testInstalled()), '"Restart now" asks about unsaved work, then installs the update');
+    check(await page.evaluate(() => window.easycutDesktop.updates.testInstalled()), 'Project menu "Install update" asks about unsaved work, then installs the update');
     check(!errors.length, 'no page errors' + (errors.length ? ': ' + errors.join(' | ') : ''));
   } catch (e) { check(false, 'Windows part crashed: ' + e.message); }
   await app.close().catch(() => {});
@@ -118,7 +119,7 @@ const ANDROID_FAKE = () => {
     await page.waitForTimeout(2200);
     check(!(await page.locator('#updbar.on').count()), 'no banner when there is nothing new');
     await page.click('#home [data-hupd="check"]');
-    await page.waitForFunction(() => /latest version \(1\.17\.0\)/.test(document.getElementById('toast').textContent), null, { timeout: 5000 });
+    await page.waitForFunction(() => /latest version \(1\.20\.0\)/.test(document.getElementById('toast').textContent), null, { timeout: 5000 });
     check(true, 'home screen "Check for updates" says you have the latest version');
   } catch (e) { check(false, 'up-to-date part: ' + e.message); }
 
@@ -135,7 +136,7 @@ const ANDROID_FAKE = () => {
     await ap.waitForSelector('#mUpd.on', { timeout: 12000 });
     check(await ap.evaluate(() => window.__apiCalls) === 1, 'asked GitHub once on launch');
     const sheet = await ap.evaluate(() => ({ h: document.querySelector('#dlgUpd h2').textContent, notes: document.querySelector('.updnotes').innerHTML, hint: document.querySelector('#dlgUpd .hint').textContent }));
-    check(/1\.17\.0 is here/.test(sheet.h) && /You have 1\.16\.0/.test(sheet.hint) && /3\.3 MB/.test(sheet.hint), `sheet: "${sheet.h}" · ${sheet.hint}`);
+    check(/1\.20\.0 is here/.test(sheet.h) && /You have 1\.16\.0/.test(sheet.hint) && /3\.3 MB/.test(sheet.hint), `sheet: "${sheet.h}" · ${sheet.hint}`);
     check(/<b>Faster<\/b> exports/.test(sheet.notes) && !/<img/.test(sheet.notes) && !(await ap.evaluate(() => window.__xss)), 'release notes shown, HTML in them not run');
     await ap.screenshot({ path: path.join(out, 'update-sheet-android.png') });
     // first time: needs "Allow from this source"
@@ -149,7 +150,7 @@ const ANDROID_FAKE = () => {
     await ap.evaluate(() => { window.__upd.canInstall = true; window.__fire('resume'); });
     await ap.waitForFunction(() => window.__upd.installed.length === 1, null, { timeout: 5000 });
     const ins = await ap.evaluate(() => ({ p: window.__upd.installed[0], url: window.__upd.lastUrl, w: document.querySelector('#updProg') && document.querySelector('#dlgUpd').textContent }));
-    check(ins.url.endsWith('/v1.17.0/EasyCut-1.17.0.apk') && ins.p.endsWith('EasyCut-1.17.0.apk'), 'after allowing: downloads the APK and opens the system installer');
+    check(ins.url.endsWith('/v1.20.0/EasyCut-1.20.0.apk') && ins.p.endsWith('EasyCut-1.20.0.apk'), 'after allowing: downloads the APK and opens the system installer');
     check(/tap Update/.test(ins.w), 'tells you to confirm in Android\'s installer');
     check(await ap.evaluate(() => window.__apiCalls) === 1, 'coming back from settings did not ask GitHub again');
     // later + throttling
@@ -165,7 +166,7 @@ const ANDROID_FAKE = () => {
     await ap.evaluate(() => { window.__upd.failDownload = true; });
     await ap.click('#dlgUpd [data-upd="go"]');
     await ap.waitForFunction(() => window.__upd.opened.length > 0, null, { timeout: 5000 });
-    check(await ap.evaluate(() => window.__upd.opened[0].endsWith('/EasyCut-1.17.0.apk')), 'if the in-app download fails, opens the APK in the browser instead');
+    check(await ap.evaluate(() => window.__upd.opened[0].endsWith('/EasyCut-1.20.0.apk')), 'if the in-app download fails, opens the APK in the browser instead');
     await ap.evaluate(() => document.querySelector('#dlgUpd [data-upd="later"]') && document.querySelector('#dlgUpd [data-upd="later"]').click());
     // up to date
     await ap.evaluate(() => { window.__release.tag_name = 'v1.16.0'; document.getElementById('bProj').click(); document.querySelector('#pmenu [data-pm="updcheck"]').click(); });

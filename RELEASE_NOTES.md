@@ -1,3 +1,28 @@
+## What's new in EasyCut 1.20.0
+
+- **Fresh Easy Cut studio:** redesigned phone and desktop experience with dark glass panels, teal/emerald accents, clearer editing tools and mobile navigation.
+- **Windows update controls:** check for updates from the Project menu and install a downloaded update directly from that menu, with unsaved-project protection.
+- **Photo and video workflows:** improved home-screen shortcuts, photo editing tools, AI workflow entry points and social export presets.
+
+## What's new in EasyCut 1.19.1
+
+- **Fix Android photo/video import:** normalize generic MIME types from Android document providers using the selected file's extension, so JPEGs and videos decode correctly even when the provider reports `application/octet-stream`.
+
+## What's new in EasyCut 1.19.0
+
+- **Android media import:** use Android's document picker to select multiple photos and videos for the editor, overlays, layouts, Reel Maker and photo editor. Temporary imported copies are cleaned up after use.
+- **More expressive reel styles:** all 46 styles layer multiple effects; tune effect amount from 0–200% separately from layer density, and get timed style transitions in automatic and manual reels. Custom manual transitions remain respected.
+
+## What's new in EasyCut 1.18.0
+
+- **More reliable photo imports:** added TIFF/TIF decoding, improved HEIF/HEIC detection across generic file types, and clearer guidance when a camera RAW format needs conversion. Photos can be combined with video in the editor, Reel Maker and photo editor.
+- **More export quality choices:** added Maximum quality and higher-resolution export options, including 4K.
+- **Templates throughout the editor:** added reusable looks in Filters and layered effect recipes in Effects, plus transition recipes and scene detection with smooth dissolves.
+- **More creative Reel Maker results:** A/B/C versions now preserve the selected direction for A and create distinct styles and shot orders for B/C, with story-first curation and more breathing room in pacing.
+- **Modern reel styles:** added Keepsake Scrapbook, Pixel Pop, Slow Burn, Bold Editorial and Wonderstruck.
+- **Punjabi typography:** added ten selectable Gurmukhi font styles.
+- **Phone and desktop:** the shared editing features are available in both app versions.
+
 ## What's new in EasyCut 1.17.0
 
 - **Photo editor** (Snapseed-inspired) on PC and phone: open it from the home screen, or tap **Edit photo** on a picture in your project. Tune light and color, curves, healing, a selective brush, lens blur, HDR and film looks. Edits are non-destructive, and you can send a finished photo straight into a reel.

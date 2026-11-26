@@ -198,3 +198,35 @@ body.pe-open{overflow:hidden}
 .pe-help b{font-size:17px;font-weight:800;line-height:1}
 .pe.pe-mob .pe-help{display:none}
 #peView.pe-panning,#peView.pe-panning *{cursor:grabbing!important}
+
+/* Match the black, glass and emerald design system used by the video editor. */
+.pe{background:var(--bg,#0a0a0f);color:var(--text,#f8fafc)}
+.pe-top,.pe-side{background:rgba(15,20,30,.82);border-color:rgba(0,230,184,.25);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+.pe-top{box-shadow:0 6px 24px #0008}
+.pe-view{background:radial-gradient(ellipse at center,#10201d 0%,#0b1111 55%,#0a0a0f 100%)}
+.pe-ib{border:1px solid transparent}
+.pe-ib:hover:not(:disabled){background:#0d2823;color:#fff}
+.pe-ib.on,.pe-btn.on{background:#07372d;color:#eafff8}
+.pe-ib.ok,.pe-btn.pri{background:linear-gradient(120deg,#00e6b8,#00c896);color:#04130f;box-shadow:0 0 24px #00e6b83d}
+.pe-stk span{background:#00ffc6;color:#04130f}
+.pe-btn,.pe-seg button,.pe-tool,.pe-ta,.pe select{background:rgba(18,25,36,.9);border-color:rgba(0,230,184,.25)}
+.pe-btn:hover,.pe-tool:hover{background:#102820}
+.pe-hud,.pe-plist,.pe-stackp{background:rgba(15,20,30,.95);border-color:rgba(0,230,184,.25);backdrop-filter:blur(16px)}
+.pe-hud b,.pe-prow>label b,.pe-sinfo b small{color:#00e6b8}
+.pe-hud i::after{background:#00e6b8}
+.pe-tabs button.on{background:#07372d;color:#eafff8;box-shadow:inset 0 -3px 0 #00ffc6}
+.pe-plist div.on,.pe-seg button.on,.pe.pe-mob .pe-chips button.on{background:#07372d;color:#eafff8}
+.pe-tabs{background:rgba(10,14,18,.94);border-color:rgba(0,230,184,.25);backdrop-filter:blur(20px)}
+.pe-tabs button{color:#94a3b8}
+.pe-tool{border-radius:15px}
+.pe-tool:hover,.pe-look:hover .pe-lth{border-color:#00e6b888}
+.pe-look.on .pe-lth,.pe-pth:hover{border-color:#00e6b8}
+.pe-look.on{color:#00e6b8}
+.pe-prow>label{color:#d5e0dc}
+.pe-num.cur>label::before{background:#00e6b8}
+.pe input[type=range]::-webkit-slider-thumb,.pe-dot,.pe-pt.on{border-color:#00ffc6}
+.pe-sw button.on{border-color:#00e6b8;box-shadow:0 0 0 2px #00e6b855}
+.pe-th,.pe.pe-mob .pe-in-tool .pe-th{background:rgba(15,20,30,.96);border-color:rgba(0,230,184,.25)}
+.pe-ta,.pe select{background:rgba(12,20,25,.9);border-color:#1b4b42}
+.pe.pe-mob .pe-side{border-color:rgba(0,230,184,.25)}
+.pe *{scrollbar-color:#ffffff30 transparent}

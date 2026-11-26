@@ -670,6 +670,8 @@ const H = {
   looks:() => HX().LOOKS || {},
   exif:buf => { try { const x = hf('exifInfo'), p = hf('parseExif'); return x && p ? x(p(buf)) : null; } catch (e) { return null; } },
   heic:f => (hf('heicToJpeg') ? hf('heicToJpeg')(f) : Promise.reject(new Error('HEIC not supported'))),
+  tiff:f => (hf('tiffToJpeg') ? hf('tiffToJpeg')(f) : Promise.reject(new Error('TIFF not supported'))),
+  androidPick:() => (hf('androidPickFiles') ? hf('androidPickFiles')() : Promise.resolve(null)),
   busy:(on, title, pct, sub) => { if (on && hf('progress')) hf('progress')(title, pct, sub || ''); else if (!on && hf('progressDone')) hf('progressDone')(); },
 };
 
@@ -753,13 +755,18 @@ function build(){
     <div class="pe-side" id="peSide"></div>
   </div>
   <div class="pe-stackp" id="peStack"></div>
-  <input type="file" id="peFile" accept="image/*,.heic,.heif" hidden>
-  <input type="file" id="peFile2" accept="image/*,.heic,.heif" hidden>`;
+  <input type="file" id="peFile" accept="image/*,.heic,.heif,.avif,.tif,.tiff" hidden>
+  <input type="file" id="peFile2" accept="image/*,.heic,.heif,.avif,.tif,.tiff" hidden>`;
   document.body.appendChild(root);
   view = $p('#peView', root); stage = $p('#peStage', root); cv = $p('#peCv', root); ov = $p('#peOv', root); hud = $p('#peHud', root); plist = $p('#pePList', root); histC = $p('#peHist', root); side = $p('#peSide', root); stackP = $p('#peStack', root);
   root.addEventListener('click', onClick); root.addEventListener('input', onInput); root.addEventListener('change', onChange);
   $p('#peFile', root).addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; if (f) openFile(f); });
   $p('#peFile2', root).addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; if (f) addSecondImage(f); });
+  const nativePicker = hf('bindAndroidPicker');
+  if (nativePicker){
+    nativePicker('#peFile', fs => { if (fs[0]) openFile(fs[0]); });
+    nativePicker('#peFile2', fs => { if (fs[0]) addSecondImage(fs[0]); });
+  }
   const cmp = $p('[data-pe="compare"]', root), on = e => { e.preventDefault(); setCompare(true); }, off = () => setCompare(false);
   cmp.addEventListener('pointerdown', on); cmp.addEventListener('pointerup', off); cmp.addEventListener('pointerleave', off); cmp.addEventListener('pointercancel', off);
   bindGestures(); stackP.addEventListener('click', onStackClick);
@@ -790,7 +797,11 @@ let resizeT = 0;
 function maybeResizePreview(){ clearTimeout(resizeT); resizeT = setTimeout(() => { if (!ST.src) return; const t = previewTarget(), cur = Math.max(ST.prevW, ST.prevH), full = Math.max(ST.src.w, ST.src.h); if ((t > cur * 1.25 && cur < full) || t < cur * .6){ uploadPreview(); render(); } }, 250); }
 async function decodeBlob(blob, name){
   try { return await createImageBitmap(blob, { imageOrientation:'from-image' }); }
-  catch (e) { if (/\.(heic|heif)$/i.test(name || '') || /hei[cf]/i.test(blob.type || '')){ const j = await H.heic(blob); return createImageBitmap(j, { imageOrientation:'from-image' }); } throw e; }
+  catch (e) {
+    if (/\.(heic|heif)$/i.test(name || '') || /hei[cf]/i.test(blob.type || '')){ const j = await H.heic(blob); return createImageBitmap(j, { imageOrientation:'from-image' }); }
+    if (/\.(tif|tiff)$/i.test(name || '') || /image\/tiff/i.test(blob.type || '')){ const j = await H.tiff(blob); return createImageBitmap(j, { imageOrientation:'from-image' }); }
+    throw e;
+  }
 }
 async function loadSource(blob, name, opts = {}){
   const bytes = new Uint8Array(await blob.slice(0, 6e6).arrayBuffer()), bmp = await decodeBlob(blob, name);
@@ -861,7 +872,7 @@ function renderSide(){
   if (!ST.src){ root.classList.remove('has-photo'); empty.innerHTML = emptyHTML(); side.innerHTML = `<div class="pe-sideempty"><div class="pe-hint">Open a photo to start. Everything you do stays editable in the stack.</div></div>`; loadRecents(); return; }
   empty.innerHTML = '';
   if (ST.sess) { side.innerHTML = toolPanel(); afterToolPanel(); return; }
-  const tabs = `<div class="pe-tabs">${[['looks','Looks'],['tools','Tools'],['export','Export']].map(([k, l]) => `<button data-tab="${k}" class="${ST.tab === k ? 'on' : ''}">${l}</button>`).join('')}</div>`;
+  const tabs = `<div class="pe-tabs">${[['looks','Filters'],['quickTune','AI Enhance'],['quickCrop','Crop'],['tools','Adjust'],['export','Export']].map(([k, l]) => `<button data-tab="${k}" class="${ST.tab === k ? 'on' : ''}">${l}</button>`).join('')}</div>`;
   let body = '';
   if (ST.tab === 'looks') body = looksHTML();
   else if (ST.tab === 'export') body = exportHTML();
@@ -1039,6 +1050,8 @@ async function onClick(e){
   if (d.fav){ e.stopPropagation(); const id = d.fav; FAVES = FAVES.includes(id) ? FAVES.filter(x => x !== id) : [...FAVES, id].slice(-6); LS.set('faves', FAVES); return renderSide(); }
   if (d.tool) return openTool(d.tool);
   if (d.look) return applyLook(d.look);
+  if (d.tab === 'quickTune') return openTool('tune');
+  if (d.tab === 'quickCrop') return openTool('crop');
   if (d.tab){ ST.tab = d.tab; return renderSide(); }
   if (d.pmedia) return openMedia(d.pmedia);
   if (d.recent) return openRecent(d.recent);
